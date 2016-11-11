@@ -23,6 +23,7 @@ module ExternalModelInterfaceDataMod
 
      logical             :: is_int_type         ! Is data of an integer type?
      logical             :: is_real_type        ! Is data of real type?
+     logical             :: is_set              ! Is data set
 
      integer             :: num_em_stages       ! Number of EM stages in which the data is exchanged
      integer, pointer    :: em_stage_ids(:)     ! ID of EM stages in which the data is exchanged
@@ -70,6 +71,7 @@ module ExternalModelInterfaceDataMod
      procedure, public :: SetLongName      => EMIDSetLongName
      procedure, public :: SetEMStages      => EMIDSetEMStages
      procedure, public :: AllocateMemory   => EMIDAllocateMemory
+     procedure, public :: Reset            => EMIDReset
 
   end type emi_data
 
@@ -114,6 +116,7 @@ contains
 
     this%is_int_type    = .false.
     this%is_real_type   = .false.
+    this%is_set         = .false.
 
     this%num_em_stages  = 0
     nullify(this%em_stage_ids)
@@ -750,6 +753,66 @@ contains
     endif
 
   end subroutine EMIDAllocateMemory_Real_4D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDReset(this)
+    !
+    ! !DESCRIPTION:
+    ! Resets values of a EMI data
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data) :: this
+
+    if (this%is_int_type .and. this%is_real_type) then
+       call endrun(msg='Data type is defined to be both int and real.')
+    endif
+
+    if ((.not.this%is_int_type) .and. (.not.this%is_real_type)) then
+       call endrun(msg='Data type is not defined to be either int or real.')
+    endif
+
+    if (this%ndim == 0) return
+
+    select case(this%ndim)
+    case (1)
+       if (this%is_real_type) then
+          this%data_real_1d(:) = 0._r8
+       else
+          this%data_int_1d(:) = 0
+       endif
+
+    case (2)
+       if (this%is_real_type) then
+          this%data_real_2d(:,:) = 0._r8
+       else
+          this%data_int_2d(:,:) = 0
+       endif
+
+    case (3)
+       if (this%is_real_type) then
+          this%data_real_3d(:,:,:) = 0._r8
+       else
+          this%data_int_3d(:,:,:) = 0
+       endif
+
+    case (4)
+       if (this%is_real_type) then
+          this%data_real_4d(:,:,:,:) = 0._r8
+       else
+          call endrun(msg='EMID of type integer for dimension=4 is not supported.')
+
+       endif
+
+    case default
+       call endrun(msg='EMID dimension larger than 4 is not supported.')
+
+    end select
+
+    this%is_set = .false.
+
+  end subroutine EMIDReset
 
   !------------------------------------------------------------------------
   subroutine EMIDListInit(this)

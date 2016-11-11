@@ -476,6 +476,10 @@ contains
     ! ------------------------------------------------------------------------
     ! Pack the data for EM
     ! ------------------------------------------------------------------------
+
+    call EMID_Reset_Data_for_EM(l2e_list(index_em), em_stage)
+    call EMID_Reset_Data_for_EM(e2l_list(index_em), em_stage)
+
     if ( present(temperature_vars) .and. &
          present(num_hydrologyc)   .and. &
          present(filter_hydrologyc)) then
@@ -510,6 +514,8 @@ contains
             num_hydrologyc, filter_hydrologyc)
 
     endif
+
+    call EMID_Verify_All_Data_Is_Set(l2e_list(index_em), em_stage)
 
     ! ------------------------------------------------------------------------
     ! Solve EM
@@ -564,8 +570,75 @@ contains
             num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
     endif
 
+    call EMID_Verify_All_Data_Is_Set(l2e_list(index_em), em_stage)
+
   end subroutine EMI_Driver
   
+!-----------------------------------------------------------------------
+  subroutine EMID_Reset_Data_for_EM(data_list, em_stage)
+    !
+    ! !DESCRIPTION:
+    ! Reset all EMI data that will be exchanged between ALM and external
+    ! model for em_stage
+    !
+    implicit none
+    !
+    class(emi_data_list)   , intent(in) :: data_list
+    integer                , intent(in) :: em_stage
+    !
+    class(emi_data), pointer            :: cur_data
+    integer                             :: istage
+
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             call cur_data%Reset()
+             exit
+          endif
+       enddo
+
+       cur_data => cur_data%next
+    enddo
+
+  end subroutine EMID_Reset_Data_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Verify_All_Data_Is_Set(data_list, em_stage)
+    !
+    ! !DESCRIPTION:
+    ! Verify that all EMI data that will be exchanged between ALM and external
+    ! model for em_stage was set
+    !
+    implicit none
+    !
+    class(emi_data_list)   , intent(in) :: data_list
+    integer                , intent(in) :: em_stage
+    !
+    class(emi_data), pointer            :: cur_data
+    integer                             :: istage
+
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             if (.not. cur_data%is_set) then
+                write(iulog,*)'EMID%name = ', trim(cur_data%name)
+                call endrun(msg='EMID is not set.')
+             endif
+             exit
+          endif
+       enddo
+
+       cur_data => cur_data%next
+    enddo
+
+  end subroutine EMID_Verify_All_Data_Is_Set
+
 !-----------------------------------------------------------------------
   subroutine EMID_Pack_WaterFlux_Vars_for_EM(data_list, em_stage, &
         num_hydrologyc, filter_hydrologyc, waterflux_vars)
@@ -626,50 +699,47 @@ contains
 
           case (F_L2E_VERTICAL_ET_MASS_FLUX)
 
-             cur_data%data_real_2d(:,:) = 0._r8
-
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevsoi
                    cur_data%data_real_2d(c,j) = mflx_et_col(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           case (F_L2E_INFIL_MASS_FLUX)
-             cur_data%data_real_1d(:) = 0._r8
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 cur_data%data_real_1d(c) = mflx_infl_col(c)
              enddo
+             cur_data%is_set = .true.
 
           case (F_L2E_DEW_MASS_FLUX)
-             cur_data%data_real_1d(:) = 0._r8
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 cur_data%data_real_1d(c) = mflx_dew_col(c)
              enddo
+             cur_data%is_set = .true.
 
           case (F_L2E_SNOW_SUBLIMATION_MASS_FLUX)
-             cur_data%data_real_1d(:) = 0._r8
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 cur_data%data_real_1d(c) = mflx_sub_snow_col(c)
              enddo
+             cur_data%is_set = .true.
 
           case (F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
-             cur_data%data_real_1d(:) = 0._r8
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 cur_data%data_real_1d(c) = mflx_snowlyr_disp_col(c)
              enddo
+             cur_data%is_set = .true.
 
           case (F_L2E_DRAINAGE_MASS_FLUX)
-
-             cur_data%data_real_2d(:,:) = 0._r8
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -677,9 +747,7 @@ contains
                    cur_data%data_real_2d(c,j) = mflx_drain_col(c,j)
                 enddo
              enddo
-
-          case default
-             write(iulog,*)'Unknown cur_data%id = ',cur_data%id
+             cur_data%is_set = .true.
 
           end select
 
@@ -745,6 +813,7 @@ contains
                 c = filter_hydrologyc(fc)
                 mflx_recharge_col(c) = cur_data%data_real_1d(c)
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -800,15 +869,15 @@ contains
           select case (cur_data%id)
 
           case (FILTER_L2E_HYDROLOGYC)
-
-             cur_data%data_int_1d(:) = 0
              do i = 1, num_filter
                 cur_data%data_int_1d(i) = filter(i)
              enddo
+             cur_data%is_set = .true.
 
           case (FILTER_L2E_NUM_HYDROLOGYC)
 
              cur_data%data_int_1d(1) = num_filter
+             cur_data%is_set = .true.
 
           end select
 
@@ -866,14 +935,13 @@ contains
           select case (cur_data%id)
 
           case (MESH_L2E_ZI)
-
-             cur_data%data_real_2d(:,:) = 0
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 0, nlevgrnd
                    cur_data%data_real_2d(c,j) = zi(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -935,24 +1003,22 @@ contains
           select case (cur_data%id)
 
           case (S_L2E_H2OSOI_LIQ)
-
-             cur_data%data_real_2d(:,:) = 0._r8
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
                    cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           case (S_L2E_H2OSOI_ICE)
-
-             cur_data%data_real_2d(:,:) = 0._r8
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
                    cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -1025,6 +1091,7 @@ contains
                    h2osoi_liq(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           case (S_E2L_H2OSOI_ICE)
 
@@ -1034,6 +1101,7 @@ contains
                    h2osoi_ice(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           case (S_E2L_VSFM_PROGNOSTIC_SOILP)
 
@@ -1043,6 +1111,7 @@ contains
                    soilp_col(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -1104,14 +1173,13 @@ contains
           select case (cur_data%id)
 
           case (S_L2E_TSOIL)
-
-             cur_data%data_real_2d(:,:) = 0._r8
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
                    cur_data%data_real_2d(c,j) = t_soisno(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -1178,12 +1246,14 @@ contains
                 c = filter_hydrologyc(fc)
                 zwt(c) = cur_data%data_real_1d(c)
              enddo
+             cur_data%is_set = .true.
 
           case (F_E2L_AQUIFER_RECHARGE)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 qcharge(c) = cur_data%data_real_1d(c)
              enddo
+             cur_data%is_set = .true.
 
           end select
 
@@ -1251,6 +1321,7 @@ contains
                    smp_l(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
+             cur_data%is_set = .true.
 
           end select
 
