@@ -678,7 +678,7 @@ contains
 end subroutine EM_VSFM_Populate_E2L_List
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Init(l2e_init_list, e2l_init_list)
+  subroutine EM_VSFM_Init(l2e_init_list, e2l_init_list, iam)
 
     !
     ! !DESCRIPTION:
@@ -696,10 +696,11 @@ end subroutine EM_VSFM_Populate_E2L_List
     ! !ARGUMENTS:
     class(emi_data_list) , intent(in)    :: l2e_init_list
     class(emi_data_list) , intent(inout) :: e2l_init_list
+    integer              , intent(in) :: iam
 
     !
     ! 1. Initialize the multi-physics-problem (MPP)
-    call initialize_mpp(0)
+    call initialize_mpp(iam)
 
     ! 2. Add all meshes needed for the MPP
     call add_meshes(l2e_init_list)

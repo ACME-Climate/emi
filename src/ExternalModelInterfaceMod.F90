@@ -214,7 +214,7 @@ contains
        call EMID_Verify_All_Data_Is_Set(l2e_init_list, em_stage)
 
        ! Initialize the external model
-       call EM_VSFM_Init(l2e_init_list, e2l_init_list)
+       call EM_VSFM_Init(l2e_init_list, e2l_init_list, iam)
 
        ! Unpack all data sent from the external model
        call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list, em_stage, &
