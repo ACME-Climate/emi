@@ -111,17 +111,38 @@ contains
     ! Initialize EMI
     !
     ! !USES:
+    use ExternalModelConstants, only : EM_INITIALIZATION_STAGE
+    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
+    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
+    use ExternalModelVSFMMod  , only : EM_VSFM_Init
     use ExternalModelConstants, only : EM_ID_BeTR
     use ExternalModelConstants, only : EM_ID_FATES
     use ExternalModelConstants, only : EM_ID_PFLOTRAN
     use ExternalModelConstants, only : EM_ID_VSFM
+    use clm_instMod           , only : soilstate_vars
+    use clm_instMod           , only : soilhydrology_vars
+    use clm_instMod           , only : waterflux_vars
+    use clm_instMod           , only : waterstate_vars
     !
     implicit none
     !
+    ! !ARGUMENTS:
+    integer, intent(in)  :: em_id
+    !
     ! !LOCAL VARIABLES:
-    integer, intent(in) :: em_id
+    class(emi_data_list), pointer :: l2e_init_list
+    class(emi_data_list), pointer :: e2l_init_list
+    integer                       :: em_stage
+    integer                       :: ii
+    integer                       :: num_filter_col
+    integer                       :: num_filter_lun
+    integer, pointer              :: filter_col(:)
+    integer, pointer              :: filter_lun(:)
+    type(bounds_type)             :: bounds_proc
+
+    em_stage = EM_INITIALIZATION_STAGE
 
     select case (em_id)
     case (EM_ID_BeTR)
@@ -134,12 +155,83 @@ contains
        ! Initialize EM
 
        ! Initialize lists of data to be exchanged between ALM and VSFM
+       ! during initialization step
+       allocate(l2e_init_list)
+       allocate(e2l_init_list)
+
+       call l2e_init_list%Init()
+       call e2l_init_list%Init()
+
+       ! Fill the data list:
+       !  - Data need during the initialization
+       call EM_VSFM_Populate_L2E_Init_List(l2e_init_list)
+       call EM_VSFM_Populate_E2L_Init_List(e2l_init_list)
+       !  - Data need during timestepping
        call EM_VSFM_Populate_L2E_List(l2e_list(index_em_vsfm))
        call EM_VSFM_Populate_E2L_List(e2l_list(index_em_vsfm))
 
        ! Allocate memory for data
+       call EMI_Setup_Data_List(l2e_init_list)
+       call EMI_Setup_Data_List(e2l_init_list)
        call EMI_Setup_Data_List(l2e_list(index_em_vsfm))
        call EMI_Setup_Data_List(e2l_list(index_em_vsfm))
+
+       ! GB_FIX_ME: Create a temporary filter
+       call get_proc_bounds(bounds_proc)
+       num_filter_col = bounds_proc%endc - bounds_proc%begc + 1
+       num_filter_lun = bounds_proc%endl - bounds_proc%begl + 1
+
+       allocate(filter_col(num_filter_col))
+       allocate(filter_lun(num_filter_lun))
+
+       do ii = 1, num_filter_col
+          filter_col(ii) = bounds_proc%begc + ii - 1
+       enddo
+
+       do ii = 1, num_filter_lun
+          filter_lun(ii) = bounds_proc%begl + ii - 1
+       enddo
+
+       ! Reset values in the data list
+       call EMID_Reset_Data_for_EM(l2e_init_list, em_stage)
+       call EMID_Reset_Data_for_EM(e2l_init_list, em_stage)
+
+       ! Pack all ALM data needed by the external model
+       call EMID_Pack_WaterState_Vars_for_EM(l2e_init_list, em_stage, &
+            num_filter_col, filter_col, waterstate_vars)
+       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_init_list, em_stage, &
+            num_filter_col, filter_col, waterflux_vars)
+       call EMID_Pack_SoilHydrology_Vars_for_EM(l2e_init_list, em_stage, &
+            num_filter_col, filter_col, soilhydrology_vars)
+       call EMID_Pack_SoilState_Vars_for_EM(l2e_init_list, em_stage, &
+            num_filter_col, filter_col, soilstate_vars)
+       call EMID_Pack_Column_for_EM(l2e_init_list, em_stage, &
+            num_filter_col, filter_col)
+       call EMID_Pack_Landunit_for_EM(l2e_init_list, em_stage, &
+            num_filter_lun, filter_lun)
+
+       ! Ensure all data needed by external model is packed
+       call EMID_Verify_All_Data_Is_Set(l2e_init_list, em_stage)
+
+       ! Initialize the external model
+       call EM_VSFM_Init(l2e_init_list, e2l_init_list)
+
+       ! Unpack all data sent from the external model
+       call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list, em_stage, &
+            num_filter_col, filter_col, soilstate_vars)
+       call EMID_Unpack_WaterState_Vars_for_EM(e2l_init_list, em_stage, &
+            num_filter_col, filter_col, waterstate_vars)
+       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_init_list, em_stage, &
+            num_filter_col, filter_col, waterflux_vars)
+       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_init_list, em_stage, &
+            num_filter_col, filter_col, soilhydrology_vars)
+
+       ! Ensure all data sent by external model is unpacked
+       call EMID_Verify_All_Data_Is_Set(e2l_init_list, em_stage)
+
+       ! Clean up memory
+       call l2e_init_list%Destroy()
+       call e2l_init_list%Destroy()
 
     case default
        call endrun('Unknown External Model')
@@ -196,6 +288,8 @@ contains
     use ExternalModelConstants    , only : S_L2E_TSOIL
     use ExternalModelConstants    , only : S_L2E_H2OSOI_LIQ
     use ExternalModelConstants    , only : S_L2E_H2OSOI_ICE
+    use ExternalModelConstants    , only : S_L2E_WTD
+    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
 
     use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
     use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
@@ -208,14 +302,32 @@ contains
     use ExternalModelConstants    , only : F_L2E_DEW_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_SNOW_SUBLIMATION_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
 
     use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
 
     use ExternalModelConstants    , only : FILTER_L2E_HYDROLOGYC
     use ExternalModelConstants    , only : FILTER_L2E_NUM_HYDROLOGYC
 
-    use ExternalModelConstants    , only : MESH_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
+    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
+    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : COLUMN_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_DZ
+    use ExternalModelConstants    , only : COLUMN_L2E_Z
+    use ExternalModelConstants    , only : COLUMN_L2E_AREA
+
+    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
+    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
+    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
+
+    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
+    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
 
     use decompMod                 , only : get_proc_bounds
     use decompMod                 , only : get_proc_clumps
@@ -286,17 +398,26 @@ contains
 
     call get_proc_bounds(bounds_proc)
 
+    ! Determine the size of data
     select case (data%id)
 
     case (S_L2E_TSOIL,                 &
           S_L2E_H2OSOI_LIQ,            &
           S_L2E_H2OSOI_ICE,            &
           S_E2L_H2OSOI_LIQ,            &
+          S_L2E_VSFM_PROGNOSTIC_SOILP, &
           S_E2L_H2OSOI_ICE,            &
           S_E2L_SOIL_MATRIC_POTENTIAL, &
           S_E2L_VSFM_PROGNOSTIC_SOILP, &
           F_L2E_VERTICAL_ET_MASS_FLUX, &
-          F_L2E_DRAINAGE_MASS_FLUX     )
+          F_L2E_DRAINAGE_MASS_FLUX,    &
+          COLUMN_L2E_DZ,               &
+          COLUMN_L2E_Z,                &
+          PARAMETER_L2E_WATSATC,       &
+          PARAMETER_L2E_HKSATC,        &
+          PARAMETER_L2E_BSWC,          &
+          PARAMETER_L2E_SUCSATC,       &
+          PARAMETER_L2E_EFFPOROSITYC   )
 
        ! Dim: Column x nlevgrnd
 
@@ -317,12 +438,19 @@ contains
        dim2_end_proc     = nlevgrnd
 
     case (F_L2E_INFIL_MASS_FLUX,                 &
+          S_L2E_WTD,                             &
           S_E2L_WTD,                             &
           FILTER_L2E_HYDROLOGYC,                 &
           F_L2E_DEW_MASS_FLUX,                   &
           F_L2E_SNOW_SUBLIMATION_MASS_FLUX,      &
           F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          F_E2L_AQUIFER_RECHARGE)
+          F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          F_E2L_AQUIFER_RECHARGE,                &
+          F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          COLUMN_L2E_ACTIVE,                     &
+          COLUMN_L2E_TYPE,                       &
+          COLUMN_L2E_LANDUNIT_INDEX,             &
+          COLUMN_L2E_AREA)
 
        ! Dim: Column
 
@@ -352,9 +480,9 @@ contains
        dim1_beg_proc = 1
        dim1_end_proc = 1
 
-    case (MESH_L2E_ZI)
+    case (COLUMN_L2E_ZI)
 
-       ! Dim: Column x nlevgrnd
+       ! Dim: Column x (0:nlevgrnd)
 
        ndim           = 2
 
@@ -372,17 +500,40 @@ contains
        dim2_beg_proc     = 0
        dim2_end_proc     = nlevgrnd
 
+    case (LANDUNIT_L2E_TYPE,       &
+          LANDUNIT_L2E_LAKEPOINT,  &
+          LANDUNIT_L2E_URBANPOINT  &
+         )
+
+       ! Dim: Landunit
+
+       ndim           = 1
+
+       do nc = 1, nclumps
+          call get_clump_bounds(nc, bounds_clump)
+          dim1_beg_clump(nc) = bounds_clump%begl
+          dim1_end_clump(nc) = bounds_clump%endl
+       enddo
+
+       dim1_beg_proc = bounds_proc%begl
+       dim1_end_proc = bounds_proc%endl
+
+
     case default
-       write(*,*)'data%id = ',data%id
+       write(*,*)'Unknown data%id = ',data%id
+       write(*,*)'Unknown data%name = ',trim(data%name)
        call endrun(msg='Unknown data%id while trying to set dimensions.')
     end select
 
+
+    ! Determine the type of data
     select case (data%id)
        
-       ! Column x nlevgrnd
     case (S_L2E_TSOIL,                           &
           S_L2E_H2OSOI_LIQ,                      &
           S_L2E_H2OSOI_ICE,                      &
+          S_L2E_WTD,                             &
+          S_L2E_VSFM_PROGNOSTIC_SOILP,           &
           S_E2L_H2OSOI_LIQ,                      &
           S_E2L_H2OSOI_ICE,                      &
           S_E2L_SOIL_MATRIC_POTENTIAL,           &
@@ -394,20 +545,38 @@ contains
           F_L2E_DEW_MASS_FLUX,                   &
           F_L2E_SNOW_SUBLIMATION_MASS_FLUX,      &
           F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
           F_E2L_AQUIFER_RECHARGE,                &
-          MESH_L2E_ZI)
+          F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          COLUMN_L2E_ZI,                         &
+          COLUMN_L2E_DZ,                         &
+          COLUMN_L2E_Z,                          &
+          COLUMN_L2E_AREA,                       &
+          PARAMETER_L2E_WATSATC,                 &
+          PARAMETER_L2E_HKSATC,                  &
+          PARAMETER_L2E_BSWC,                    &
+          PARAMETER_L2E_SUCSATC,                 &
+          PARAMETER_L2E_EFFPOROSITYC             &
+          )
 
        is_int_type    = .false.
        is_real_type   = .true.
 
-    case (FILTER_L2E_HYDROLOGYC,   &
-          FILTER_L2E_NUM_HYDROLOGYC)
+    case (FILTER_L2E_HYDROLOGYC,     &
+          FILTER_L2E_NUM_HYDROLOGYC, &
+          COLUMN_L2E_ACTIVE,         &
+          COLUMN_L2E_TYPE,           &
+          COLUMN_L2E_LANDUNIT_INDEX, &
+          LANDUNIT_L2E_TYPE,         &
+          LANDUNIT_L2E_LAKEPOINT,    &
+          LANDUNIT_L2E_URBANPOINT )
 
        is_int_type    = .true.
        is_real_type   = .false.
 
     case default
-       write(*,*)'data%id = ',data%id
+       write(*,*)'Unknown data%id = ',data%id
+       write(*,*)'Unknown data%name = ',trim(data%name)
        call endrun(msg='Unknown data%id while trying to specify data type.')
     end select
 
@@ -510,7 +679,7 @@ contains
        call EMID_Pack_Filter_for_EM(l2e_list(index_em), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
-       call EMID_Pack_Column_Depth_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_Column_for_EM(l2e_list(index_em), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
     endif
@@ -627,6 +796,7 @@ contains
        do istage = 1, cur_data%num_em_stages
           if (cur_data%em_stage_ids(istage) == em_stage) then
              if (.not. cur_data%is_set) then
+                write(iulog,*)'EMID%id   = ', cur_data%id
                 write(iulog,*)'EMID%name = ', trim(cur_data%name)
                 call endrun(msg='EMID is not set.')
              endif
@@ -652,6 +822,7 @@ contains
     use ExternalModelConstants    , only : F_L2E_DEW_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_SNOW_SUBLIMATION_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
     use WaterFluxType             , only : waterflux_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
@@ -674,9 +845,10 @@ contains
          mflx_infl_col         => waterflux_vars%mflx_infl_col         , &
          mflx_dew_col          => waterflux_vars%mflx_dew_col          , &
          mflx_snowlyr_disp_col => waterflux_vars%mflx_snowlyr_disp_col , &
+         mflx_snowlyr_col      => waterflux_vars%mflx_snowlyr_col      , &
          mflx_sub_snow_col     => waterflux_vars%mflx_sub_snow_col     , &
          mflx_et_col           => waterflux_vars%mflx_et_col           , &
-         mflx_drain_col        =>  waterflux_vars%mflx_drain_col         &
+         mflx_drain_col        => waterflux_vars%mflx_drain_col          &
          )
 
     count = 0
@@ -739,6 +911,14 @@ contains
              enddo
              cur_data%is_set = .true.
 
+          case (F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = mflx_snowlyr_col(c)
+             enddo
+             cur_data%is_set = .true.
+
           case (F_L2E_DRAINAGE_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
@@ -769,6 +949,7 @@ contains
     !
     ! !USES:
     use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use WaterFluxType             , only : waterflux_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -782,12 +963,13 @@ contains
     !
     integer                           :: c,fc,j
     class(emi_data), pointer          :: cur_data
-    logical                           :: need_to_pack
+    logical                           :: need_to_unpack
     integer                           :: istage
     integer                           :: count
 
     associate( &
-         mflx_recharge_col => waterflux_vars%mflx_recharge_col &
+         mflx_recharge_col   => waterflux_vars%mflx_recharge_col, &
+         mflx_snowlyr_col    => waterflux_vars%mflx_snowlyr_col   &
     )
 
     count = 0
@@ -796,15 +978,15 @@ contains
        if (.not.associated(cur_data)) exit
        count = count + 1
 
-       need_to_pack = .false.
+       need_to_unpack = .false.
        do istage = 1, cur_data%num_em_stages
           if (cur_data%em_stage_ids(istage) == em_stage) then
-             need_to_pack = .true.
+             need_to_unpack = .true.
              exit
           endif
        enddo
 
-       if (need_to_pack) then
+       if (need_to_unpack) then
 
           select case (cur_data%id)
 
@@ -812,6 +994,13 @@ contains
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 mflx_recharge_col(c) = cur_data%data_real_1d(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                mflx_snowlyr_col(c) = cur_data%data_real_1d(c)
              enddo
              cur_data%is_set = .true.
 
@@ -889,14 +1078,20 @@ contains
   end subroutine EMID_Pack_Filter_for_EM
 
 !-----------------------------------------------------------------------
-  subroutine EMID_Pack_Column_Depth_for_EM(data_list, em_stage, &
+  subroutine EMID_Pack_Column_for_EM(data_list, em_stage, &
         num_filter, filter)
     !
     ! !DESCRIPTION:
     ! Pack data from ALM's column type for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : MESH_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
+    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
+    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : COLUMN_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_DZ
+    use ExternalModelConstants    , only : COLUMN_L2E_Z
+    use ExternalModelConstants    , only : COLUMN_L2E_AREA
     use ColumnType                , only : col
     use clm_varpar                , only : nlevgrnd
     !
@@ -912,9 +1107,6 @@ contains
     logical                           :: need_to_pack
     integer                           :: istage
     integer                           :: count
-    real(r8), pointer                 :: zi(:,:)
-
-    zi => col%zi
 
     count = 0
     cur_data => data_list%first
@@ -934,12 +1126,58 @@ contains
 
           select case (cur_data%id)
 
-          case (MESH_L2E_ZI)
+          case (COLUMN_L2E_ACTIVE)
+             do fc = 1, num_filter
+                c = filter(fc)
+                if (col%active(c)) cur_data%data_int_1d(c) = 1
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_TYPE)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_int_1d(c) = col%itype(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_LANDUNIT_INDEX)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_int_1d(c) = col%landunit(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_ZI)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 0, nlevgrnd
-                   cur_data%data_real_2d(c,j) = zi(c,j)
+                   cur_data%data_real_2d(c,j) = col%zi(c,j)
                 enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_DZ)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = col%dz(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_Z)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = col%z(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (COLUMN_L2E_AREA)
+             do fc = 1, num_filter
+                c = filter(fc)
+                !cur_data%data_real_1d(c) = col%area(c)
              enddo
              cur_data%is_set = .true.
 
@@ -950,7 +1188,79 @@ contains
        cur_data => cur_data%next
     enddo
 
-  end subroutine EMID_Pack_Column_Depth_for_EM
+  end subroutine EMID_Pack_Column_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Pack_Landunit_for_EM(data_list, em_stage, &
+        num_filter, filter)
+    !
+    ! !DESCRIPTION:
+    ! Pack data from ALM's landunit type for EM
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
+    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
+    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
+    use LandunitType              , only : lun
+    !
+    implicit none
+    !
+    class(emi_data_list) , intent(in) :: data_list
+    integer              , intent(in) :: em_stage
+    integer              , intent(in) :: num_filter ! number of column soil points in column filter
+    integer              , intent(in) :: filter(:)  ! column filter for soil points
+    !
+    integer                           :: fl,l
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_pack
+    integer                           :: istage
+    integer                           :: count
+
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       need_to_pack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_pack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_pack) then
+
+          select case (cur_data%id)
+
+          case (LANDUNIT_L2E_TYPE)
+             do fl = 1, num_filter
+                l = filter(fl)
+                cur_data%data_int_1d(l) = lun%itype(l)
+             enddo
+             cur_data%is_set = .true.
+
+          case (LANDUNIT_L2E_LAKEPOINT)
+             do fl = 1, num_filter
+                l = filter(fl)
+                if (lun%lakpoi(l)) cur_data%data_int_1d(l) = 1
+             enddo
+             cur_data%is_set = .true.
+
+          case (LANDUNIT_L2E_URBANPOINT)
+             do fl = 1, num_filter
+                l = filter(fl)
+                if (lun%urbpoi(l)) cur_data%data_int_1d(l) = 1
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+  end subroutine EMID_Pack_Landunit_for_EM
 
 !-----------------------------------------------------------------------
   subroutine EMID_Pack_WaterState_Vars_for_EM(data_list, em_stage, &
@@ -962,6 +1272,7 @@ contains
     ! !USES:
     use ExternalModelConstants    , only : S_L2E_H2OSOI_LIQ
     use ExternalModelConstants    , only : S_L2E_H2OSOI_ICE
+    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     !
@@ -981,7 +1292,8 @@ contains
 
     associate(& 
          h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Input:  [real(r8) (:,:) ]  ice water (kg/m2)
-         h2osoi_liq =>    waterstate_vars%h2osoi_liq_col   & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
+         h2osoi_liq =>    waterstate_vars%h2osoi_liq_col , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
+         soilp_col  =>    waterstate_vars%soilp_col        & ! Input:  [real(r8) (:,:) ]  soil water pressure (Pa)
          )
 
     count = 0
@@ -1016,6 +1328,15 @@ contains
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
                    cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (S_L2E_VSFM_PROGNOSTIC_SOILP)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = soilp_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -1055,7 +1376,7 @@ contains
     !
     integer                           :: c,fc,j
     class(emi_data), pointer          :: cur_data
-    logical                           :: need_to_pack
+    logical                           :: need_to_unpack
     integer                           :: istage
     integer                           :: count
 
@@ -1071,15 +1392,15 @@ contains
        if (.not.associated(cur_data)) exit
        count = count + 1
 
-       need_to_pack = .false.
+       need_to_unpack = .false.
        do istage = 1, cur_data%num_em_stages
           if (cur_data%em_stage_ids(istage) == em_stage) then
-             need_to_pack = .true.
+             need_to_unpack = .true.
              exit
           endif
        enddo
 
-       if (need_to_pack) then
+       if (need_to_unpack) then
 
           select case (cur_data%id)
 
@@ -1193,6 +1514,71 @@ contains
   end subroutine EMID_Pack_Temperature_Vars_for_EM
 
 !-----------------------------------------------------------------------
+  subroutine EMID_Pack_SoilHydrology_Vars_for_EM(data_list, em_stage, &
+        num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
+    !
+    ! !DESCRIPTION:
+    ! Save data from EM in ALM's soilhydrolgy_vars
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : S_L2E_WTD
+    use SoilHydrologyType         , only : soilhydrology_type
+    !
+    implicit none
+    !
+    class(emi_data_list)     , intent(inout) :: data_list
+    integer                  , intent(in)    :: em_stage
+    integer                  , intent(in)    :: num_hydrologyc       ! number of column soil points in column filter
+    integer                  , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
+    type(soilhydrology_type) , intent(in)    :: soilhydrology_vars
+    !
+    integer                           :: c,fc,j
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_pack
+    integer                           :: istage
+    integer                           :: count
+
+    associate( &
+         zwt => soilhydrology_vars%zwt_col &
+    )
+
+    count = 0
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+       count = count + 1
+
+       need_to_pack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_pack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_pack) then
+
+          select case (cur_data%id)
+
+          case (S_L2E_WTD)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = zwt(c)
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+
+  end subroutine EMID_Pack_SoilHydrology_Vars_for_EM
+
+!-----------------------------------------------------------------------
   subroutine EMID_Unpack_SoilHydrology_Vars_for_EM(data_list, em_stage, &
         num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
     !
@@ -1214,7 +1600,7 @@ contains
     !
     integer                           :: c,fc,j
     class(emi_data), pointer          :: cur_data
-    logical                           :: need_to_pack
+    logical                           :: need_to_unpack
     integer                           :: istage
     integer                           :: count
 
@@ -1229,15 +1615,15 @@ contains
        if (.not.associated(cur_data)) exit
        count = count + 1
 
-       need_to_pack = .false.
+       need_to_unpack = .false.
        do istage = 1, cur_data%num_em_stages
           if (cur_data%em_stage_ids(istage) == em_stage) then
-             need_to_pack = .true.
+             need_to_unpack = .true.
              exit
           endif
        enddo
 
-       if (need_to_pack) then
+       if (need_to_unpack) then
 
           select case (cur_data%id)
 
@@ -1267,6 +1653,119 @@ contains
   end subroutine EMID_Unpack_SoilHydrology_Vars_for_EM
 
 !-----------------------------------------------------------------------
+  subroutine EMID_Pack_SoilState_Vars_for_EM(data_list, em_stage, &
+        num_hydrologyc, filter_hydrologyc, soilstate_vars)
+    !
+    ! !DESCRIPTION:
+    ! Save data from EM in ALM's soilstate_vars
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
+    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
+    use SoilStateType             , only : soilstate_type
+    use clm_varpar                , only : nlevsoi, nlevgrnd
+    !
+    implicit none
+    !
+    class(emi_data_list) , intent(inout) :: data_list
+    integer              , intent(in)    :: em_stage
+    integer              , intent(in)    :: num_hydrologyc       ! number of column soil points in column filter
+    integer              , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
+    type(soilstate_type) , intent(in)    :: soilstate_vars
+    !
+    integer                           :: c,fc,j
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_pack
+    integer                           :: istage
+    integer                           :: count
+
+    associate( &
+         watsat       => soilstate_vars%watsat_col,      &
+         hksat        => soilstate_vars%hksat_col,       &
+         bsw          => soilstate_vars%bsw_col,         &
+         sucsat       => soilstate_vars%sucsat_col,      &
+         eff_porosity => soilstate_vars%eff_porosity_col &
+    )
+
+    count = 0
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+       count = count + 1
+
+       need_to_pack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_pack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_pack) then
+
+          select case (cur_data%id)
+
+          case (PARAMETER_L2E_WATSATC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = watsat(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (PARAMETER_L2E_HKSATC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = hksat(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (PARAMETER_L2E_BSWC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = bsw(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (PARAMETER_L2E_SUCSATC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = sucsat(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (PARAMETER_L2E_EFFPOROSITYC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = eff_porosity(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+
+  end subroutine EMID_Pack_SoilState_Vars_for_EM
+
+!-----------------------------------------------------------------------
   subroutine EMID_Unpack_SoilState_Vars_for_EM(data_list, em_stage, &
         num_hydrologyc, filter_hydrologyc, soilstate_vars)
     !
@@ -1288,12 +1787,12 @@ contains
     !
     integer                           :: c,fc,j
     class(emi_data), pointer          :: cur_data
-    logical                           :: need_to_pack
+    logical                           :: need_to_unpack
     integer                           :: istage
     integer                           :: count
 
     associate( &
-         smp_l => soilstate_vars%smp_l_col &
+         smp_l        => soilstate_vars%smp_l_col &
     )
 
     count = 0
@@ -1302,15 +1801,15 @@ contains
        if (.not.associated(cur_data)) exit
        count = count + 1
 
-       need_to_pack = .false.
+       need_to_unpack = .false.
        do istage = 1, cur_data%num_em_stages
           if (cur_data%em_stage_ids(istage) == em_stage) then
-             need_to_pack = .true.
+             need_to_unpack = .true.
              exit
           endif
        enddo
 
-       if (need_to_pack) then
+       if (need_to_unpack) then
 
           select case (cur_data%id)
 

@@ -72,6 +72,7 @@ module ExternalModelInterfaceDataMod
      procedure, public :: SetEMStages      => EMIDSetEMStages
      procedure, public :: AllocateMemory   => EMIDAllocateMemory
      procedure, public :: Reset            => EMIDReset
+     procedure, public :: Destroy          => EMIDDestroy
 
   end type emi_data
 
@@ -92,6 +93,7 @@ module ExternalModelInterfaceDataMod
      procedure, public :: Init    => EMIDListInit
      procedure, public :: AddData => EMIDListAddData
      procedure, public :: Copy    => EMIDListCopy
+     procedure, public :: Destroy => EMIDListDestroy
 
   end type emi_data_list
 
@@ -815,6 +817,63 @@ contains
   end subroutine EMIDReset
 
   !------------------------------------------------------------------------
+  subroutine EMIDDestroy(this)
+    !
+    ! !DESCRIPTION:
+    ! Destroys a EMI data
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data) :: this
+
+    if (this%is_int_type .and. this%is_real_type) then
+       call endrun(msg='Data type is defined to be both int and real.')
+    endif
+
+    if ((.not.this%is_int_type) .and. (.not.this%is_real_type)) then
+       call endrun(msg='Data type is not defined to be either int or real.')
+    endif
+
+    if (this%ndim == 0) return
+
+    select case(this%ndim)
+    case (1)
+       if (this%is_real_type) then
+          deallocate(this%data_real_1d)
+       else
+          deallocate(this%data_int_1d)
+       endif
+
+    case (2)
+       if (this%is_real_type) then
+          deallocate(this%data_real_2d)
+       else
+          deallocate(this%data_int_2d)
+       endif
+
+    case (3)
+       if (this%is_real_type) then
+          deallocate(this%data_real_3d)
+       else
+          deallocate(this%data_int_3d)
+       endif
+
+    case (4)
+       if (this%is_real_type) then
+          deallocate(this%data_real_4d)
+       else
+          call endrun(msg='EMID of type integer for dimension=4 is not supported.')
+       endif
+
+    case default
+       call endrun(msg='EMID dimension larger than 4 is not supported.')
+
+    end select
+
+  end subroutine EMIDDestroy
+
+  !------------------------------------------------------------------------
   subroutine EMIDListInit(this)
     !
     ! !DESCRIPTION:
@@ -903,5 +962,36 @@ contains
 
   end subroutine EMIDListCopy
 
+  !------------------------------------------------------------------------
+  subroutine EMIDListDestroy(this)
+    !
+    ! !DESCRIPTION:
+    ! Destroys a EMID list
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list) :: this
+    ! !LOCAL VARIABLES:
+    class(emi_data)      , pointer    :: cur_data
+    class(emi_data)      , pointer    :: old_data
+
+    cur_data => this%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       old_data => cur_data
+       cur_data => cur_data%next
+       call old_data%Destroy()
+
+    enddo
+
+    this%num_data = 0
+
+    nullify(this%first)
+    nullify(this%last)
+    nullify(this%data_ptr)
+
+  end subroutine EMIDListDestroy
 
 end module ExternalModelInterfaceDataMod

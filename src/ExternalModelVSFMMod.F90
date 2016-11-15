@@ -8,9 +8,40 @@ module ExternalModelVSFMMod
   use shr_log_mod                  , only : errMsg => shr_log_errMsg
   use ExternalModelInterfaceDataMod, only : emi_data_list, emi_data
   use mpp_varctl                   , only : iulog
+    use MultiPhysicsProbVSFM       , only : vsfm_mpp
   !
   implicit none
   !
+
+  integer :: index_col_l2e_active
+  integer :: index_col_l2e_type
+  integer :: index_col_l2e_landunit_index
+  integer :: index_col_l2e_zi
+  integer :: index_col_l2e_dz
+  integer :: index_col_l2e_z
+  integer :: index_col_l2e_area
+
+  integer :: index_landunit_l2e_type
+  integer :: index_landunit_l2e_lakepoint
+  integer :: index_landunit_l2e_urbanpoint
+
+  integer :: index_parameter_l2e_watsatc
+  integer :: index_parameter_l2e_hksatc
+  integer :: index_parameter_l2e_bswc
+  integer :: index_parameter_l2e_sucsatc
+  integer :: index_parameter_l2e_effporosityc
+
+  integer :: index_s_l2e_init_wtd
+  integer :: index_s_l2e_init_soilp
+
+  integer :: index_s_e2l_init_h2osoi_liq
+  integer :: index_s_e2l_init_h2osoi_ice
+  integer :: index_s_e2l_init_smp
+  integer :: index_s_e2l_init_wtd
+
+  integer :: index_f_e2l_init_mflx_snowlyr_col
+  integer :: index_f_l2e_init_mflx_snowlyr_col
+
   integer :: index_s_l2e_tsoil
   integer :: index_s_l2e_h2osoi_liq
   integer :: index_s_l2e_h2osoi_ice
@@ -33,14 +64,326 @@ module ExternalModelVSFMMod
   integer :: index_filter_l2e_hydrologyc
   integer :: index_filter_l2e_num_hydrologyc
 
-  integer :: index_mesh_l2e_zi
+  integer :: index_COLUMN_L2E_ZI
+
+  ! IDs to indentify the conditions for VSFM
+  integer :: vsfm_cond_id_for_infil
+  integer :: vsfm_cond_id_for_et
+  integer :: vsfm_cond_id_for_dew
+  integer :: vsfm_cond_id_for_drainage
+  integer :: vsfm_cond_id_for_snow
+  integer :: vsfm_cond_id_for_sublimation
+  integer :: vsfm_cond_id_for_lateral_flux
 
   !
-  public :: EM_VSFM_Populate_L2E_List, &
-            EM_VSFM_Populate_E2L_List, &
+  public :: EM_VSFM_Populate_L2E_Init_List, &
+            EM_VSFM_Populate_E2L_Init_List, &
+            EM_VSFM_Populate_L2E_List,      &
+            EM_VSFM_Populate_E2L_List,      &
+            EM_VSFM_Init,                   &
             EM_VSFM_Solve
 
 contains
+
+  !------------------------------------------------------------------------
+  subroutine EM_VSFM_Populate_L2E_Init_List(l2e_init_list)
+    !
+    ! !DESCRIPTION:
+    ! Create a list of all variables needed by VSFM from ALM
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : EM_INITIALIZATION_STAGE
+    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
+    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
+    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : COLUMN_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_DZ
+    use ExternalModelConstants    , only : COLUMN_L2E_Z
+    use ExternalModelConstants    , only : COLUMN_L2E_AREA
+    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
+    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
+    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
+    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
+    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
+    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
+    use ExternalModelConstants    , only : S_L2E_WTD
+    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list), intent(inout) :: l2e_init_list
+    !
+    class(emi_data), pointer :: data
+    integer        , pointer :: em_stages(:)
+    integer                  :: number_em_stages
+    integer                  :: count
+
+    count            = 0
+    number_em_stages = 1
+    allocate(em_stages(number_em_stages))
+    em_stages(1) = EM_INITIALIZATION_STAGE
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_ACTIVE, name = "Column active",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_active = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_TYPE, name = "Column type",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_type   = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_LANDUNIT_INDEX, name = "Column landunit index",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                        = count + 1
+    index_col_l2e_landunit_index = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_ZI, name = "Column layer interface depth",units = "[m]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_zi = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_DZ, name = "Column layer thickness",units = "[m]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_dz = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_Z, name = "Column layer centroid",units = "[m]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_z = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=COLUMN_L2E_AREA, name = "Column surface area",units = "[m]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_col_l2e_area = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=LANDUNIT_L2E_TYPE, name = "Landunit type",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_landunit_l2e_type = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=LANDUNIT_L2E_LAKEPOINT, name = "Landunit lake point",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_landunit_l2e_lakepoint = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=LANDUNIT_L2E_URBANPOINT, name = "Landunit urban point ",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_landunit_l2e_urbanpoint = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=PARAMETER_L2E_WATSATC, name = "Soil porosity",units = "[m^3/m^3]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_parameter_l2e_watsatc = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=PARAMETER_L2E_HKSATC, name = "Soil hydraulic conductivity at saturation",units = "[mm/s]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_parameter_l2e_hksatc = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=PARAMETER_L2E_BSWC, name = "Clapp and Hornberger",units = "[-]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_parameter_l2e_bswc = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=PARAMETER_L2E_SUCSATC, name = "Minimum soil suction ",units = "[mm]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_parameter_l2e_sucsatc = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=PARAMETER_L2E_EFFPOROSITYC, name = "Effective porosity",units = "[m^3/m^3]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_parameter_l2e_effporosityc = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_L2E_WTD, name = "Water table depth ",units = "[m]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                = count + 1
+    index_s_l2e_init_wtd = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_L2E_VSFM_PROGNOSTIC_SOILP, name = "Soil liquid pressure",units = "[Pa]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                  = count + 1
+    index_s_l2e_init_soilp = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+                    name = "Snow layer disappearance sink from restart",units = "[kg/s]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call l2e_init_list%AddData(data)
+    count                  = count + 1
+    index_f_l2e_init_mflx_snowlyr_col = count
+    nullify(data)
+
+  end subroutine EM_VSFM_Populate_L2E_Init_List
+
+  !------------------------------------------------------------------------
+  subroutine EM_VSFM_Populate_E2L_Init_List(e2l_init_list)
+    !
+    !
+    ! !DESCRIPTION:
+    ! Create a list of all variables to be returned by VSFM from ALM
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : EM_INITIALIZATION_STAGE
+    use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
+    use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
+    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : S_E2L_WTD
+    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list) , intent(inout) :: e2l_init_list
+    !
+    ! !LOCAL VARIABLES:
+    class(emi_data)      , pointer       :: data
+    integer              , pointer       :: em_stages(:)
+    integer                              :: number_em_stages
+    integer                              :: count
+
+    count            = 0
+    number_em_stages = 1
+    allocate(em_stages(number_em_stages))
+    em_stages(1) = EM_INITIALIZATION_STAGE
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_E2L_H2OSOI_LIQ,              &
+                    name = "Soil liquid water",       &
+                    units = "[kg/m2]",                &
+                    num_em_stages = number_em_stages, &
+                    em_stage_ids = em_stages)
+    call e2l_init_list%AddData(data)
+    count                  = count + 1
+    index_s_e2l_init_h2osoi_liq = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_E2L_H2OSOI_ICE,              &
+                    name = "Soil ice water",          &
+                    units = "[kg/m2]",                &
+                    num_em_stages = number_em_stages, &
+                    em_stage_ids = em_stages)
+    call e2l_init_list%AddData(data)
+    count                  = count + 1
+    index_s_e2l_init_h2osoi_ice = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_E2L_SOIL_MATRIC_POTENTIAL,   &
+                    name = "Soil matric potential",   &
+                    units = "[mm]",                   &
+                    num_em_stages = number_em_stages, &
+                    em_stage_ids = em_stages)
+    call e2l_init_list%AddData(data)
+    count                          = count + 1
+    index_s_e2l_init_smp = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=S_E2L_WTD,                     &
+                    name = "Water table depth",       &
+                    units = "[m]",                    &
+                    num_em_stages = number_em_stages, &
+                    em_stage_ids = em_stages)
+    call e2l_init_list%AddData(data)
+    count           = count + 1
+    index_s_e2l_init_wtd = count
+    nullify(data)
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(id=F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+                    name = "Snow layer disappearance sink initial value",units = "[kg/s]", &
+                    num_em_stages = number_em_stages,em_stage_ids = em_stages)
+    call e2l_init_list%AddData(data)
+    count                  = count + 1
+    index_f_e2l_init_mflx_snowlyr_col = count
+    nullify(data)
+
+    deallocate(em_stages)
+
+  end subroutine EM_VSFM_Populate_E2L_Init_List
 
   !------------------------------------------------------------------------
   subroutine EM_VSFM_Populate_L2E_List(l2e_list)
@@ -61,7 +404,7 @@ contains
     use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
     use ExternalModelConstants    , only : FILTER_L2E_HYDROLOGYC
     use ExternalModelConstants    , only : FILTER_L2E_NUM_HYDROLOGYC
-    use ExternalModelConstants    , only : MESH_L2E_ZI
+    use ExternalModelConstants    , only : COLUMN_L2E_ZI
     !
     implicit none
     !
@@ -213,14 +556,14 @@ contains
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=MESH_L2E_ZI,                           &
+    call data%Setup(id=COLUMN_L2E_ZI,                         &
                     name = "Depth of interface layer",        &
                     units = "[m]",                            &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count             = count + 1
-    index_mesh_l2e_zi = count
+    index_COLUMN_L2E_ZI = count
     nullify(data)
 
     deallocate(em_stages)
@@ -335,6 +678,1351 @@ contains
 end subroutine EM_VSFM_Populate_E2L_List
 
   !------------------------------------------------------------------------
+  subroutine EM_VSFM_Init(l2e_init_list, e2l_init_list)
+
+    !
+    ! !DESCRIPTION:
+    !
+    !
+    ! !USES:
+    use mpp_varctl                , only : vsfm_use_dynamic_linesearch
+    !
+    implicit none
+    !
+#include "finclude/petscsys.h"
+#include "finclude/petscsnes.h"
+#include "finclude/petscsnes.h90"
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list) , intent(in)    :: l2e_init_list
+    class(emi_data_list) , intent(inout) :: e2l_init_list
+
+    !
+    ! 1. Initialize the multi-physics-problem (MPP)
+    call initialize_mpp(0)
+
+    ! 2. Add all meshes needed for the MPP
+    call add_meshes(l2e_init_list)
+
+    ! 3. Add all governing equations
+    call add_goveqns()
+
+    ! 4. Add boundary and source-sink conditions to all governing equations
+    call add_conditions_to_goveqns()
+
+    ! 5. Allocate memory to hold auxvars
+    call allocate_auxvars()
+
+    ! 6. Setup the MPP
+    call vsfm_mpp%SetupProblem(vsfm_use_dynamic_linesearch)
+
+    ! 7. Add material properities associated with all governing equations
+    call set_material_properties(l2e_init_list)
+
+    ! 8. Set initial conditions
+    call set_initial_conditions(l2e_init_list)
+
+    ! 9. Determine IDs for various source-sink condition
+    call determine_condition_ids()
+
+    !10.
+    call extract_data_for_alm(l2e_init_list, e2l_init_list)
+
+  end subroutine EM_VSFM_Init
+
+  !------------------------------------------------------------------------
+  subroutine initialize_mpp(iam)
+    !
+    ! !DESCRIPTION:
+    ! Initialization VSFM
+    !
+    ! !USES:
+    use MultiPhysicsProbConstants , only : MPP_VSFM_SNES_CLM
+    !
+    implicit none
+    !
+    ! !ARGUMENTS
+    integer, intent(in) :: iam
+
+    !
+    ! Set up the multi-physics problem
+    !
+    call vsfm_mpp%Init       ()
+    call vsfm_mpp%SetName    ('Variably-Saturated-Flow-Model')
+    call vsfm_mpp%SetID      (MPP_VSFM_SNES_CLM)
+    call vsfm_mpp%SetMPIRank (iam)
+
+  end subroutine initialize_mpp
+
+  !------------------------------------------------------------------------
+  subroutine add_meshes(l2e_init_list)
+    !
+    ! !DESCRIPTION:
+    ! Add meshes used in the VSFM MPP
+    !
+    ! !USES:
+    use mpp_varcon                , only : istcrop, istsoil
+    use mpp_varcon                , only : icol_road_perv
+    use mpp_varpar                , only : nlevgrnd
+    use mpp_varctl                , only : lateral_connectivity
+    use mpp_varcon                , only : max_lunit
+    use mpp_varctl                , only : vsfm_lateral_model_type
+
+    use MultiPhysicsProbConstants , only : MESH_ALONG_GRAVITY
+    use MultiPhysicsProbConstants , only : MESH_CLM_SOIL_COL
+    use MultiPhysicsProbConstants , only : VAR_XC
+    use MultiPhysicsProbConstants , only : VAR_YC
+    use MultiPhysicsProbConstants , only : VAR_ZC
+    use MultiPhysicsProbConstants , only : VAR_DX
+    use MultiPhysicsProbConstants , only : VAR_DY
+    use MultiPhysicsProbConstants , only : VAR_DZ
+    use MultiPhysicsProbConstants , only : VAR_AREA
+    use MultiPhysicsProbConstants , only : CONN_SET_INTERNAL
+    use MultiPhysicsProbConstants , only : CONN_SET_LATERAL
+    use MultiPhysicsProbConstants , only : GE_RE
+    use MultiPhysicsProbConstants , only : COND_BC
+    use MultiPhysicsProbConstants , only : COND_SS
+    use MultiPhysicsProbConstants , only : COND_HEAT_FLUX
+    use MultiPhysicsProbConstants , only : COND_HEAT_RATE
+    use MultiPhysicsProbConstants , only : SNOW_TOP_CELLS
+    use MultiPhysicsProbConstants , only : SNOW_BOTTOM_CELLS
+    use MultiPhysicsProbConstants , only : SSW_TOP_CELLS
+    use MultiPhysicsProbConstants , only : SOIL_TOP_CELLS
+    use MultiPhysicsProbConstants , only : ALL_CELLS
+    use MultiPhysicsProbConstants , only : CONN_VERTICAL
+    use MultiPhysicsProbConstants , only : VAR_FRAC
+    use MultiPhysicsProbConstants , only : VAR_ACTIVE
+    use MultiPhysicsProbConstants , only : VAR_DIST_UP
+    use MultiPhysicsProbConstants , only : VAR_DIST_DN
+    use MultiPhysicsProbConstants , only : DISCRETIZATION_VERTICAL_ONLY
+    use MultiPhysicsProbConstants , only : DISCRETIZATION_VERTICAL_WITH_SS
+    use MultiPhysicsProbConstants , only : DISCRETIZATION_THREE_DIM
+    use mpp_bounds                , only : bounds_proc_begg_all, bounds_proc_endg_all
+    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    use mpp_bounds                , only : nclumps
+    !
+    implicit none
+    !
+    class(emi_data_list) , intent(in)    :: l2e_init_list
+    !
+    ! !LOCAL VARIABLES:
+    integer            :: c,g,fc,j,l           ! do loop indices
+    integer            :: imesh
+    integer            :: nlev
+    integer            :: first_active_soil_col_id
+    integer            :: col_id
+    integer            :: icell
+    integer            :: iconn
+    integer            :: horz_nconn
+    integer            :: vert_nconn
+    integer            :: comb_nconn
+    integer            :: ieqn
+    integer            :: ieqn_1
+    integer            :: ieqn_2
+    integer            :: icond
+    integer            :: ncells_local
+    integer            :: mpi_rank
+
+    real(r8), pointer  :: z(:,:)               ! centroid at "z" level [m]
+    real(r8), pointer  :: zi(:,:)              ! interface level below a "z" level (m)
+    real(r8), pointer  :: dz(:,:)              ! layer thickness at "z" level (m)
+
+    PetscReal, pointer :: soil_xc(:)           ! x-position of grid cell [m]
+    PetscReal, pointer :: soil_yc(:)           ! y-position of grid cell [m]
+    PetscReal, pointer :: soil_zc(:)           ! z-position of grid cell [m]
+    PetscReal, pointer :: soil_dx(:)           ! layer thickness of grid cell [m]
+    PetscReal, pointer :: soil_dy(:)           ! layer thickness of grid cell [m]
+    PetscReal, pointer :: soil_dz(:)           ! layer thickness of grid cell [m]
+    PetscReal, pointer :: soil_area(:)         ! area of grid cell [m^2]
+    PetscInt , pointer :: soil_filter(:)       ! 
+
+    PetscInt, pointer  :: vert_conn_id_up(:)   !
+    PetscInt, pointer  :: vert_conn_id_dn(:)   !
+    PetscReal, pointer :: vert_conn_dist_up(:) !
+    PetscReal, pointer :: vert_conn_dist_dn(:) !
+    PetscReal, pointer :: vert_conn_area(:)    !
+    PetscInt , pointer :: vert_conn_type(:)    !
+
+    PetscInt, pointer  :: horz_conn_id_up(:)   !
+    PetscInt, pointer  :: horz_conn_id_dn(:)   !
+    PetscReal, pointer :: horz_conn_dist_up(:) !
+    PetscReal, pointer :: horz_conn_dist_dn(:) !
+    PetscReal, pointer :: horz_conn_area(:)    !
+    PetscInt, pointer  :: horz_conn_type(:)    !
+
+    PetscInt, pointer  :: comb_conn_id_up(:)   !
+    PetscInt, pointer  :: comb_conn_id_dn(:)   !
+    PetscReal, pointer :: comb_conn_dist_up(:) !
+    PetscReal, pointer :: comb_conn_dist_dn(:) !
+    PetscReal, pointer :: comb_conn_area(:)    !
+    PetscInt, pointer  :: comb_conn_type(:)    !
+
+    real(r8), pointer  :: xc_col(:)            ! x-position of grid cell [m]
+    real(r8), pointer  :: yc_col(:)            ! y-position of grid cell [m]
+    real(r8), pointer  :: zc_col(:)            ! z-position of grid cell [m]
+    real(r8), pointer  :: area_col(:)          ! area of grid cell [m^2]
+    integer, pointer   :: grid_owner(:)        ! MPI rank owner of grid cell
+
+    integer            :: ncells_ghost         ! total number of ghost gridcells on the processor
+    integer            :: ncols_ghost
+
+    integer, pointer   :: vsfm_landunit_ind(:,:)
+    integer, pointer   :: vsfm_coli(:)
+    integer, pointer   :: vsfm_colf(:)
+
+    PetscInt           :: discretization_type  !
+
+    integer  , pointer                   :: col_active(:)
+    integer  , pointer                   :: col_type(:)
+    integer  , pointer                   :: col_landunit(:)
+    integer  , pointer                   :: lun_type(:)
+    integer  , pointer                   :: lun_lakpoi(:)
+    integer  , pointer                   :: lun_urbpoi(:)
+
+    !----------------------------------------------------------------------
+
+    zi           => l2e_init_list%data_ptr(index_col_l2e_zi                )%data%data_real_2d
+    dz           => l2e_init_list%data_ptr(index_col_l2e_dz                )%data%data_real_2d
+    z            => l2e_init_list%data_ptr(index_col_l2e_z                 )%data%data_real_2d
+
+    col_active   => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
+    col_type     => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
+    col_landunit => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
+    lun_type     => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
+    lun_lakpoi   => l2e_init_list%data_ptr(index_landunit_l2e_lakepoint    )%data%data_int_1d
+    lun_urbpoi   => l2e_init_list%data_ptr(index_landunit_l2e_urbanpoint   )%data%data_int_1d
+
+    if (nclumps /= 1) then
+       call endrun(msg='ERROR VSFM only supported for clumps = 1')
+    endif    
+
+    allocate(xc_col            (bounds_proc_begc_all:bounds_proc_endc_all                    ))
+    allocate(yc_col            (bounds_proc_begc_all:bounds_proc_endc_all                    ))
+    allocate(zc_col            (bounds_proc_begc_all:bounds_proc_endc_all                    ))
+    allocate(area_col          (bounds_proc_begc_all:bounds_proc_endc_all                    ))
+    allocate(grid_owner        (bounds_proc_begg_all:bounds_proc_endg_all                    ))
+
+    allocate (soil_xc           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_yc           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_zc           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_dx           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_dy           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_dz           ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_area         ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+    allocate (soil_filter       ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*nlevgrnd     ))
+
+    allocate (vert_conn_id_up   ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+    allocate (vert_conn_id_dn   ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+    allocate (vert_conn_dist_up ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+    allocate (vert_conn_dist_dn ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+    allocate (vert_conn_area    ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+    allocate (vert_conn_type    ((bounds_proc_endc_all-bounds_proc_begc_all+1 )*(nlevgrnd-1) ))
+
+    xc_col(:)     = 0.d0
+    yc_col(:)     = 0.d0
+    zc_col(:)     = 0.d0
+    area_col(:)   = 0.d0
+    grid_owner(:) = 0
+
+    first_active_soil_col_id = -1
+    do c = bounds_proc_begc, bounds_proc_endc
+       l = col_landunit(c)
+
+       if ((col_active(c) == 1) .and. .not.(lun_lakpoi(l) == 1) .and. .not. (lun_urbpoi(l) == 1)) then
+          first_active_soil_col_id = c
+          exit
+       endif
+    end do
+
+    if (first_active_soil_col_id == -1) then
+       write(iulog,*)'No active soil column found'
+       call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    xc_col(:)     = 0._r8
+    yc_col(:)     = 0._r8
+    zc_col(:)     = 0._r8
+    grid_owner(:) = 0
+    area_col(:)   = 1._r8
+    ncols_ghost   = 0
+    horz_nconn    = 0
+
+#if 0
+    if (lateral_connectivity) then
+
+       call vsfm_mpp%GetMPIRank(mpi_rank)
+
+       call update_mesh_information (ncells_ghost, &
+            ncols_ghost, xc_col, yc_col, zc_col,   &
+            area_col, grid_owner, mpi_rank )
+
+       call setup_lateral_connections (grid_owner, &
+            bounds_proc_begg_all, bounds_proc_endg_all, &
+            bounds_proc_begc_all, bounds_proc_endc_all, &
+            zc_col,                                     &
+            horz_nconn,                            &
+            horz_conn_id_up, horz_conn_id_dn,      &
+            horz_conn_dist_up, horz_conn_dist_dn,  &
+            horz_conn_area, horz_conn_type)
+
+    endif
+#endif
+
+    ! Save geometric attributes for soil mesh
+    icell = 0
+    do c = bounds_proc_begc, bounds_proc_endc
+       do j = 1, nlevgrnd
+          icell = icell + 1
+
+          if ((col_active(c) == 1).and. &
+               (lun_type(l) == istsoil .or. col_type(c) == icol_road_perv .or. &
+                lun_type(l) == istcrop)) then
+             col_id = c
+             soil_filter(icell) = 1
+          else
+             col_id = first_active_soil_col_id
+             soil_filter(icell) = 0
+          end if
+
+          soil_xc(icell)   = xc_col(c)
+          soil_yc(icell)   = yc_col(c)
+          soil_zc(icell)   = -0.5d0*(zi(col_id,j-1) + zi(col_id,j)) + zc_col(c)
+          soil_dx(icell)   = 1.d0
+          soil_dy(icell)   = 1.d0
+          soil_dz(icell)   = dz(col_id,j)
+          soil_area(icell) = area_col(c)
+
+       end do
+    end do
+
+    ! Save information about internal connections for soil mesh
+    iconn = 0
+    do c = bounds_proc_begc, bounds_proc_endc
+
+       do j = 1, nlevgrnd-1
+
+          iconn = iconn + 1
+          vert_conn_id_up(iconn)   = (c-bounds_proc_begc)*nlevgrnd + j
+          vert_conn_id_dn(iconn)   = vert_conn_id_up(iconn) + 1
+          vert_conn_dist_up(iconn) = 0.5d0*dz(c,j  ) !zi(c,j)   - z(c,j)
+          vert_conn_dist_dn(iconn) = 0.5d0*dz(c,j+1) !z( c,j+1) - zi(c,j)
+          vert_conn_area(iconn)    = area_col(c)
+          vert_conn_type(iconn)    = CONN_VERTICAL
+
+       end do
+    end do
+    vert_nconn = iconn
+
+    !
+    ! Set up the meshes
+    !
+    call vsfm_mpp%SetNumMeshes(1)
+
+    !
+    ! Set mesh value
+    !
+    imesh        = 1
+    nlev         = nlevgrnd
+    ncells_local = (bounds_proc_endc - bounds_proc_begc + 1)*nlev
+    ncells_ghost = ncols_ghost*nlev
+
+    call vsfm_mpp%MeshSetName        (imesh, 'Soil mesh')
+    call vsfm_mpp%MeshSetOrientation (imesh, MESH_ALONG_GRAVITY)
+    call vsfm_mpp%MeshSetID          (imesh, MESH_CLM_SOIL_COL)
+    call vsfm_mpp%MeshSetDimensions  (imesh, ncells_local, ncells_ghost, nlev)
+
+    call vsfm_mpp%MeshSetGridCellFilter      (imesh, soil_filter)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_XC   , soil_xc)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_YC   , soil_yc)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_ZC   , soil_zc)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_DX   , soil_dx)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_DY   , soil_dy)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_DZ   , soil_dz)
+    call vsfm_mpp%MeshSetGeometricAttributes (imesh, VAR_AREA , soil_area)
+    call vsfm_mpp%MeshComputeVolume          (imesh)
+
+    !
+    ! Set connection
+    !
+    if (vsfm_lateral_model_type == 'none') then
+       discretization_type = DISCRETIZATION_VERTICAL_ONLY
+
+       call vsfm_mpp%MeshSetConnectionSet(imesh, CONN_SET_INTERNAL, &
+            vert_nconn,  vert_conn_id_up, vert_conn_id_dn, &
+            vert_conn_dist_up, vert_conn_dist_dn,  vert_conn_area, vert_conn_type)
+
+    else if (vsfm_lateral_model_type == 'source_sink') then
+       discretization_type = DISCRETIZATION_VERTICAL_WITH_SS
+
+       call vsfm_mpp%MeshSetConnectionSet(imesh, CONN_SET_INTERNAL, &
+            vert_nconn,  vert_conn_id_up, vert_conn_id_dn, &
+            vert_conn_dist_up, vert_conn_dist_dn, vert_conn_area, vert_conn_type)
+
+       call vsfm_mpp%MeshSetConnectionSet(imesh, CONN_SET_LATERAL, &
+            horz_nconn,  horz_conn_id_up, horz_conn_id_dn, &
+            horz_conn_dist_up, horz_conn_dist_dn, horz_conn_area, horz_conn_type)
+
+    else if (vsfm_lateral_model_type == 'three_dimensional') then
+       discretization_type = DISCRETIZATION_THREE_DIM
+
+       comb_nconn = vert_nconn + horz_nconn
+
+       allocate (comb_conn_id_up   (comb_nconn))
+       allocate (comb_conn_id_dn   (comb_nconn))
+       allocate (comb_conn_dist_up (comb_nconn))
+       allocate (comb_conn_dist_dn (comb_nconn))
+       allocate (comb_conn_area    (comb_nconn))
+       allocate (comb_conn_type    (comb_nconn))
+
+       comb_conn_id_up   (1:vert_nconn) = vert_conn_id_up   (1:vert_nconn)
+       comb_conn_id_dn   (1:vert_nconn) = vert_conn_id_dn   (1:vert_nconn)
+       comb_conn_dist_up (1:vert_nconn) = vert_conn_dist_up (1:vert_nconn)
+       comb_conn_dist_dn (1:vert_nconn) = vert_conn_dist_dn (1:vert_nconn)
+       comb_conn_area    (1:vert_nconn) = vert_conn_area    (1:vert_nconn)
+       comb_conn_type    (1:vert_nconn) = vert_conn_type    (1:vert_nconn)
+
+       comb_conn_id_up   (vert_nconn+1:comb_nconn) = horz_conn_id_up   (1:horz_nconn)
+       comb_conn_id_dn   (vert_nconn+1:comb_nconn) = horz_conn_id_dn   (1:horz_nconn)
+       comb_conn_dist_up (vert_nconn+1:comb_nconn) = horz_conn_dist_up (1:horz_nconn)
+       comb_conn_dist_dn (vert_nconn+1:comb_nconn) = horz_conn_dist_dn (1:horz_nconn)
+       comb_conn_area    (vert_nconn+1:comb_nconn) = horz_conn_area    (1:horz_nconn)
+       comb_conn_type    (vert_nconn+1:comb_nconn) = horz_conn_type    (1:horz_nconn)
+
+       call vsfm_mpp%MeshSetConnectionSet(imesh, CONN_SET_INTERNAL, &
+            comb_nconn,  comb_conn_id_up, comb_conn_id_dn, &
+            comb_conn_dist_up, comb_conn_dist_dn, comb_conn_area, comb_conn_type)
+
+       deallocate (comb_conn_id_up  )
+       deallocate (comb_conn_id_dn  )
+       deallocate (comb_conn_dist_up)
+       deallocate (comb_conn_dist_dn)
+       deallocate (comb_conn_area   )
+       deallocate (comb_conn_type   )
+
+    else
+       call endrun(msg='ERROR: ' // &
+            'Unknown vsfm_lateral_model_type = ' // trim(vsfm_lateral_model_type) // &
+            errMsg(__FILE__, __LINE__))
+    endif
+
+    ! Free up memory
+    deallocate(xc_col            )
+    deallocate(yc_col            )
+    deallocate(zc_col            )
+    deallocate(area_col          )
+    deallocate(grid_owner        )
+
+    deallocate (soil_xc          )
+    deallocate (soil_yc          )
+    deallocate (soil_zc          )
+    deallocate (soil_dx          )
+    deallocate (soil_dy          )
+    deallocate (soil_dz          )
+    deallocate (soil_area        )
+    deallocate (soil_filter      )
+
+    deallocate (vert_conn_id_up  )
+    deallocate (vert_conn_id_dn  )
+    deallocate (vert_conn_dist_up)
+    deallocate (vert_conn_dist_dn)
+    deallocate (vert_conn_area   )
+    deallocate (vert_conn_type   )
+
+    if (lateral_connectivity) then
+       deallocate (horz_conn_id_up   )
+       deallocate (horz_conn_id_dn   )
+       deallocate (horz_conn_dist_up )
+       deallocate (horz_conn_dist_dn )
+       deallocate (horz_conn_area    )
+       deallocate (horz_conn_type    )
+    endif
+
+  end subroutine add_meshes
+
+  !------------------------------------------------------------------------
+
+#if 0
+  subroutine update_mesh_information (ncells_ghost, ncols_ghost,  &
+       xc_col, yc_col, zc_col, area_col, &
+       grid_owner, mpi_rank &
+    )
+    !
+    ! !DESCRIPTION:
+    !
+    ! !USES:
+    use decompMod                 , only : bounds_type, get_proc_bounds
+    use domainMod                 , only : ldomain
+    use domainLateralMod          , only : ldomain_lateral
+    use mpp_varpar                , only : nlevgrnd
+    use mpp_varcon                , only : istsoil
+    use initGridCellsMod          , only : initGhostGridCells
+    use decompMod                 , only : get_proc_total_ghosts
+    use UnstructuredGridType      , only : ScatterDataG2L
+    use clm_instMod               , only : soilstate_vars
+    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    use mpp_bounds                , only : bounds_proc_begg_all, bounds_proc_endg_all
+    use mpp_bounds                , only : bounds_proc_begg, bounds_proc_endg
+    !
+    implicit none
+    !
+    integer            :: ncols_ghost    ! number of ghost columns
+    real(r8), pointer  :: xc_col(:)      ! x-position of grid cell [m]
+    real(r8), pointer  :: yc_col(:)      ! y-position of grid cell [m]
+    real(r8), pointer  :: zc_col(:)      ! z-position of grid cell [m]
+    real(r8), pointer  :: area_col(:)    ! area of grid cell [m^2]
+    integer, pointer   :: grid_owner(:)  ! MPI rank owner of grid cell
+    integer, intent(in):: mpi_rank       ! MPI rank
+    !
+    type(bounds_type)  :: bounds_proc
+    integer            :: c,g,fc,j,l     ! do loop indices
+    integer            :: nblocks
+    integer            :: beg_idx
+    integer            :: ndata_send     ! number of data sent by local mpi rank
+    integer            :: ndata_recv     ! number of data received by local mpi rank
+    real(r8), pointer  :: data_send(:)   ! data sent by local mpi rank
+    real(r8), pointer  :: data_recv(:)   ! data received by local mpi rank
+
+    integer            :: ncells_ghost   ! total number of ghost gridcells on the processor
+    integer            :: nlunits_ghost  ! total number of ghost landunits on the processor
+    integer            :: npfts_ghost    ! total number of ghost pfts on the processor
+    integer            :: nCohorts_ghost ! total number of ghost cohorts on the processor
+    !----------------------------------------------------------------------
+
+    call initGhostGridCells()
+
+    call get_proc_bounds(bounds_proc)
+    call soilstate_vars%InitColdGhost(bounds_proc)
+
+    nblocks    = 4
+    ndata_send = nblocks*ldomain_lateral%ugrid%ngrid_local
+    ndata_recv = nblocks*ldomain_lateral%ugrid%ngrid_ghosted
+
+    allocate(data_send(ndata_send))
+    allocate(data_recv(ndata_recv))
+
+    ! Aggregate the data to send
+    do g = bounds_proc_begg, bounds_proc_endg
+
+       beg_idx = (g-bounds_proc_begg)*nblocks
+
+       if (isnan(ldomain%xCell(g))) then
+          call endrun(msg='ERROR initialize3: xCell = NaN')
+       endif
+       beg_idx = beg_idx + 1;
+       data_send(beg_idx) = ldomain%xCell(g)
+
+       if (isnan(ldomain%yCell(g))) then
+          call endrun(msg='ERROR initialize3: yCell = NaN')
+       endif
+       beg_idx = beg_idx + 1;
+       data_send(beg_idx) = ldomain%yCell(g)
+
+       if (isnan(ldomain%topo(g))) then
+          call endrun(msg='ERROR initialize3: topo = NaN')
+       endif
+       beg_idx = beg_idx + 1;
+       data_send(beg_idx) = ldomain%topo(g)
+
+       beg_idx = beg_idx + 1;
+       data_send(beg_idx) = real(mpi_rank)
+
+    enddo
+
+    ! Scatter: Global-to-Local
+    call ScatterDataG2L(ldomain_lateral%ugrid, nblocks, &
+         ndata_send, data_send, ndata_recv, data_recv)
+
+    ! Save data for ghost subgrid category
+    do c = bounds_proc_begc_all, bounds_proc_endc_all
+
+       g       = col%gridcell(c)
+       beg_idx = (g-bounds_proc_begg)*nblocks
+
+       beg_idx = beg_idx + 1; xc_col(c) = data_recv(beg_idx)
+       beg_idx = beg_idx + 1; yc_col(c) = data_recv(beg_idx)
+       beg_idx = beg_idx + 1; zc_col(c) = data_recv(beg_idx)
+       beg_idx = beg_idx + 1; grid_owner(g) = data_recv(beg_idx)
+
+       area_col(c) = ldomain_lateral%ugrid%areaGrid_ghosted(g-bounds_proc_begg + 1)
+
+    enddo
+
+    deallocate(data_send)
+    deallocate(data_recv)
+
+    call get_proc_total_ghosts(ncells_ghost, nlunits_ghost, &
+         ncols_ghost, npfts_ghost, nCohorts_ghost)
+
+  end subroutine update_mesh_information
+
+  !------------------------------------------------------------------------
+
+  subroutine setup_lateral_connections (grid_owner, &
+       begg, endg, begc, endc, zc_col,              &
+       nconn_horz,                                  &
+       horz_conn_id_up, horz_conn_id_dn,            &
+       horz_conn_dist_up, horz_conn_dist_dn,        &
+       horz_conn_area, horz_conn_type               &
+       )
+    !
+    ! !DESCRIPTION:
+    !
+    ! !USES:
+    !
+    use domainLateralMod          , only : ldomain_lateral
+    use mpp_varpar                , only : nlevgrnd
+    use MultiPhysicsProbConstants , only : CONN_HORIZONTAL
+    use mpp_varcon                , only : istsoil
+    !
+    implicit none
+    !
+    integer, pointer   :: grid_owner(:)        ! MPI rank owner of grid cell
+    integer            :: begg,endg
+    integer            :: begc,endc
+    real(r8), pointer  :: zc_col(:)            ! z-position of grid cell [m]
+    PetscInt           :: nconn_horz
+    PetscInt, pointer  :: horz_conn_type(:)    !
+    PetscInt, pointer  :: horz_conn_id_up(:)   !
+    PetscInt, pointer  :: horz_conn_id_dn(:)   !
+    PetscReal, pointer :: horz_conn_dist_up(:) !
+    PetscReal, pointer :: horz_conn_dist_dn(:) !
+    PetscReal, pointer :: horz_conn_area(:)    !
+    !
+    ! !LOCAL VARIABLES:
+    PetscInt           :: c,j,l                !indices
+    PetscInt           :: icell
+    PetscInt           :: iconn
+    PetscInt           :: nconn
+    PetscInt           :: id_up, id_dn
+    PetscInt           :: first_active_hydro_col_id
+    PetscInt           :: col_id
+    PetscInt           :: g_up, g_dn, iedge
+    PetscInt           :: c_idx_up, c_idx_dn
+    PetscInt           :: l_idx_up, l_idx_dn
+    PetscInt           :: ltype, ctype
+    PetscInt           :: tmp
+    PetscReal          :: dist_x, dist_y, dist_z, dist
+    PetscReal          :: dc, dv
+    PetscErrorCode     :: ierr
+    real(r8), pointer  :: dz(:,:)              ! layer thickness at "z" level (m)
+    !----------------------------------------------------------------------
+
+    dz         =>    col%dz
+
+    !
+    ! Sets up lateral connection between columns of type 'istsoil'
+    !
+    ! Assumptions:
+    ! - There is only ONE 'istsoil' column per landunit per grid cell.
+    ! - Grid cells that are laterally connected via cellsOnCell
+    !   field defined in domain netcdf file have at least ONE
+    !   column of 'istsoil' type
+
+    nconn_horz = 0
+
+    ltype = istsoil
+    ctype = istsoil
+
+    ! Determine number of lateral connections
+
+    do icell = 1, ldomain_lateral%ugrid%ngrid_local
+       do iedge = 1, ldomain_lateral%ugrid%maxEdges
+
+          if (ldomain_lateral%ugrid%gridsOnGrid_local(iedge,icell) > icell) then
+             g_up = icell + begg - 1
+             g_dn = ldomain_lateral%ugrid%gridsOnGrid_local(iedge,icell) + begg - 1
+
+             l_idx_up = grc%landunit_indices(ltype, g_up)
+             l_idx_dn = grc%landunit_indices(ltype, g_dn)
+
+             c_idx_up = -1
+             c_idx_dn = -1
+
+             do c = lun%coli(l_idx_up), lun%colf(l_idx_up)
+                if (col%itype(c) == ctype) then
+                   if (c_idx_up /= -1) then
+                      write(iulog,*)'CreateFromCLMCols: More than one column found for ' // &
+                           'ctype = ', ctype, ' for ltype = ', ltype, ' in grid cell ', g_up
+                      call endrun(msg=errMsg(__FILE__, __LINE__))
+                   endif
+                   c_idx_up = c
+                endif
+             enddo
+
+             do c = lun%coli(l_idx_dn), lun%colf(l_idx_dn)
+                if (col%itype(c) == ctype) then
+                   if (c_idx_dn /= -1) then
+                      write(iulog,*)'CreateFromCLMCols: More than one column found for ' // &
+                           'ctype = ', ctype, ' for ltype = ', ltype, ' in grid cell ', g_dn
+                      call endrun(msg=errMsg(__FILE__, __LINE__))
+                   endif
+                   c_idx_dn = c
+                endif
+             enddo
+
+             if (c_idx_up > -1 .and. c_idx_dn > -1) then
+                nconn_horz = nconn_horz + 1
+             else
+                write(iulog,*)'CreateFromCLMCols: No column of ctype = ', ctype, &
+                     ' found between following grid cells: ',g_up,g_dn
+                call endrun(msg=errMsg(__FILE__, __LINE__))
+             endif
+          endif
+       enddo
+    enddo
+
+    nconn_horz = nconn_horz * nlevgrnd
+
+    allocate (horz_conn_id_up   (nconn_horz))
+    allocate (horz_conn_id_dn   (nconn_horz))
+    allocate (horz_conn_dist_up (nconn_horz))
+    allocate (horz_conn_dist_dn (nconn_horz))
+    allocate (horz_conn_area    (nconn_horz))
+    allocate (horz_conn_type    (nconn_horz))
+
+    iconn = 0
+    do icell = 1, ldomain_lateral%ugrid%ngrid_local
+
+       do iedge = 1, ldomain_lateral%ugrid%maxEdges
+          if (ldomain_lateral%ugrid%gridsOnGrid_local(iedge,icell) > icell) then
+             g_up = icell + begg - 1
+             g_dn = ldomain_lateral%ugrid%gridsOnGrid_local(iedge,icell) + begg - 1
+
+             l_idx_up = grc%landunit_indices(ltype, g_up)
+             l_idx_dn = grc%landunit_indices(ltype, g_dn)
+
+             c_idx_up = -1
+             c_idx_dn = -1
+
+             do c = lun%coli(l_idx_up), lun%colf(l_idx_up)
+                if (col%itype(c) == ctype) then
+                   if (c_idx_up /= -1) then
+                      write(iulog,*)'CreateFromCLMCols: More than one column found for ' // &
+                           'ctype = ', ctype, ' for ltype = ', ltype, ' in grid cell ', g_up
+                      call endrun(msg=errMsg(__FILE__, __LINE__))
+                   endif
+                   c_idx_up = c
+                endif
+             enddo
+
+             do c = lun%coli(l_idx_dn), lun%colf(l_idx_dn)
+                if (col%itype(c) == ctype) then
+                   if (c_idx_dn /= -1) then
+                      write(iulog,*)'CreateFromCLMCols: More than one column found for ' // &
+                           'ctype = ', ctype, ' for ltype = ', ltype, ' in grid cell ', g_dn
+                      call endrun(msg=errMsg(__FILE__, __LINE__))
+                   endif
+                   c_idx_dn = c
+                endif
+             enddo
+
+             if (c_idx_up > -1 .and. c_idx_dn > -1) then
+
+                if (grid_owner(g_up) > grid_owner(g_dn)) then
+                   tmp      = g_up;
+                   g_up     = g_dn
+                   g_dn     = tmp
+
+                   tmp      = l_idx_up;
+                   l_idx_up = l_idx_dn
+                   l_idx_dn = tmp
+
+                   tmp      = c_idx_up;
+                   c_idx_up = c_idx_dn
+                   c_idx_dn = tmp
+                endif
+
+                dc = ldomain_lateral%ugrid%dcOnGrid_local(iedge, icell)
+                dv = ldomain_lateral%ugrid%dvOnGrid_local(iedge, icell)
+
+                do j = 1, nlevgrnd
+                   iconn = iconn + 1
+
+                   id_up = (c_idx_up - begc)*nlevgrnd + j
+                   id_dn = (c_idx_dn - begc)*nlevgrnd + j
+
+                   horz_conn_type         = CONN_HORIZONTAL
+                   horz_conn_id_up(iconn) = id_up
+                   horz_conn_id_dn(iconn) = id_dn
+
+                   !this%is_active(id_up) = PETSC_TRUE
+                   !this%is_active(id_dn) = PETSC_TRUE
+
+                   horz_conn_area(iconn) = dz(c_idx_up,j)*dv
+                   dist = (dc**2.d0 + (zc_col(c_idx_up) - zc_col(c_idx_dn))**2.d0)**0.5d0
+
+                   horz_conn_dist_up(iconn) = 0.5d0*dist
+                   horz_conn_dist_dn(iconn) = 0.5d0*dist
+
+                enddo
+             endif ! if (c_idx_up > -1 .and. c_idx_dn > -1)
+          endif ! if (ugrid%gridsOnGrid_local(iedge,icell) > icell)
+       enddo
+    enddo
+
+  end subroutine setup_lateral_connections
+#endif
+
+  !------------------------------------------------------------------------
+
+  subroutine add_goveqns()
+    !
+    ! !DESCRIPTION:
+    !
+    !
+    ! !USES:
+    use MultiPhysicsProbConstants , only : GE_RE
+    use MultiPhysicsProbConstants , only : MESH_CLM_SOIL_COL
+    !
+    ! !ARGUMENTS
+    implicit none
+
+    call vsfm_mpp%AddGovEqn(GE_RE, 'Richards Equation ODE', MESH_CLM_SOIL_COL)
+
+    call vsfm_mpp%SetMeshesOfGoveqns()    
+
+  end subroutine add_goveqns
+
+  !------------------------------------------------------------------------
+  subroutine add_conditions_to_goveqns()
+    !
+    ! !DESCRIPTION:
+    !
+    !
+    ! !USES:
+    use mpp_varctl                , only : vsfm_lateral_model_type
+    use mpp_varctl                , only : vsfm_include_seepage_bc
+    use MultiPhysicsProbConstants , only : SOIL_CELLS
+    use MultiPhysicsProbConstants , only : SOIL_TOP_CELLS
+    use MultiPhysicsProbConstants , only : COND_SS
+    use MultiPhysicsProbConstants , only : COND_BC
+    use MultiPhysicsProbConstants , only : COND_MASS_RATE
+    use MultiPhysicsProbConstants , only : COND_SEEPAGE_BC
+    !
+    ! !ARGUMENTS
+    implicit none
+    !
+    PetscInt :: ieqn
+
+    ieqn = 1
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Infiltration_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_TOP_CELLS)
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Evapotranspiration_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_CELLS)
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Dew_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_TOP_CELLS)
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Drainage_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_CELLS)
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Snow_Disappearance_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_TOP_CELLS)
+
+    call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+         'Sublimation_Flux', 'kg/s', COND_MASS_RATE, &
+         SOIL_TOP_CELLS)
+
+    if (vsfm_lateral_model_type == 'source_sink' ) then
+
+       call vsfm_mpp%GovEqnAddCondition(ieqn, COND_SS,   &
+            'Lateral_flux', 'kg/s', COND_MASS_RATE, &
+            SOIL_CELLS)
+
+       if (vsfm_include_seepage_bc) then
+          call vsfm_mpp%GovEqnAddCondition(ieqn, COND_BC,   &
+               'Seepage_Flux', 'kg/s', COND_SEEPAGE_BC, &
+               SOIL_TOP_CELLS)
+       endif
+
+    else if (vsfm_lateral_model_type == 'three_dimensional') then
+
+       if (vsfm_include_seepage_bc) then
+          call vsfm_mpp%GovEqnAddCondition(ieqn, COND_BC,   &
+               'Seepage_Flux', 'kg/s', COND_SEEPAGE_BC, &
+               SOIL_TOP_CELLS)
+       endif
+
+    endif
+
+  end subroutine add_conditions_to_goveqns
+
+  !------------------------------------------------------------------------
+  subroutine allocate_auxvars()
+    !
+    ! !DESCRIPTION:
+    !
+    !
+    implicit none
+
+    !
+    ! Allocate auxvars
+    !
+    call vsfm_mpp%AllocateAuxVars()
+
+  end subroutine allocate_auxvars
+
+  !------------------------------------------------------------------------
+  subroutine set_material_properties(l2e_init_list)
+    !
+    ! !DESCRIPTION:
+    !
+    use clm_instMod               , only : soilstate_vars
+    use clm_instMod               , only : soilhydrology_vars
+    use mpp_varcon                , only : istcrop
+    use mpp_varcon                , only : istsoil
+    use mpp_varcon                , only : icol_road_perv
+    use mpp_varpar                , only : nlevgrnd
+    use mpp_varctl                , only : vsfm_satfunc_type
+    use MultiPhysicsProbVSFM      , only : VSFMMPPSetSoils
+    use EOSWaterMod               , only : DENSITY_TGDPB01
+    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    !
+    implicit none
+    !
+    class(emi_data_list), intent(in) :: l2e_init_list
+    !
+    real(r8), pointer    :: clm_watsat(:,:)
+    real(r8), pointer    :: clm_hksat(:,:)
+    real(r8), pointer    :: clm_bsw(:,:)
+    real(r8), pointer    :: clm_sucsat(:,:)
+    real(r8), pointer    :: clm_eff_porosity(:,:)
+    real(r8), pointer    :: clm_zwt(:)
+    real(r8), pointer    :: vsfm_watsat(:,:)
+    real(r8), pointer    :: vsfm_hksat(:,:)
+    real(r8), pointer    :: vsfm_bsw(:,:)
+    real(r8), pointer    :: vsfm_sucsat(:,:)
+    real(r8), pointer    :: vsfm_eff_porosity(:,:)
+    real(r8), pointer    :: vsfm_residual_sat(:,:)
+    integer, pointer     :: vsfm_filter(:)
+    !
+    integer              :: c,g,fc,j,l            ! do loop indices
+    integer              :: ncells_ghost          ! total number of ghost gridcells on the processor
+    integer              :: nlunits_ghost         ! total number of ghost landunits on the processor
+    integer              :: ncols_ghost           ! total number of ghost columns on the processor
+    integer              :: npfts_ghost           ! total number of ghost pfts on the processor
+    integer              :: nCohorts_ghost        ! total number of ghost cohorts on the processor
+    integer  , pointer                   :: col_active(:)
+    integer  , pointer                   :: col_type(:)
+    integer  , pointer                   :: col_landunit(:)
+    integer  , pointer                   :: lun_type(:)
+    !-----------------------------------------------------------------------
+
+    col_active       => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
+    col_type         => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
+    col_landunit     => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
+    lun_type         => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
+
+    clm_watsat       => l2e_init_list%data_ptr(index_parameter_l2e_watsatc     )%data%data_real_2d
+    clm_hksat        => l2e_init_list%data_ptr(index_parameter_l2e_hksatc      )%data%data_real_2d
+    clm_bsw          => l2e_init_list%data_ptr(index_parameter_l2e_bswc        )%data%data_real_2d
+    clm_sucsat       => l2e_init_list%data_ptr(index_parameter_l2e_sucsatc     )%data%data_real_2d
+    clm_eff_porosity => l2e_init_list%data_ptr(index_parameter_l2e_effporosityc)%data%data_real_2d
+    clm_zwt          => l2e_init_list%data_ptr(index_s_l2e_init_wtd                 )%data%data_real_1d
+
+    ! Allocate memory
+    allocate(vsfm_filter       (bounds_proc_begc_all:bounds_proc_endc_all           ))
+    allocate(vsfm_watsat       (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+    allocate(vsfm_hksat        (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+    allocate(vsfm_bsw          (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+    allocate(vsfm_sucsat       (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+    allocate(vsfm_eff_porosity (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+    allocate(vsfm_residual_sat (bounds_proc_begc_all:bounds_proc_endc_all, nlevgrnd ))
+
+    ! Initialize
+    vsfm_filter       (:)   = 0
+    vsfm_watsat       (:,:) = 0._r8
+    vsfm_hksat        (:,:) = 0._r8
+    vsfm_bsw          (:,:) = 0._r8
+    vsfm_sucsat       (:,:) = 0._r8
+    vsfm_residual_sat (:,:) = 0._r8
+
+    ! Save data to initialize VSFM
+    do c = bounds_proc_begc, bounds_proc_endc
+       l = col_landunit(c)
+
+       if ((col_active(c) == 1) .and. &
+           (lun_type(l) == istsoil .or. col_type(c) == icol_road_perv .or. &
+           lun_type(l) == istcrop)) then
+
+          vsfm_filter    (c) = 1
+
+          do j = 1 ,nlevgrnd
+             vsfm_watsat(c,j)       = clm_watsat(c,j)
+             vsfm_hksat(c,j)        = clm_hksat(c,j)
+             vsfm_bsw(c,j)          = clm_bsw(c,j)
+             vsfm_sucsat(c,j)       = clm_sucsat(c,j)
+             vsfm_eff_porosity(c,j) = clm_eff_porosity(c,j)
+          enddo
+
+       endif
+    enddo
+
+    ncols_ghost = 0
+
+    call VSFMMPPSetSoils(vsfm_mpp, bounds_proc_begc, bounds_proc_endc, &
+         ncols_ghost, vsfm_filter, &
+         vsfm_watsat, vsfm_hksat, vsfm_bsw, vsfm_sucsat, vsfm_eff_porosity, &
+         vsfm_residual_sat, vsfm_satfunc_type, DENSITY_TGDPB01)
+
+    ! Free up memory
+    deallocate(vsfm_filter       )
+    deallocate(vsfm_watsat       )
+    deallocate(vsfm_hksat        )
+    deallocate(vsfm_bsw          )
+    deallocate(vsfm_sucsat       )
+    deallocate(vsfm_eff_porosity )
+    deallocate(vsfm_residual_sat )
+
+  end subroutine set_material_properties
+
+  !------------------------------------------------------------------------
+  subroutine set_initial_conditions(l2e_init_list)
+    !
+    ! !DESCRIPTION:
+    !
+    use clm_instMod               , only : soilstate_vars
+    use clm_instMod               , only : soilhydrology_vars
+    use mpp_varcon                , only : istcrop
+    use mpp_varcon                , only : istsoil
+    use mpp_varcon                , only : icol_road_perv
+    use mpp_varpar                , only : nlevgrnd
+    use mpp_varctl                , only : vsfm_satfunc_type
+    use MultiPhysicsProbVSFM      , only : VSFMMPPSetSoils
+    use MultiPhysicsProbConstants , only : GRAVITY_CONSTANT
+    use MultiPhysicsProbConstants , only : PRESSURE_REF
+    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    !
+    implicit none
+    !
+    class(emi_data_list), intent(in) :: l2e_init_list
+    !
+    real(r8), pointer    :: clm_zi(:,:)           ! interface level below a "z" level (m)
+    real(r8), pointer    :: clm_zwt(:)            !
+    !
+    integer              :: c,g,fc,j,l            ! do loop indices
+    integer              :: ncells_ghost          ! total number of ghost gridcells on the processor
+    integer              :: nlunits_ghost         ! total number of ghost landunits on the processor
+    integer              :: ncols_ghost           ! total number of ghost columns on the processor
+    integer              :: npfts_ghost           ! total number of ghost pfts on the processor
+    integer              :: nCohorts_ghost        ! total number of ghost cohorts on the processor
+    real(r8), pointer    :: press_ic_1d(:)        ! pressure initial condition (m)
+    integer :: icell
+    integer  , pointer                   :: col_active(:)
+    integer  , pointer                   :: col_type(:)
+    integer  , pointer                   :: col_landunit(:)
+    integer  , pointer                   :: lun_type(:)
+    !-----------------------------------------------------------------------
+
+    col_active       => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
+    col_type         => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
+    col_landunit     => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
+    lun_type         => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
+    clm_zwt          => l2e_init_list%data_ptr(index_s_l2e_init_wtd                 )%data%data_real_1d
+    clm_zi           => l2e_init_list%data_ptr(index_col_l2e_zi                )%data%data_real_2d
+
+    ! Allocate memory
+    allocate(press_ic_1d ((bounds_proc_endc_all - bounds_proc_begc_all + 1)*nlevgrnd))
+
+    ! Initialize
+    press_ic_1d(:) = 101325.d0
+
+    ! Save data to initialize VSFM
+    do c = bounds_proc_begc, bounds_proc_endc
+       l = col_landunit(c)
+
+       do j = 1, nlevgrnd
+          icell = (c - bounds_proc_begc)*nlevgrnd + j
+          if ((col_active(c) == 1) .and. &
+               (lun_type(l) == istsoil .or. col_type(c) == icol_road_perv .or. &
+               lun_type(l) == istcrop)) then
+
+             press_ic_1d(icell) = PRESSURE_REF + &
+                  997.16d0*GRAVITY_CONSTANT * &
+                  (-clm_zwt(c) - (-0.5d0*(clm_zi(c,j-1) + clm_zi(c,j))))
+          endif
+       enddo
+    enddo
+
+    !call VSFMMPPSetICs(vsfm_mpp, bounds_proc_begc, bounds_proc_endc, &
+    !zc_col, vsfm_filter, vsfm_zwt)
+    call vsfm_mpp%Restart(press_ic_1d)
+
+    ! Free up memory
+    deallocate(press_ic_1d)
+
+  end subroutine set_initial_conditions
+
+  !-----------------------------------------------------------------------
+  subroutine determine_condition_ids()
+    !
+    !DESCRIPTION
+    !  Determines the IDs of various source-sink conditions in VSFM
+    !
+    use mpp_varctl                       , only : vsfm_lateral_model_type
+    use MultiPhysicsProbVSFM             , only : vsfm_mpp
+    use MultiPhysicsProbConstants        , only : COND_SS
+    use MultiPhysicsProbConstants        , only : COND_NULL
+    use mpp_varctl                       , only : iulog
+    use abortutils                       , only : endrun
+    use shr_log_mod                      , only : errMsg => shr_log_errMsg
+    ! !ARGUMENTS:
+    implicit none
+    integer :: ier ! error status
+    character (len=256), pointer :: cond_names(:)
+    integer                      :: num_conds
+    integer                      :: num_conds_expected
+    integer                      :: nn
+    integer                      :: kk
+    character (len=256)          :: cond_name
+    !------------------------------------------------------------------------------
+
+    vsfm_cond_id_for_infil        = -1
+    vsfm_cond_id_for_et           = -1
+    vsfm_cond_id_for_dew          = -1
+    vsfm_cond_id_for_drainage     = -1
+    vsfm_cond_id_for_snow         = -1
+    vsfm_cond_id_for_sublimation  = -1
+    vsfm_cond_id_for_lateral_flux = -1
+
+    num_conds_expected = 6
+
+    if (vsfm_lateral_model_type == 'source_sink' ) then
+       num_conds_expected = num_conds_expected + 1
+    end if
+
+    ! Get the number of conditions
+    call vsfm_mpp%sysofeqns%GetConditionNames(COND_SS, COND_NULL, num_conds, cond_names)
+
+    if (num_conds /= num_conds_expected) then
+      write(iulog,*)'In init_vsfm_condition_ids: Source-sink conditions /= ', num_conds_expected
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    do nn = 1, num_conds
+       select case(trim(cond_names(nn)))
+
+       case ("Infiltration_Flux")
+          vsfm_cond_id_for_infil        = nn
+
+       case ("Evapotranspiration_Flux")
+          vsfm_cond_id_for_et           = nn
+
+       case ("Dew_Flux")
+          vsfm_cond_id_for_dew          = nn
+
+       case ("Drainage_Flux")
+          vsfm_cond_id_for_drainage     = nn
+
+       case ("Snow_Disappearance_Flux")
+          vsfm_cond_id_for_snow         = nn
+
+       case ("Sublimation_Flux")
+          vsfm_cond_id_for_sublimation  = nn
+
+       case ("Lateral_flux")
+          vsfm_cond_id_for_lateral_flux = nn
+
+       case default
+          write(iulog,*) trim(cond_names(nn))
+          write(iulog,*)'In init_vsfm_condition_ids: Unknown flux.'
+          call endrun(msg=errMsg(__FILE__, __LINE__))
+       end select
+    enddo
+
+    if (vsfm_cond_id_for_infil == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_infil not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_cond_id_for_et == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_et not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_cond_id_for_dew == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_dew not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_cond_id_for_drainage == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_drainage not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_cond_id_for_snow == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_snow not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_cond_id_for_sublimation == -1) then
+      write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_sublimation not defined.'
+      call endrun(msg=errMsg(__FILE__, __LINE__))
+    endif
+
+    if (vsfm_lateral_model_type == 'source_sink') then
+       if (vsfm_cond_id_for_lateral_flux == -1) then
+          write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_lateral_flux not defined.'
+          call endrun(msg=errMsg(__FILE__, __LINE__))
+       endif
+
+    endif
+
+    deallocate(cond_names)
+
+  end subroutine determine_condition_ids
+
+  !-----------------------------------------------------------------------
+  subroutine extract_data_for_alm(l2e_init_list, e2l_init_list)
+    !
+    !DESCRIPTION
+    !  Saves
+    !
+    use mpp_varctl                , only : restart_vsfm
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    use mpp_varpar                , only : nlevgrnd
+    use MultiPhysicsProbConstants , only : AUXVAR_INTERNAL
+    use MultiPhysicsProbConstants , only : VAR_MASS
+    use MultiPhysicsProbConstants , only : VAR_SOIL_MATRIX_POT
+    !
+    implicit none
+    !
+    class(emi_data_list) , intent(in)    :: l2e_init_list
+    class(emi_data_list) , intent(inout) :: e2l_init_list
+
+    ! !LOCAL VARIABLES:
+    integer                              :: p,c,fc,j,g  ! do loop indices
+
+    real(r8)  , pointer                  :: l2e_col_zi(:,:)
+
+    real(r8)  , pointer                  :: l2e_soilp(:,:)
+    real(r8)  , pointer                  :: l2e_mflx_snowlyr_col(:)
+
+    real(r8)  , pointer                  :: vsfm_soilp_col_1d(:)
+    real(r8)  , pointer                  :: vsfm_mass_col_1d(:)
+    real(r8)  , pointer                  :: vsfm_smpl_col_1d(:)
+    real(r8)  , pointer                  :: e2l_h2osoi_liq(:,:)
+    real(r8)  , pointer                  :: e2l_h2osoi_ice(:,:)
+    real(r8)  , pointer                  :: e2l_smp_l(:,:)
+    real(r8)  , pointer                  :: e2l_zwt(:)
+    real(r8)  , pointer                  :: e2l_mflx_snowlyr_col(:)
+    integer                              :: jwt
+    integer                              :: idx
+    integer                              :: soe_auxvar_id
+    real(r8)                             :: z_up, z_dn
+
+    !-----------------------------------------------------------------------
+
+    l2e_col_zi           => l2e_init_list%data_ptr(index_col_l2e_zi                  )%data%data_real_2d
+    l2e_soilp            => l2e_init_list%data_ptr(index_s_l2e_init_soilp            )%data%data_real_2d
+    l2e_mflx_snowlyr_col => l2e_init_list%data_ptr(index_f_l2e_init_mflx_snowlyr_col )%data%data_real_1d
+    e2l_h2osoi_liq       => e2l_init_list%data_ptr(index_s_e2l_init_h2osoi_liq       )%data%data_real_2d
+    e2l_h2osoi_ice       => e2l_init_list%data_ptr(index_s_e2l_init_h2osoi_ice       )%data%data_real_2d
+    e2l_smp_l            => e2l_init_list%data_ptr(index_s_e2l_init_smp              )%data%data_real_2d
+    e2l_zwt              => e2l_init_list%data_ptr(index_s_e2l_init_wtd              )%data%data_real_1d
+    e2l_mflx_snowlyr_col => e2l_init_list%data_ptr(index_f_e2l_init_mflx_snowlyr_col )%data%data_real_1d
+
+
+    ! PreSolve: Allows saturation value to be computed based on ICs and stored
+    !           in GE auxvar
+    call vsfm_mpp%sysofeqns%SetDtime(1.d0)
+    call vsfm_mpp%sysofeqns%PreSolve()
+
+    ! PostSolve: Allows saturation value stored in GE auxvar to be copied into
+    !            SoE auxvar
+    call vsfm_mpp%sysofeqns%PostSolve()
+
+    allocate(vsfm_soilp_col_1d((bounds_proc_endc-bounds_proc_begc+1)*nlevgrnd))
+    allocate(vsfm_mass_col_1d ((bounds_proc_endc-bounds_proc_begc+1)*nlevgrnd))
+    allocate(vsfm_smpl_col_1d ((bounds_proc_endc-bounds_proc_begc+1)*nlevgrnd))
+
+    if (restart_vsfm) then
+
+       ! Save 1D array for VSFM (vsfm_soilp_col_1d) and
+       ! set initial value of mflx_snowlyr_col for ALM
+       do c = bounds_proc_begc, bounds_proc_endc
+          do j = 1, nlevgrnd
+             idx = (c - bounds_proc_begc)*nlevgrnd + j
+             vsfm_soilp_col_1d(idx) = l2e_soilp(c,j)
+          end do
+          idx = c-bounds_proc_begc+1
+          e2l_mflx_snowlyr_col(c) = l2e_mflx_snowlyr_col(c)
+       end do
+
+       ! Set the initial conditions
+       call vsfm_mpp%Restart(vsfm_soilp_col_1d)
+
+       ! PreSolve: Allows saturation value to be computed based on ICs and stored
+       !           in GE auxvar
+       call vsfm_mpp%sysofeqns%SetDtime(1.d0)
+       call vsfm_mpp%sysofeqns%PreSolve()
+
+       ! PostSolve: Allows saturation value stored in GE auxvar to be copied into
+       !            SoE auxvar
+       call vsfm_mpp%sysofeqns%PostSolve()
+
+    else
+       ! Set initial value of mflx_snowlyr_col for ALM
+       e2l_mflx_snowlyr_col(:) = 0._r8
+    end if
+
+    ! Get total mass
+    soe_auxvar_id = 1;
+    call vsfm_mpp%sysofeqns%GetDataForCLM(AUXVAR_INTERNAL,   &
+                                          VAR_MASS,          &
+                                          soe_auxvar_id,     &
+                                          vsfm_mass_col_1d)
+
+    ! Get liquid soil matrix potential
+    soe_auxvar_id = 1;
+    call vsfm_mpp%sysofeqns%GetDataForCLM(AUXVAR_INTERNAL,       &
+                                          VAR_SOIL_MATRIX_POT,   &
+                                          soe_auxvar_id,         &
+                                          vsfm_smpl_col_1d)
+
+    do c = bounds_proc_begc, bounds_proc_endc
+       ! initialization
+       jwt = -1
+
+       ! Loops in decreasing j so WTD can be computed in the same loop
+       do j = nlevgrnd, 1, -1
+          idx = (c-bounds_proc_begc)*nlevgrnd + j
+
+          e2l_h2osoi_liq(c,j) = vsfm_mass_col_1d(idx)
+          e2l_h2osoi_ice(c,j) = 0.d0
+          e2l_smp_l(c,j)      = vsfm_smpl_col_1d(idx)*1000._r8      ! [m] --> [mm]
+
+          if (jwt == -1) then
+             ! Find the first soil that is unsaturated
+             if (e2l_smp_l(c,j) < 0._r8) jwt = j
+          end if
+
+       end do
+
+       if (jwt == -1 .or. jwt == nlevgrnd) then
+          ! Water table below or in the last layer
+          e2l_zwt(c) = l2e_col_zi(c,nlevgrnd)
+       else
+          z_dn = (l2e_col_zi(c,jwt-1) + l2e_col_zi(c,jwt  ))/2._r8
+          z_up = (l2e_col_zi(c,jwt ) + l2e_col_zi(c,jwt+1))/2._r8
+          e2l_zwt(c) = (0._r8 - e2l_smp_l(c,jwt))/(e2l_smp_l(c,jwt) - e2l_smp_l(c,jwt+1))*(z_dn - z_up) + z_dn
+        endif
+     enddo
+
+   end subroutine extract_data_for_alm
+
+    !------------------------------------------------------------------------
   subroutine EM_VSFM_Solve(em_stage, dt, nstep, l2e_list, e2l_list)
 
     !
@@ -357,13 +2045,6 @@ end subroutine EM_VSFM_Populate_E2L_List
     use MultiPhysicsProbConstants , only : AUXVAR_INTERNAL
     use MultiPhysicsProbConstants , only : AUXVAR_BC
     use MultiPhysicsProbConstants , only : AUXVAR_SS
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_infil
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_et
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_dew
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_drainage
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_snow
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_sublimation
-    use MPPVSFMALM_Initialize     , only : vsfm_cond_id_for_lateral_flux
     use mpp_varpar                , only : nlevgrnd
     !
     implicit none
@@ -500,7 +2181,7 @@ end subroutine EM_VSFM_Populate_E2L_List
       l2e_filter_hydrologyc => l2e_list%data_ptr(index_filter_l2e_hydrologyc    )%data%data_int_1d
       l2e_num_hydrologyc    =  l2e_list%data_ptr(index_filter_l2e_num_hydrologyc)%data%data_int_1d(1)
 
-      l2e_zi                => l2e_list%data_ptr(index_mesh_l2e_zi              )%data%data_real_2d
+      l2e_zi                => l2e_list%data_ptr(index_COLUMN_L2E_ZI              )%data%data_real_2d
 
       e2l_h2osoi_liq        => e2l_list%data_ptr(index_s_e2l_h2osoi_liq         )%data%data_real_2d
       e2l_h2osoi_ice        => e2l_list%data_ptr(index_s_e2l_h2osoi_ice         )%data%data_real_2d

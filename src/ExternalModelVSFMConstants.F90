@@ -5,6 +5,6 @@ module ExternalModelVSFMConstants
   !
   private
 
-  integer, parameter, public :: EM_VSFM_SOIL_HYDRO_STAGE = 1
+  integer, parameter, public :: EM_VSFM_SOIL_HYDRO_STAGE = 14
 
 end module ExternalModelVSFMConstants
