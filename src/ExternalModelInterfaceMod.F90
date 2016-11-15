@@ -285,49 +285,49 @@ contains
     ! Setup a EMI data
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_L2E_TSOIL
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_L2E_WTD
-    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_WTD
+    use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
 
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
-    use ExternalModelConstants    , only : S_E2L_WTD
-    use ExternalModelConstants    , only : S_E2L_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_WTD
+    use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
 
-    use ExternalModelConstants    , only : F_L2E_INFIL_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_VERTICAL_ET_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DEW_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_SUBLIMATION_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
 
-    use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
-    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
 
-    use ExternalModelConstants    , only : FILTER_L2E_HYDROLOGYC
-    use ExternalModelConstants    , only : FILTER_L2E_NUM_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
 
-    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
-    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
-    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
-    use ExternalModelConstants    , only : COLUMN_L2E_ZI
-    use ExternalModelConstants    , only : COLUMN_L2E_DZ
-    use ExternalModelConstants    , only : COLUMN_L2E_Z
-    use ExternalModelConstants    , only : COLUMN_L2E_AREA
+    use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
+    use ExternalModelConstants    , only : L2E_COLUMN_TYPE
+    use ExternalModelConstants    , only : L2E_COLUMN_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ
+    use ExternalModelConstants    , only : L2E_COLUMN_Z
+    use ExternalModelConstants    , only : L2E_COLUMN_AREA
 
-    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
-    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
-    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
+    use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_URBANPOINT
 
-    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
-    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
+    use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
+    use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
 
     use decompMod                 , only : get_proc_bounds
     use decompMod                 , only : get_proc_clumps
@@ -401,23 +401,23 @@ contains
     ! Determine the size of data
     select case (data%id)
 
-    case (S_L2E_TSOIL,                 &
-          S_L2E_H2OSOI_LIQ,            &
-          S_L2E_H2OSOI_ICE,            &
-          S_E2L_H2OSOI_LIQ,            &
-          S_L2E_VSFM_PROGNOSTIC_SOILP, &
-          S_E2L_H2OSOI_ICE,            &
-          S_E2L_SOIL_MATRIC_POTENTIAL, &
-          S_E2L_VSFM_PROGNOSTIC_SOILP, &
-          F_L2E_VERTICAL_ET_MASS_FLUX, &
-          F_L2E_DRAINAGE_MASS_FLUX,    &
-          COLUMN_L2E_DZ,               &
-          COLUMN_L2E_Z,                &
-          PARAMETER_L2E_WATSATC,       &
-          PARAMETER_L2E_HKSATC,        &
-          PARAMETER_L2E_BSWC,          &
-          PARAMETER_L2E_SUCSATC,       &
-          PARAMETER_L2E_EFFPOROSITYC   )
+    case (L2E_STATE_TSOIL,                 &
+          L2E_STATE_H2OSOI_LIQ,            &
+          L2E_STATE_H2OSOI_ICE,            &
+          E2L_STATE_H2OSOI_LIQ,            &
+          L2E_STATE_VSFM_PROGNOSTIC_SOILP, &
+          E2L_STATE_H2OSOI_ICE,            &
+          E2L_STATE_SOIL_MATRIC_POTENTIAL, &
+          E2L_STATE_VSFM_PROGNOSTIC_SOILP, &
+          L2E_FLUX_VERTICAL_ET_MASS_FLUX,  &
+          L2E_FLUX_DRAINAGE_MASS_FLUX,     &
+          L2E_COLUMN_DZ,                   &
+          L2E_COLUMN_Z,                    &
+          L2E_PARAMETER_WATSATC,           &
+          L2E_PARAMETER_HKSATC,            &
+          L2E_PARAMETER_BSWC,              &
+          L2E_PARAMETER_SUCSATC,           &
+          L2E_PARAMETER_EFFPOROSITYC   )
 
        ! Dim: Column x nlevgrnd
 
@@ -437,20 +437,20 @@ contains
        dim2_beg_proc     = 1
        dim2_end_proc     = nlevgrnd
 
-    case (F_L2E_INFIL_MASS_FLUX,                 &
-          S_L2E_WTD,                             &
-          S_E2L_WTD,                             &
-          FILTER_L2E_HYDROLOGYC,                 &
-          F_L2E_DEW_MASS_FLUX,                   &
-          F_L2E_SNOW_SUBLIMATION_MASS_FLUX,      &
-          F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          F_E2L_AQUIFER_RECHARGE,                &
-          F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          COLUMN_L2E_ACTIVE,                     &
-          COLUMN_L2E_TYPE,                       &
-          COLUMN_L2E_LANDUNIT_INDEX,             &
-          COLUMN_L2E_AREA)
+    case (L2E_FLUX_INFIL_MASS_FLUX,                         &
+          L2E_STATE_WTD,                                    &
+          E2L_STATE_WTD,                                    &
+          L2E_FILTER_HYDROLOGYC,                            &
+          L2E_FLUX_DEW_MASS_FLUX,                           &
+          L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
+          L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
+          L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          E2L_FLUX_AQUIFER_RECHARGE,                        &
+          E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
+          L2E_COLUMN_ACTIVE,                                &
+          L2E_COLUMN_TYPE,                                  &
+          L2E_COLUMN_LANDUNIT_INDEX,                        &
+          L2E_COLUMN_AREA)
 
        ! Dim: Column
 
@@ -465,7 +465,7 @@ contains
        dim1_beg_proc = bounds_proc%begc
        dim1_end_proc = bounds_proc%endc
 
-    case (FILTER_L2E_NUM_HYDROLOGYC)
+    case (L2E_FILTER_NUM_HYDROLOGYC)
 
        ! Dim: 1
 
@@ -480,7 +480,7 @@ contains
        dim1_beg_proc = 1
        dim1_end_proc = 1
 
-    case (COLUMN_L2E_ZI)
+    case (L2E_COLUMN_ZI)
 
        ! Dim: Column x (0:nlevgrnd)
 
@@ -500,9 +500,9 @@ contains
        dim2_beg_proc     = 0
        dim2_end_proc     = nlevgrnd
 
-    case (LANDUNIT_L2E_TYPE,       &
-          LANDUNIT_L2E_LAKEPOINT,  &
-          LANDUNIT_L2E_URBANPOINT  &
+    case (L2E_LANDUNIT_TYPE,       &
+          L2E_LANDUNIT_LAKEPOINT,  &
+          L2E_LANDUNIT_URBANPOINT  &
          )
 
        ! Dim: Landunit
@@ -529,47 +529,47 @@ contains
     ! Determine the type of data
     select case (data%id)
        
-    case (S_L2E_TSOIL,                           &
-          S_L2E_H2OSOI_LIQ,                      &
-          S_L2E_H2OSOI_ICE,                      &
-          S_L2E_WTD,                             &
-          S_L2E_VSFM_PROGNOSTIC_SOILP,           &
-          S_E2L_H2OSOI_LIQ,                      &
-          S_E2L_H2OSOI_ICE,                      &
-          S_E2L_SOIL_MATRIC_POTENTIAL,           &
-          S_E2L_VSFM_PROGNOSTIC_SOILP,           &
-          S_E2L_WTD,                             &
-          F_L2E_VERTICAL_ET_MASS_FLUX,           &
-          F_L2E_DRAINAGE_MASS_FLUX,              &
-          F_L2E_INFIL_MASS_FLUX,                 &
-          F_L2E_DEW_MASS_FLUX,                   &
-          F_L2E_SNOW_SUBLIMATION_MASS_FLUX,      &
-          F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          F_E2L_AQUIFER_RECHARGE,                &
-          F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          COLUMN_L2E_ZI,                         &
-          COLUMN_L2E_DZ,                         &
-          COLUMN_L2E_Z,                          &
-          COLUMN_L2E_AREA,                       &
-          PARAMETER_L2E_WATSATC,                 &
-          PARAMETER_L2E_HKSATC,                  &
-          PARAMETER_L2E_BSWC,                    &
-          PARAMETER_L2E_SUCSATC,                 &
-          PARAMETER_L2E_EFFPOROSITYC             &
+    case (L2E_STATE_TSOIL,                                  &
+          L2E_STATE_H2OSOI_LIQ,                             &
+          L2E_STATE_H2OSOI_ICE,                             &
+          L2E_STATE_WTD,                                    &
+          L2E_STATE_VSFM_PROGNOSTIC_SOILP,                  &
+          E2L_STATE_H2OSOI_LIQ,                             &
+          E2L_STATE_H2OSOI_ICE,                             &
+          E2L_STATE_SOIL_MATRIC_POTENTIAL,                  &
+          E2L_STATE_VSFM_PROGNOSTIC_SOILP,                  &
+          E2L_STATE_WTD,                                    &
+          L2E_FLUX_VERTICAL_ET_MASS_FLUX,                   &
+          L2E_FLUX_DRAINAGE_MASS_FLUX,                      &
+          L2E_FLUX_INFIL_MASS_FLUX,                         &
+          L2E_FLUX_DEW_MASS_FLUX,                           &
+          L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
+          L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
+          L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          E2L_FLUX_AQUIFER_RECHARGE,                        &
+          E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
+          L2E_COLUMN_ZI,                                    &
+          L2E_COLUMN_DZ,                                    &
+          L2E_COLUMN_Z,                                     &
+          L2E_COLUMN_AREA,                                  &
+          L2E_PARAMETER_WATSATC,                            &
+          L2E_PARAMETER_HKSATC,                             &
+          L2E_PARAMETER_BSWC,                               &
+          L2E_PARAMETER_SUCSATC,                            &
+          L2E_PARAMETER_EFFPOROSITYC                        &
           )
 
        is_int_type    = .false.
        is_real_type   = .true.
 
-    case (FILTER_L2E_HYDROLOGYC,     &
-          FILTER_L2E_NUM_HYDROLOGYC, &
-          COLUMN_L2E_ACTIVE,         &
-          COLUMN_L2E_TYPE,           &
-          COLUMN_L2E_LANDUNIT_INDEX, &
-          LANDUNIT_L2E_TYPE,         &
-          LANDUNIT_L2E_LAKEPOINT,    &
-          LANDUNIT_L2E_URBANPOINT )
+    case (L2E_FILTER_HYDROLOGYC,     &
+          L2E_FILTER_NUM_HYDROLOGYC, &
+          L2E_COLUMN_ACTIVE,         &
+          L2E_COLUMN_TYPE,           &
+          L2E_COLUMN_LANDUNIT_INDEX, &
+          L2E_LANDUNIT_TYPE,         &
+          L2E_LANDUNIT_LAKEPOINT,    &
+          L2E_LANDUNIT_URBANPOINT )
 
        is_int_type    = .true.
        is_real_type   = .false.
@@ -817,13 +817,13 @@ contains
     ! Pack data from ALM's waterflux_vars for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : F_L2E_INFIL_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_VERTICAL_ET_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DEW_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_SUBLIMATION_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
     use WaterFluxType             , only : waterflux_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -869,7 +869,7 @@ contains
 
           select case (cur_data%id)
 
-          case (F_L2E_VERTICAL_ET_MASS_FLUX)
+          case (L2E_FLUX_VERTICAL_ET_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -879,7 +879,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_INFIL_MASS_FLUX)
+          case (L2E_FLUX_INFIL_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -887,7 +887,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_DEW_MASS_FLUX)
+          case (L2E_FLUX_DEW_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -895,7 +895,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_SNOW_SUBLIMATION_MASS_FLUX)
+          case (L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -903,7 +903,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+          case (L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -911,7 +911,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+          case (L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -919,7 +919,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (F_L2E_DRAINAGE_MASS_FLUX)
+          case (L2E_FLUX_DRAINAGE_MASS_FLUX)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -948,8 +948,8 @@ contains
     ! Pack data from EM in ALM's waterflux_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
-    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use WaterFluxType             , only : waterflux_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -990,14 +990,14 @@ contains
 
           select case (cur_data%id)
 
-          case (F_E2L_AQUIFER_RECHARGE)
+          case (E2L_FLUX_AQUIFER_RECHARGE)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 mflx_recharge_col(c) = cur_data%data_real_1d(c)
              enddo
              cur_data%is_set = .true.
 
-          case (F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+          case (E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 mflx_snowlyr_col(c) = cur_data%data_real_1d(c)
@@ -1023,8 +1023,8 @@ contains
     ! Pack data from ALM's filter for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : FILTER_L2E_HYDROLOGYC
-    use ExternalModelConstants    , only : FILTER_L2E_NUM_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
     !
     implicit none
     !
@@ -1057,13 +1057,13 @@ contains
 
           select case (cur_data%id)
 
-          case (FILTER_L2E_HYDROLOGYC)
+          case (L2E_FILTER_HYDROLOGYC)
              do i = 1, num_filter
                 cur_data%data_int_1d(i) = filter(i)
              enddo
              cur_data%is_set = .true.
 
-          case (FILTER_L2E_NUM_HYDROLOGYC)
+          case (L2E_FILTER_NUM_HYDROLOGYC)
 
              cur_data%data_int_1d(1) = num_filter
              cur_data%is_set = .true.
@@ -1085,13 +1085,13 @@ contains
     ! Pack data from ALM's column type for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
-    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
-    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
-    use ExternalModelConstants    , only : COLUMN_L2E_ZI
-    use ExternalModelConstants    , only : COLUMN_L2E_DZ
-    use ExternalModelConstants    , only : COLUMN_L2E_Z
-    use ExternalModelConstants    , only : COLUMN_L2E_AREA
+    use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
+    use ExternalModelConstants    , only : L2E_COLUMN_TYPE
+    use ExternalModelConstants    , only : L2E_COLUMN_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ
+    use ExternalModelConstants    , only : L2E_COLUMN_Z
+    use ExternalModelConstants    , only : L2E_COLUMN_AREA
     use ColumnType                , only : col
     use clm_varpar                , only : nlevgrnd
     !
@@ -1126,28 +1126,28 @@ contains
 
           select case (cur_data%id)
 
-          case (COLUMN_L2E_ACTIVE)
+          case (L2E_COLUMN_ACTIVE)
              do fc = 1, num_filter
                 c = filter(fc)
                 if (col%active(c)) cur_data%data_int_1d(c) = 1
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_TYPE)
+          case (L2E_COLUMN_TYPE)
              do fc = 1, num_filter
                 c = filter(fc)
                 cur_data%data_int_1d(c) = col%itype(c)
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_LANDUNIT_INDEX)
+          case (L2E_COLUMN_LANDUNIT_INDEX)
              do fc = 1, num_filter
                 c = filter(fc)
                 cur_data%data_int_1d(c) = col%landunit(c)
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_ZI)
+          case (L2E_COLUMN_ZI)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 0, nlevgrnd
@@ -1156,7 +1156,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_DZ)
+          case (L2E_COLUMN_DZ)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
@@ -1165,7 +1165,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_Z)
+          case (L2E_COLUMN_Z)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
@@ -1174,7 +1174,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (COLUMN_L2E_AREA)
+          case (L2E_COLUMN_AREA)
              do fc = 1, num_filter
                 c = filter(fc)
                 !cur_data%data_real_1d(c) = col%area(c)
@@ -1198,9 +1198,9 @@ contains
     ! Pack data from ALM's landunit type for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
-    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
-    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
+    use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_URBANPOINT
     use LandunitType              , only : lun
     !
     implicit none
@@ -1232,21 +1232,21 @@ contains
 
           select case (cur_data%id)
 
-          case (LANDUNIT_L2E_TYPE)
+          case (L2E_LANDUNIT_TYPE)
              do fl = 1, num_filter
                 l = filter(fl)
                 cur_data%data_int_1d(l) = lun%itype(l)
              enddo
              cur_data%is_set = .true.
 
-          case (LANDUNIT_L2E_LAKEPOINT)
+          case (L2E_LANDUNIT_LAKEPOINT)
              do fl = 1, num_filter
                 l = filter(fl)
                 if (lun%lakpoi(l)) cur_data%data_int_1d(l) = 1
              enddo
              cur_data%is_set = .true.
 
-          case (LANDUNIT_L2E_URBANPOINT)
+          case (L2E_LANDUNIT_URBANPOINT)
              do fl = 1, num_filter
                 l = filter(fl)
                 if (lun%urbpoi(l)) cur_data%data_int_1d(l) = 1
@@ -1270,9 +1270,9 @@ contains
     ! Pack data from ALM's waterstate_vars for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     !
@@ -1314,7 +1314,7 @@ contains
 
           select case (cur_data%id)
 
-          case (S_L2E_H2OSOI_LIQ)
+          case (L2E_STATE_H2OSOI_LIQ)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1323,7 +1323,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (S_L2E_H2OSOI_ICE)
+          case (L2E_STATE_H2OSOI_ICE)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1332,7 +1332,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (S_L2E_VSFM_PROGNOSTIC_SOILP)
+          case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1360,9 +1360,9 @@ contains
     ! Save data from EM in ALM's waterflux_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_E2L_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     !
@@ -1404,7 +1404,7 @@ contains
 
           select case (cur_data%id)
 
-          case (S_E2L_H2OSOI_LIQ)
+          case (E2L_STATE_H2OSOI_LIQ)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -1414,7 +1414,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (S_E2L_H2OSOI_ICE)
+          case (E2L_STATE_H2OSOI_ICE)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -1424,7 +1424,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (S_E2L_VSFM_PROGNOSTIC_SOILP)
+          case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
 
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -1453,7 +1453,7 @@ contains
     ! Pack data from ALM's temperature_vars for EM
     !
     ! !USES:
-    use ExternalModelConstants , only : S_L2E_TSOIL
+    use ExternalModelConstants , only : L2E_STATE_TSOIL
     use TemperatureType        , only : temperature_type
     use clm_varpar             , only : nlevgrnd
     !
@@ -1493,7 +1493,7 @@ contains
 
           select case (cur_data%id)
 
-          case (S_L2E_TSOIL)
+          case (L2E_STATE_TSOIL)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1521,7 +1521,7 @@ contains
     ! Save data from EM in ALM's soilhydrolgy_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_L2E_WTD
+    use ExternalModelConstants    , only : L2E_STATE_WTD
     use SoilHydrologyType         , only : soilhydrology_type
     !
     implicit none
@@ -1560,7 +1560,7 @@ contains
 
           select case (cur_data%id)
 
-          case (S_L2E_WTD)
+          case (L2E_STATE_WTD)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 cur_data%data_real_1d(c) = zwt(c)
@@ -1586,8 +1586,8 @@ contains
     ! Save data from EM in ALM's soilhydrolgy_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_E2L_WTD
-    use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : E2L_STATE_WTD
+    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     use SoilHydrologyType         , only : soilhydrology_type
     !
     implicit none
@@ -1627,14 +1627,14 @@ contains
 
           select case (cur_data%id)
 
-          case (S_E2L_WTD)
+          case (E2L_STATE_WTD)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 zwt(c) = cur_data%data_real_1d(c)
              enddo
              cur_data%is_set = .true.
 
-          case (F_E2L_AQUIFER_RECHARGE)
+          case (E2L_FLUX_AQUIFER_RECHARGE)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 qcharge(c) = cur_data%data_real_1d(c)
@@ -1660,12 +1660,12 @@ contains
     ! Save data from EM in ALM's soilstate_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
-    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
-    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
+    use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
     use SoilStateType             , only : soilstate_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -1709,7 +1709,7 @@ contains
 
           select case (cur_data%id)
 
-          case (PARAMETER_L2E_WATSATC)
+          case (L2E_PARAMETER_WATSATC)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1718,7 +1718,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (PARAMETER_L2E_HKSATC)
+          case (L2E_PARAMETER_HKSATC)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1727,7 +1727,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (PARAMETER_L2E_BSWC)
+          case (L2E_PARAMETER_BSWC)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1736,7 +1736,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (PARAMETER_L2E_SUCSATC)
+          case (L2E_PARAMETER_SUCSATC)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1745,7 +1745,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (PARAMETER_L2E_EFFPOROSITYC)
+          case (L2E_PARAMETER_EFFPOROSITYC)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1773,7 +1773,7 @@ contains
     ! Save data from EM in ALM's soilstate_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
     use SoilStateType             , only : soilstate_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -1813,7 +1813,7 @@ contains
 
           select case (cur_data%id)
 
-          case (S_E2L_SOIL_MATRIC_POTENTIAL)
+          case (E2L_STATE_SOIL_MATRIC_POTENTIAL)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd

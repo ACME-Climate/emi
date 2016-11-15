@@ -13,58 +13,58 @@ module ExternalModelVSFMMod
   implicit none
   !
 
-  integer :: index_col_l2e_active
-  integer :: index_col_l2e_type
-  integer :: index_col_l2e_landunit_index
-  integer :: index_col_l2e_zi
-  integer :: index_col_l2e_dz
-  integer :: index_col_l2e_z
-  integer :: index_col_l2e_area
+  integer :: index_l2e_col_active
+  integer :: index_l2e_col_type
+  integer :: index_l2e_col_landunit_index
+  integer :: index_l2e_col_zi
+  integer :: index_l2e_col_dz
+  integer :: index_l2e_col_z
+  integer :: index_l2e_col_area
 
-  integer :: index_landunit_l2e_type
-  integer :: index_landunit_l2e_lakepoint
-  integer :: index_landunit_l2e_urbanpoint
+  integer :: index_l2e_landunit_type
+  integer :: index_l2e_landunit_lakepoint
+  integer :: index_l2e_landunit_urbanpoint
 
-  integer :: index_parameter_l2e_watsatc
-  integer :: index_parameter_l2e_hksatc
-  integer :: index_parameter_l2e_bswc
-  integer :: index_parameter_l2e_sucsatc
-  integer :: index_parameter_l2e_effporosityc
+  integer :: index_l2e_parameter_watsatc
+  integer :: index_l2e_parameter_hksatc
+  integer :: index_l2e_parameter_bswc
+  integer :: index_l2e_parameter_sucsatc
+  integer :: index_l2e_parameter_effporosityc
 
-  integer :: index_s_l2e_init_wtd
-  integer :: index_s_l2e_init_soilp
+  integer :: index_l2e_state_init_wtd
+  integer :: index_l2e_state_init_soilp
 
-  integer :: index_s_e2l_init_h2osoi_liq
-  integer :: index_s_e2l_init_h2osoi_ice
-  integer :: index_s_e2l_init_smp
-  integer :: index_s_e2l_init_wtd
+  integer :: index_e2l_state_init_h2osoi_liq
+  integer :: index_e2l_state_init_h2osoi_ice
+  integer :: index_e2l_state_init_smp
+  integer :: index_e2l_state_init_wtd
 
-  integer :: index_f_e2l_init_mflx_snowlyr_col
-  integer :: index_f_l2e_init_mflx_snowlyr_col
+  integer :: index_e2l_flux_init_mflx_snowlyr_col
+  integer :: index_l2e_flux_init_mflx_snowlyr_col
 
-  integer :: index_s_l2e_tsoil
-  integer :: index_s_l2e_h2osoi_liq
-  integer :: index_s_l2e_h2osoi_ice
+  integer :: index_l2e_state_tsoil
+  integer :: index_l2e_state_h2osoi_liq
+  integer :: index_l2e_state_h2osoi_ice
 
-  integer :: index_s_e2l_h2osoi_liq
-  integer :: index_s_e2l_h2osoi_ice
-  integer :: index_s_e2l_smp
-  integer :: index_s_e2l_wtd
-  integer :: index_s_e2l_soilp
+  integer :: index_e2l_state_h2osoi_liq
+  integer :: index_e2l_state_h2osoi_ice
+  integer :: index_e2l_state_smp
+  integer :: index_e2l_state_wtd
+  integer :: index_e2l_state_soilp
 
-  integer :: index_f_l2e_infil
-  integer :: index_f_l2e_et
-  integer :: index_f_l2e_dew
-  integer :: index_f_l2e_snow_sub
-  integer :: index_f_l2e_snowlyr
-  integer :: index_f_l2e_drainage
+  integer :: index_l2e_flux_infil
+  integer :: index_l2e_flux_et
+  integer :: index_l2e_flux_dew
+  integer :: index_l2e_flux_snow_sub
+  integer :: index_l2e_flux_snowlyr
+  integer :: index_l2e_flux_drainage
 
-  integer :: index_f_e2l_qrecharge
+  integer :: index_e2l_flux_qrecharge
 
-  integer :: index_filter_l2e_hydrologyc
-  integer :: index_filter_l2e_num_hydrologyc
+  integer :: index_l2e_filter_hydrologyc
+  integer :: index_l2e_filter_num_hydrologyc
 
-  integer :: index_COLUMN_L2E_ZI
+  integer :: index_l2e_column_zi
 
   ! IDs to indentify the conditions for VSFM
   integer :: vsfm_cond_id_for_infil
@@ -93,24 +93,24 @@ contains
     !
     ! !USES:
     use ExternalModelConstants    , only : EM_INITIALIZATION_STAGE
-    use ExternalModelConstants    , only : COLUMN_L2E_ACTIVE
-    use ExternalModelConstants    , only : COLUMN_L2E_TYPE
-    use ExternalModelConstants    , only : COLUMN_L2E_LANDUNIT_INDEX
-    use ExternalModelConstants    , only : COLUMN_L2E_ZI
-    use ExternalModelConstants    , only : COLUMN_L2E_DZ
-    use ExternalModelConstants    , only : COLUMN_L2E_Z
-    use ExternalModelConstants    , only : COLUMN_L2E_AREA
-    use ExternalModelConstants    , only : LANDUNIT_L2E_TYPE
-    use ExternalModelConstants    , only : LANDUNIT_L2E_LAKEPOINT
-    use ExternalModelConstants    , only : LANDUNIT_L2E_URBANPOINT
-    use ExternalModelConstants    , only : PARAMETER_L2E_WATSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_HKSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_BSWC
-    use ExternalModelConstants    , only : PARAMETER_L2E_SUCSATC
-    use ExternalModelConstants    , only : PARAMETER_L2E_EFFPOROSITYC
-    use ExternalModelConstants    , only : S_L2E_WTD
-    use ExternalModelConstants    , only : S_L2E_VSFM_PROGNOSTIC_SOILP
-    use ExternalModelConstants    , only : F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
+    use ExternalModelConstants    , only : L2E_COLUMN_TYPE
+    use ExternalModelConstants    , only : L2E_COLUMN_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ
+    use ExternalModelConstants    , only : L2E_COLUMN_Z
+    use ExternalModelConstants    , only : L2E_COLUMN_AREA
+    use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
+    use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_URBANPOINT
+    use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
+    use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
+    use ExternalModelConstants    , only : L2E_STATE_WTD
+    use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     !
     implicit none
     !
@@ -129,165 +129,165 @@ contains
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_ACTIVE, name = "Column active",units = "[-]", &
+    call data%Setup(id=L2E_COLUMN_ACTIVE, name = "Column active",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_active = count
+    index_l2e_col_active = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_TYPE, name = "Column type",units = "[-]", &
+    call data%Setup(id=L2E_COLUMN_TYPE, name = "Column type",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_type   = count
+    index_l2e_col_type   = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_LANDUNIT_INDEX, name = "Column landunit index",units = "[-]", &
+    call data%Setup(id=L2E_COLUMN_LANDUNIT_INDEX, name = "Column landunit index",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                        = count + 1
-    index_col_l2e_landunit_index = count
+    index_l2e_col_landunit_index = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_ZI, name = "Column layer interface depth",units = "[m]", &
+    call data%Setup(id=L2E_COLUMN_ZI, name = "Column layer interface depth",units = "[m]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_zi = count
+    index_l2e_col_zi = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_DZ, name = "Column layer thickness",units = "[m]", &
+    call data%Setup(id=L2E_COLUMN_DZ, name = "Column layer thickness",units = "[m]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_dz = count
+    index_l2e_col_dz = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_Z, name = "Column layer centroid",units = "[m]", &
+    call data%Setup(id=L2E_COLUMN_Z, name = "Column layer centroid",units = "[m]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_z = count
+    index_l2e_col_z = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_AREA, name = "Column surface area",units = "[m]", &
+    call data%Setup(id=L2E_COLUMN_AREA, name = "Column surface area",units = "[m]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_col_l2e_area = count
+    index_l2e_col_area = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=LANDUNIT_L2E_TYPE, name = "Landunit type",units = "[-]", &
+    call data%Setup(id=L2E_LANDUNIT_TYPE, name = "Landunit type",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_landunit_l2e_type = count
+    index_l2e_landunit_type = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=LANDUNIT_L2E_LAKEPOINT, name = "Landunit lake point",units = "[-]", &
+    call data%Setup(id=L2E_LANDUNIT_LAKEPOINT, name = "Landunit lake point",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_landunit_l2e_lakepoint = count
+    index_l2e_landunit_lakepoint = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=LANDUNIT_L2E_URBANPOINT, name = "Landunit urban point ",units = "[-]", &
+    call data%Setup(id=L2E_LANDUNIT_URBANPOINT, name = "Landunit urban point ",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_landunit_l2e_urbanpoint = count
+    index_l2e_landunit_urbanpoint = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=PARAMETER_L2E_WATSATC, name = "Soil porosity",units = "[m^3/m^3]", &
+    call data%Setup(id=L2E_PARAMETER_WATSATC, name = "Soil porosity",units = "[m^3/m^3]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_parameter_l2e_watsatc = count
+    index_l2e_parameter_watsatc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=PARAMETER_L2E_HKSATC, name = "Soil hydraulic conductivity at saturation",units = "[mm/s]", &
+    call data%Setup(id=L2E_PARAMETER_HKSATC, name = "Soil hydraulic conductivity at saturation",units = "[mm/s]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_parameter_l2e_hksatc = count
+    index_l2e_parameter_hksatc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=PARAMETER_L2E_BSWC, name = "Clapp and Hornberger",units = "[-]", &
+    call data%Setup(id=L2E_PARAMETER_BSWC, name = "Clapp and Hornberger",units = "[-]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_parameter_l2e_bswc = count
+    index_l2e_parameter_bswc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=PARAMETER_L2E_SUCSATC, name = "Minimum soil suction ",units = "[mm]", &
+    call data%Setup(id=L2E_PARAMETER_SUCSATC, name = "Minimum soil suction ",units = "[mm]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_parameter_l2e_sucsatc = count
+    index_l2e_parameter_sucsatc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=PARAMETER_L2E_EFFPOROSITYC, name = "Effective porosity",units = "[m^3/m^3]", &
+    call data%Setup(id=L2E_PARAMETER_EFFPOROSITYC, name = "Effective porosity",units = "[m^3/m^3]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_parameter_l2e_effporosityc = count
+    index_l2e_parameter_effporosityc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_L2E_WTD, name = "Water table depth ",units = "[m]", &
+    call data%Setup(id=L2E_STATE_WTD, name = "Water table depth ",units = "[m]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                = count + 1
-    index_s_l2e_init_wtd = count
+    index_l2e_state_init_wtd = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_L2E_VSFM_PROGNOSTIC_SOILP, name = "Soil liquid pressure",units = "[Pa]", &
+    call data%Setup(id=L2E_STATE_VSFM_PROGNOSTIC_SOILP, name = "Soil liquid pressure",units = "[Pa]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                  = count + 1
-    index_s_l2e_init_soilp = count
+    index_l2e_state_init_soilp = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+    call data%Setup(id=L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
                     name = "Snow layer disappearance sink from restart",units = "[kg/s]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call l2e_init_list%AddData(data)
     count                  = count + 1
-    index_f_l2e_init_mflx_snowlyr_col = count
+    index_l2e_flux_init_mflx_snowlyr_col = count
     nullify(data)
 
   end subroutine EM_VSFM_Populate_L2E_Init_List
@@ -301,11 +301,11 @@ contains
     !
     ! !USES:
     use ExternalModelConstants    , only : EM_INITIALIZATION_STAGE
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
-    use ExternalModelConstants    , only : S_E2L_WTD
-    use ExternalModelConstants    , only : F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_WTD
+    use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     !
     implicit none
     !
@@ -325,60 +325,60 @@ contains
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_H2OSOI_LIQ,              &
+    call data%Setup(id=E2L_STATE_H2OSOI_LIQ,              &
                     name = "Soil liquid water",       &
                     units = "[kg/m2]",                &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_init_list%AddData(data)
     count                  = count + 1
-    index_s_e2l_init_h2osoi_liq = count
+    index_e2l_state_init_h2osoi_liq = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_H2OSOI_ICE,              &
+    call data%Setup(id=E2L_STATE_H2OSOI_ICE,              &
                     name = "Soil ice water",          &
                     units = "[kg/m2]",                &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_init_list%AddData(data)
     count                  = count + 1
-    index_s_e2l_init_h2osoi_ice = count
+    index_e2l_state_init_h2osoi_ice = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_SOIL_MATRIC_POTENTIAL,   &
+    call data%Setup(id=E2L_STATE_SOIL_MATRIC_POTENTIAL,   &
                     name = "Soil matric potential",   &
                     units = "[mm]",                   &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_init_list%AddData(data)
     count                          = count + 1
-    index_s_e2l_init_smp = count
+    index_e2l_state_init_smp = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_WTD,                     &
+    call data%Setup(id=E2L_STATE_WTD,                     &
                     name = "Water table depth",       &
                     units = "[m]",                    &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_init_list%AddData(data)
     count           = count + 1
-    index_s_e2l_init_wtd = count
+    index_e2l_state_init_wtd = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_E2L_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+    call data%Setup(id=E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
                     name = "Snow layer disappearance sink initial value",units = "[kg/s]", &
                     num_em_stages = number_em_stages,em_stage_ids = em_stages)
     call e2l_init_list%AddData(data)
     count                  = count + 1
-    index_f_e2l_init_mflx_snowlyr_col = count
+    index_e2l_flux_init_mflx_snowlyr_col = count
     nullify(data)
 
     deallocate(em_stages)
@@ -393,18 +393,18 @@ contains
     !
     ! !USES:
     use ExternalModelVSFMConstants, only : EM_VSFM_SOIL_HYDRO_STAGE
-    use ExternalModelConstants    , only : S_L2E_TSOIL
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_L2E_H2OSOI_ICE
-    use ExternalModelConstants    , only : F_L2E_INFIL_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_VERTICAL_ET_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DEW_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_SUBLIMATION_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : F_L2E_DRAINAGE_MASS_FLUX
-    use ExternalModelConstants    , only : FILTER_L2E_HYDROLOGYC
-    use ExternalModelConstants    , only : FILTER_L2E_NUM_HYDROLOGYC
-    use ExternalModelConstants    , only : COLUMN_L2E_ZI
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI
     !
     implicit none
     !
@@ -424,146 +424,146 @@ contains
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_L2E_TSOIL,                           &
+    call data%Setup(id=L2E_STATE_TSOIL,                           &
                     name = "Soil temperature",                &
                     units = "[K]",                            &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count             = count + 1
-    index_s_l2e_tsoil = count
+    index_l2e_state_tsoil = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_L2E_H2OSOI_LIQ,                      &
+    call data%Setup(id=L2E_STATE_H2OSOI_LIQ,                      &
                     name = "Soil liquid water",               &
                     units = "[kg/m2]",                        &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     count                  = count + 1
-    index_s_l2e_h2osoi_liq = count
+    index_l2e_state_h2osoi_liq = count
     call l2e_list%AddData(data)
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_L2E_H2OSOI_ICE,                      &
+    call data%Setup(id=L2E_STATE_H2OSOI_ICE,                      &
                     name = "Soil ice water",                  &
                     units = "[kg/m2]",                        &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count                  = count + 1
-    index_s_l2e_h2osoi_ice = count
+    index_l2e_state_h2osoi_ice = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_INFIL_MASS_FLUX,                 &
+    call data%Setup(id=L2E_FLUX_INFIL_MASS_FLUX,                 &
                     name = "Soil infiltration source",        &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count             = count + 1
-    index_f_l2e_infil = count
+    index_l2e_flux_infil = count
     nullify(data)
     
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_VERTICAL_ET_MASS_FLUX,           &
+    call data%Setup(id=L2E_FLUX_VERTICAL_ET_MASS_FLUX,           &
                     name = "Evapotranspiration sink",         &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count          = count + 1
-    index_f_l2e_et = count
+    index_l2e_flux_et = count
     nullify(data)
     
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_DEW_MASS_FLUX,                   &
+    call data%Setup(id=L2E_FLUX_DEW_MASS_FLUX,                   &
                     name = "Dew sink",                        &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count           = count + 1
-    index_f_l2e_dew = count
+    index_l2e_flux_dew = count
     nullify(data)
     
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_SNOW_SUBLIMATION_MASS_FLUX,      &
+    call data%Setup(id=L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,      &
                     name = "Snow sublimation sink",           &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count                = count + 1
-    index_f_l2e_snow_sub = count
+    index_l2e_flux_snow_sub = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+    call data%Setup(id=L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
                     name = "Snow layer disappearance sink",   &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count               = count + 1
-    index_f_l2e_snowlyr = count
+    index_l2e_flux_snowlyr = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_L2E_DRAINAGE_MASS_FLUX,              &
+    call data%Setup(id=L2E_FLUX_DRAINAGE_MASS_FLUX,              &
                     name = "Drainage",                        &
                     units = "[kg/s]",                         &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count               = count + 1
-    index_f_l2e_drainage = count
+    index_l2e_flux_drainage = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=FILTER_L2E_HYDROLOGYC,                 &
+    call data%Setup(id=L2E_FILTER_HYDROLOGYC,                 &
                     name = "Hydrology filter",                &
                     units = "[-]",                            &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count                       = count + 1
-    index_filter_l2e_hydrologyc = count
+    index_l2e_filter_hydrologyc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=FILTER_L2E_NUM_HYDROLOGYC,             &
+    call data%Setup(id=L2E_FILTER_NUM_HYDROLOGYC,             &
                     name = "Number of hydrology filter",      &
                     units = "[-]",                            &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count                          = count + 1
-    index_filter_l2e_num_hydrologyc = count
+    index_l2e_filter_num_hydrologyc = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=COLUMN_L2E_ZI,                         &
+    call data%Setup(id=L2E_COLUMN_ZI,                         &
                     name = "Depth of interface layer",        &
                     units = "[m]",                            &
                     num_em_stages = number_em_stages,         &
                     em_stage_ids = em_stages)
     call l2e_list%AddData(data)
     count             = count + 1
-    index_COLUMN_L2E_ZI = count
+    index_l2e_column_zi = count
     nullify(data)
 
     deallocate(em_stages)
@@ -579,12 +579,12 @@ contains
     !
     ! !USES:
     use ExternalModelVSFMConstants, only : EM_VSFM_SOIL_HYDRO_STAGE
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_LIQ
-    use ExternalModelConstants    , only : S_E2L_H2OSOI_ICE
-    use ExternalModelConstants    , only : S_E2L_SOIL_MATRIC_POTENTIAL
-    use ExternalModelConstants    , only : S_E2L_WTD
-    use ExternalModelConstants    , only : S_E2L_VSFM_PROGNOSTIC_SOILP
-    use ExternalModelConstants    , only : F_E2L_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_WTD
+    use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     !
     implicit none
     !
@@ -604,74 +604,74 @@ contains
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_H2OSOI_LIQ,              &
+    call data%Setup(id=E2L_STATE_H2OSOI_LIQ,              &
                     name = "Soil liquid water",       &
                     units = "[kg/m2]",                &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count                  = count + 1
-    index_s_e2l_h2osoi_liq = count
+    index_e2l_state_h2osoi_liq = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_H2OSOI_ICE,              &
+    call data%Setup(id=E2L_STATE_H2OSOI_ICE,              &
                     name = "Soil ice water",          &
                     units = "[kg/m2]",                &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count                  = count + 1
-    index_s_e2l_h2osoi_ice = count
+    index_e2l_state_h2osoi_ice = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_SOIL_MATRIC_POTENTIAL,   &
+    call data%Setup(id=E2L_STATE_SOIL_MATRIC_POTENTIAL,   &
                     name = "Soil matric potential",   &
                     units = "[mm]",                   &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count                          = count + 1
-    index_s_e2l_smp = count
+    index_e2l_state_smp = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_WTD,                     &
+    call data%Setup(id=E2L_STATE_WTD,                     &
                     name = "Water table depth",       &
                     units = "[m]",                    &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count           = count + 1
-    index_s_e2l_wtd = count
+    index_e2l_state_wtd = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=S_E2L_VSFM_PROGNOSTIC_SOILP,   &
+    call data%Setup(id=E2L_STATE_VSFM_PROGNOSTIC_SOILP,   &
                     name = "Soil liquid pressure",    &
                     units = "[Pa]",                   &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count             = count + 1
-    index_s_e2l_soilp = count
+    index_e2l_state_soilp = count
     nullify(data)
 
     allocate(data)
     call data%Init()
-    call data%Setup(id=F_E2L_AQUIFER_RECHARGE,        &
+    call data%Setup(id=E2L_FLUX_AQUIFER_RECHARGE,        &
                     name = "Aquifer recharge rate",   &
                     units = "[mm/s]",                 &
                     num_em_stages = number_em_stages, &
                     em_stage_ids = em_stages)
     call e2l_list%AddData(data)
     count                 = count + 1
-    index_f_e2l_qrecharge = count
+    index_e2l_flux_qrecharge = count
     nullify(data)
 
     deallocate(em_stages)
@@ -883,16 +883,16 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !----------------------------------------------------------------------
 
-    zi           => l2e_init_list%data_ptr(index_col_l2e_zi                )%data%data_real_2d
-    dz           => l2e_init_list%data_ptr(index_col_l2e_dz                )%data%data_real_2d
-    z            => l2e_init_list%data_ptr(index_col_l2e_z                 )%data%data_real_2d
+    zi           => l2e_init_list%data_ptr(index_l2e_col_zi                )%data%data_real_2d
+    dz           => l2e_init_list%data_ptr(index_l2e_col_dz                )%data%data_real_2d
+    z            => l2e_init_list%data_ptr(index_l2e_col_z                 )%data%data_real_2d
 
-    col_active   => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
-    col_type     => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
-    col_landunit => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
-    lun_type     => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
-    lun_lakpoi   => l2e_init_list%data_ptr(index_landunit_l2e_lakepoint    )%data%data_int_1d
-    lun_urbpoi   => l2e_init_list%data_ptr(index_landunit_l2e_urbanpoint   )%data%data_int_1d
+    col_active   => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
+    col_type     => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
+    col_landunit => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
+    lun_type     => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
+    lun_lakpoi   => l2e_init_list%data_ptr(index_l2e_landunit_lakepoint    )%data%data_int_1d
+    lun_urbpoi   => l2e_init_list%data_ptr(index_l2e_landunit_urbanpoint   )%data%data_int_1d
 
     if (nclumps /= 1) then
        call endrun(msg='ERROR VSFM only supported for clumps = 1')
@@ -1619,17 +1619,17 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    col_active       => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
-    col_type         => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
-    col_landunit     => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
-    lun_type         => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
+    col_active       => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
+    col_type         => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
+    col_landunit     => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
+    lun_type         => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
 
-    clm_watsat       => l2e_init_list%data_ptr(index_parameter_l2e_watsatc     )%data%data_real_2d
-    clm_hksat        => l2e_init_list%data_ptr(index_parameter_l2e_hksatc      )%data%data_real_2d
-    clm_bsw          => l2e_init_list%data_ptr(index_parameter_l2e_bswc        )%data%data_real_2d
-    clm_sucsat       => l2e_init_list%data_ptr(index_parameter_l2e_sucsatc     )%data%data_real_2d
-    clm_eff_porosity => l2e_init_list%data_ptr(index_parameter_l2e_effporosityc)%data%data_real_2d
-    clm_zwt          => l2e_init_list%data_ptr(index_s_l2e_init_wtd                 )%data%data_real_1d
+    clm_watsat       => l2e_init_list%data_ptr(index_l2e_parameter_watsatc     )%data%data_real_2d
+    clm_hksat        => l2e_init_list%data_ptr(index_l2e_parameter_hksatc      )%data%data_real_2d
+    clm_bsw          => l2e_init_list%data_ptr(index_l2e_parameter_bswc        )%data%data_real_2d
+    clm_sucsat       => l2e_init_list%data_ptr(index_l2e_parameter_sucsatc     )%data%data_real_2d
+    clm_eff_porosity => l2e_init_list%data_ptr(index_l2e_parameter_effporosityc)%data%data_real_2d
+    clm_zwt          => l2e_init_list%data_ptr(index_l2e_state_init_wtd                 )%data%data_real_1d
 
     ! Allocate memory
     allocate(vsfm_filter       (bounds_proc_begc_all:bounds_proc_endc_all           ))
@@ -1726,12 +1726,12 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    col_active       => l2e_init_list%data_ptr(index_col_l2e_active            )%data%data_int_1d
-    col_type         => l2e_init_list%data_ptr(index_col_l2e_type              )%data%data_int_1d
-    col_landunit     => l2e_init_list%data_ptr(index_col_l2e_landunit_index    )%data%data_int_1d
-    lun_type         => l2e_init_list%data_ptr(index_landunit_l2e_type         )%data%data_int_1d
-    clm_zwt          => l2e_init_list%data_ptr(index_s_l2e_init_wtd                 )%data%data_real_1d
-    clm_zi           => l2e_init_list%data_ptr(index_col_l2e_zi                )%data%data_real_2d
+    col_active       => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
+    col_type         => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
+    col_landunit     => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
+    lun_type         => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
+    clm_zwt          => l2e_init_list%data_ptr(index_l2e_state_init_wtd                 )%data%data_real_1d
+    clm_zi           => l2e_init_list%data_ptr(index_l2e_col_zi                )%data%data_real_2d
 
     ! Allocate memory
     allocate(press_ic_1d ((bounds_proc_endc_all - bounds_proc_begc_all + 1)*nlevgrnd))
@@ -1925,14 +1925,14 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !-----------------------------------------------------------------------
 
-    l2e_col_zi           => l2e_init_list%data_ptr(index_col_l2e_zi                  )%data%data_real_2d
-    l2e_soilp            => l2e_init_list%data_ptr(index_s_l2e_init_soilp            )%data%data_real_2d
-    l2e_mflx_snowlyr_col => l2e_init_list%data_ptr(index_f_l2e_init_mflx_snowlyr_col )%data%data_real_1d
-    e2l_h2osoi_liq       => e2l_init_list%data_ptr(index_s_e2l_init_h2osoi_liq       )%data%data_real_2d
-    e2l_h2osoi_ice       => e2l_init_list%data_ptr(index_s_e2l_init_h2osoi_ice       )%data%data_real_2d
-    e2l_smp_l            => e2l_init_list%data_ptr(index_s_e2l_init_smp              )%data%data_real_2d
-    e2l_zwt              => e2l_init_list%data_ptr(index_s_e2l_init_wtd              )%data%data_real_1d
-    e2l_mflx_snowlyr_col => e2l_init_list%data_ptr(index_f_e2l_init_mflx_snowlyr_col )%data%data_real_1d
+    l2e_col_zi           => l2e_init_list%data_ptr(index_l2e_col_zi                  )%data%data_real_2d
+    l2e_soilp            => l2e_init_list%data_ptr(index_l2e_state_init_soilp            )%data%data_real_2d
+    l2e_mflx_snowlyr_col => l2e_init_list%data_ptr(index_l2e_flux_init_mflx_snowlyr_col )%data%data_real_1d
+    e2l_h2osoi_liq       => e2l_init_list%data_ptr(index_e2l_state_init_h2osoi_liq       )%data%data_real_2d
+    e2l_h2osoi_ice       => e2l_init_list%data_ptr(index_e2l_state_init_h2osoi_ice       )%data%data_real_2d
+    e2l_smp_l            => e2l_init_list%data_ptr(index_e2l_state_init_smp              )%data%data_real_2d
+    e2l_zwt              => e2l_init_list%data_ptr(index_e2l_state_init_wtd              )%data%data_real_1d
+    e2l_mflx_snowlyr_col => e2l_init_list%data_ptr(index_e2l_flux_init_mflx_snowlyr_col )%data%data_real_1d
 
 
     ! PreSolve: Allows saturation value to be computed based on ICs and stored
@@ -2169,30 +2169,30 @@ end subroutine EM_VSFM_Populate_E2L_List
 
       dtime = dt
 
-      l2e_mflux_infil       => l2e_list%data_ptr(index_f_l2e_infil              )%data%data_real_1d
-      l2e_mflux_dew         => l2e_list%data_ptr(index_f_l2e_dew                )%data%data_real_1d
-      l2e_mflux_sub_snow    => l2e_list%data_ptr(index_f_l2e_snow_sub           )%data%data_real_1d
-      l2e_mflux_snowlyr     => l2e_list%data_ptr(index_f_l2e_snowlyr            )%data%data_real_1d
+      l2e_mflux_infil       => l2e_list%data_ptr(index_l2e_flux_infil              )%data%data_real_1d
+      l2e_mflux_dew         => l2e_list%data_ptr(index_l2e_flux_dew                )%data%data_real_1d
+      l2e_mflux_sub_snow    => l2e_list%data_ptr(index_l2e_flux_snow_sub           )%data%data_real_1d
+      l2e_mflux_snowlyr     => l2e_list%data_ptr(index_l2e_flux_snowlyr            )%data%data_real_1d
 
-      l2e_mflux_et          => l2e_list%data_ptr(index_f_l2e_et                 )%data%data_real_2d
-      l2e_mflux_drain       => l2e_list%data_ptr(index_f_l2e_drainage           )%data%data_real_2d
-      l2e_h2osoi_liq        => l2e_list%data_ptr(index_s_l2e_h2osoi_liq         )%data%data_real_2d
-      l2e_h2osoi_ice        => l2e_list%data_ptr(index_s_l2e_h2osoi_ice         )%data%data_real_2d
+      l2e_mflux_et          => l2e_list%data_ptr(index_l2e_flux_et                 )%data%data_real_2d
+      l2e_mflux_drain       => l2e_list%data_ptr(index_l2e_flux_drainage           )%data%data_real_2d
+      l2e_h2osoi_liq        => l2e_list%data_ptr(index_l2e_state_h2osoi_liq         )%data%data_real_2d
+      l2e_h2osoi_ice        => l2e_list%data_ptr(index_l2e_state_h2osoi_ice         )%data%data_real_2d
 
-      l2e_filter_hydrologyc => l2e_list%data_ptr(index_filter_l2e_hydrologyc    )%data%data_int_1d
-      l2e_num_hydrologyc    =  l2e_list%data_ptr(index_filter_l2e_num_hydrologyc)%data%data_int_1d(1)
+      l2e_filter_hydrologyc => l2e_list%data_ptr(index_l2e_filter_hydrologyc    )%data%data_int_1d
+      l2e_num_hydrologyc    =  l2e_list%data_ptr(index_l2e_filter_num_hydrologyc)%data%data_int_1d(1)
 
-      l2e_zi                => l2e_list%data_ptr(index_COLUMN_L2E_ZI              )%data%data_real_2d
+      l2e_zi                => l2e_list%data_ptr(index_l2e_column_zi              )%data%data_real_2d
 
-      e2l_h2osoi_liq        => e2l_list%data_ptr(index_s_e2l_h2osoi_liq         )%data%data_real_2d
-      e2l_h2osoi_ice        => e2l_list%data_ptr(index_s_e2l_h2osoi_ice         )%data%data_real_2d
-      e2l_smp               => e2l_list%data_ptr(index_s_e2l_smp                )%data%data_real_2d
-      e2l_wtd               => e2l_list%data_ptr(index_s_e2l_wtd                )%data%data_real_1d
-      e2l_soilp             => e2l_list%data_ptr(index_s_e2l_soilp              )%data%data_real_2d
-      e2l_qrecharge         => e2l_list%data_ptr(index_f_e2l_qrecharge          )%data%data_real_1d
+      e2l_h2osoi_liq        => e2l_list%data_ptr(index_e2l_state_h2osoi_liq         )%data%data_real_2d
+      e2l_h2osoi_ice        => e2l_list%data_ptr(index_e2l_state_h2osoi_ice         )%data%data_real_2d
+      e2l_smp               => e2l_list%data_ptr(index_e2l_state_smp                )%data%data_real_2d
+      e2l_wtd               => e2l_list%data_ptr(index_e2l_state_wtd                )%data%data_real_1d
+      e2l_soilp             => e2l_list%data_ptr(index_e2l_state_soilp              )%data%data_real_2d
+      e2l_qrecharge         => e2l_list%data_ptr(index_e2l_flux_qrecharge          )%data%data_real_1d
 
-      begc = l2e_list%data_ptr(index_f_l2e_et)%data%dim1_beg_clump(1)
-      endc = l2e_list%data_ptr(index_f_l2e_et)%data%dim1_end_clump(1)
+      begc = l2e_list%data_ptr(index_l2e_flux_et)%data%dim1_beg_clump(1)
+      endc = l2e_list%data_ptr(index_l2e_flux_et)%data%dim1_end_clump(1)
 
       allocate(frac_ice                    (begc:endc,1:nlevgrnd))
       allocate(total_mass_flux_col         (begc:endc))
