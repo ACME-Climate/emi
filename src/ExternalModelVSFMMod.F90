@@ -493,16 +493,16 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !----------------------------------------------------------------------
 
-    zi           => l2e_init_list%data_ptr(index_l2e_col_zi                )%data%data_real_2d
-    dz           => l2e_init_list%data_ptr(index_l2e_col_dz                )%data%data_real_2d
-    z            => l2e_init_list%data_ptr(index_l2e_col_z                 )%data%data_real_2d
+    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi             , zi           )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_col_dz             , dz           )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_col_z              , z            )
 
-    col_active   => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
-    col_type     => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
-    col_landunit => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
-    lun_type     => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
-    lun_lakpoi   => l2e_init_list%data_ptr(index_l2e_landunit_lakepoint    )%data%data_int_1d
-    lun_urbpoi   => l2e_init_list%data_ptr(index_l2e_landunit_urbanpoint   )%data%data_int_1d
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active          , col_active   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type            , col_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index  , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type       , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_urbanpoint , lun_urbpoi   )
 
     if (nclumps /= 1) then
        call endrun(msg='ERROR VSFM only supported for clumps = 1')
@@ -1229,17 +1229,17 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    col_active       => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
-    col_type         => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
-    col_landunit     => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
-    lun_type         => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
+    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_watsatc      , clm_watsat       )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_hksatc       , clm_hksat        )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_bswc         , clm_bsw          )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_sucsatc      , clm_sucsat       )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_effporosityc , clm_eff_porosity )
+    call l2e_init_list%GetPointerToReal1D(index_l2e_state_init_wtd         , clm_zwt          )
 
-    clm_watsat       => l2e_init_list%data_ptr(index_l2e_parameter_watsatc     )%data%data_real_2d
-    clm_hksat        => l2e_init_list%data_ptr(index_l2e_parameter_hksatc      )%data%data_real_2d
-    clm_bsw          => l2e_init_list%data_ptr(index_l2e_parameter_bswc        )%data%data_real_2d
-    clm_sucsat       => l2e_init_list%data_ptr(index_l2e_parameter_sucsatc     )%data%data_real_2d
-    clm_eff_porosity => l2e_init_list%data_ptr(index_l2e_parameter_effporosityc)%data%data_real_2d
-    clm_zwt          => l2e_init_list%data_ptr(index_l2e_state_init_wtd                 )%data%data_real_1d
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active              , col_active       )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type                , col_type         )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index      , col_landunit     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type           , lun_type         )
 
     ! Allocate memory
     allocate(vsfm_filter       (bounds_proc_begc_all:bounds_proc_endc_all           ))
@@ -1336,12 +1336,13 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    col_active       => l2e_init_list%data_ptr(index_l2e_col_active            )%data%data_int_1d
-    col_type         => l2e_init_list%data_ptr(index_l2e_col_type              )%data%data_int_1d
-    col_landunit     => l2e_init_list%data_ptr(index_l2e_col_landunit_index    )%data%data_int_1d
-    lun_type         => l2e_init_list%data_ptr(index_l2e_landunit_type         )%data%data_int_1d
-    clm_zwt          => l2e_init_list%data_ptr(index_l2e_state_init_wtd                 )%data%data_real_1d
-    clm_zi           => l2e_init_list%data_ptr(index_l2e_col_zi                )%data%data_real_2d
+    call l2e_init_list%GetPointerToReal1D(index_l2e_state_init_wtd    , clm_zwt      )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi            , clm_zi       )
+
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active         , col_active   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type           , col_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type      , lun_type     )
 
     ! Allocate memory
     allocate(press_ic_1d ((bounds_proc_endc_all - bounds_proc_begc_all + 1)*nlevgrnd))
@@ -1535,15 +1536,17 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !-----------------------------------------------------------------------
 
-    l2e_col_zi           => l2e_init_list%data_ptr(index_l2e_col_zi                  )%data%data_real_2d
-    l2e_soilp            => l2e_init_list%data_ptr(index_l2e_state_init_soilp            )%data%data_real_2d
-    l2e_mflx_snowlyr_col => l2e_init_list%data_ptr(index_l2e_flux_init_mflx_snowlyr_col )%data%data_real_1d
-    e2l_h2osoi_liq       => e2l_init_list%data_ptr(index_e2l_state_init_h2osoi_liq       )%data%data_real_2d
-    e2l_h2osoi_ice       => e2l_init_list%data_ptr(index_e2l_state_init_h2osoi_ice       )%data%data_real_2d
-    e2l_smp_l            => e2l_init_list%data_ptr(index_e2l_state_init_smp              )%data%data_real_2d
-    e2l_zwt              => e2l_init_list%data_ptr(index_e2l_state_init_wtd              )%data%data_real_1d
-    e2l_mflx_snowlyr_col => e2l_init_list%data_ptr(index_e2l_flux_init_mflx_snowlyr_col )%data%data_real_1d
+    call l2e_init_list%GetPointerToReal1D(index_l2e_flux_init_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
 
+    call l2e_init_list%GetPointerToReal2D(index_l2e_state_init_soilp           , l2e_soilp            )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi                     , l2e_col_zi           )
+
+    call e2l_init_list%GetPointerToReal1D(index_e2l_state_init_wtd             , e2l_zwt              )
+    call e2l_init_list%GetPointerToReal1D(index_e2l_flux_init_mflx_snowlyr_col , e2l_mflx_snowlyr_col )
+
+    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_h2osoi_liq      , e2l_h2osoi_liq       )
+    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_h2osoi_ice      , e2l_h2osoi_ice       )
+    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_smp             , e2l_smp_l            )
 
     ! PreSolve: Allows saturation value to be computed based on ICs and stored
     !           in GE auxvar
@@ -1657,6 +1660,7 @@ end subroutine EM_VSFM_Populate_E2L_List
     use MultiPhysicsProbConstants , only : AUXVAR_BC
     use MultiPhysicsProbConstants , only : AUXVAR_SS
     use mpp_varpar                , only : nlevgrnd
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
     !
     implicit none
     !
@@ -1779,30 +1783,31 @@ end subroutine EM_VSFM_Populate_E2L_List
 
       dtime = dt
 
-      l2e_mflux_infil       => l2e_list%data_ptr(index_l2e_flux_infil              )%data%data_real_1d
-      l2e_mflux_dew         => l2e_list%data_ptr(index_l2e_flux_dew                )%data%data_real_1d
-      l2e_mflux_sub_snow    => l2e_list%data_ptr(index_l2e_flux_snow_sub           )%data%data_real_1d
-      l2e_mflux_snowlyr     => l2e_list%data_ptr(index_l2e_flux_snowlyr            )%data%data_real_1d
+      call l2e_list%GetPointerToReal1D(index_l2e_flux_infil       , l2e_mflux_infil       )
+      call l2e_list%GetPointerToReal1D(index_l2e_flux_dew         , l2e_mflux_dew         )
+      call l2e_list%GetPointerToReal1D(index_l2e_flux_snow_sub    , l2e_mflux_sub_snow    )
+      call l2e_list%GetPointerToReal1D(index_l2e_flux_snowlyr     , l2e_mflux_snowlyr     )
 
-      l2e_mflux_et          => l2e_list%data_ptr(index_l2e_flux_et                 )%data%data_real_2d
-      l2e_mflux_drain       => l2e_list%data_ptr(index_l2e_flux_drainage           )%data%data_real_2d
-      l2e_h2osoi_liq        => l2e_list%data_ptr(index_l2e_state_h2osoi_liq         )%data%data_real_2d
-      l2e_h2osoi_ice        => l2e_list%data_ptr(index_l2e_state_h2osoi_ice         )%data%data_real_2d
+      call l2e_list%GetPointerToReal2D(index_l2e_flux_et          , l2e_mflux_et          )
+      call l2e_list%GetPointerToReal2D(index_l2e_flux_drainage    , l2e_mflux_drain       )
+      call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_liq , l2e_h2osoi_liq        )
+      call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_ice , l2e_h2osoi_ice        )
 
-      l2e_filter_hydrologyc => l2e_list%data_ptr(index_l2e_filter_hydrologyc    )%data%data_int_1d
-      l2e_num_hydrologyc    =  l2e_list%data_ptr(index_l2e_filter_num_hydrologyc)%data%data_int_1d(1)
+      call l2e_list%GetPointerToInt1D(index_l2e_filter_hydrologyc , l2e_filter_hydrologyc )
+      call l2e_list%GetIntValue(index_l2e_filter_num_hydrologyc   , l2e_num_hydrologyc    )
 
-      l2e_zi                => l2e_list%data_ptr(index_l2e_column_zi              )%data%data_real_2d
+      call l2e_list%GetPointerToReal2D(index_l2e_column_zi        , l2e_zi                )
 
-      e2l_h2osoi_liq        => e2l_list%data_ptr(index_e2l_state_h2osoi_liq         )%data%data_real_2d
-      e2l_h2osoi_ice        => e2l_list%data_ptr(index_e2l_state_h2osoi_ice         )%data%data_real_2d
-      e2l_smp               => e2l_list%data_ptr(index_e2l_state_smp                )%data%data_real_2d
-      e2l_wtd               => e2l_list%data_ptr(index_e2l_state_wtd                )%data%data_real_1d
-      e2l_soilp             => e2l_list%data_ptr(index_e2l_state_soilp              )%data%data_real_2d
-      e2l_qrecharge         => e2l_list%data_ptr(index_e2l_flux_qrecharge          )%data%data_real_1d
+      call e2l_list%GetPointerToReal1D(index_e2l_state_wtd        , e2l_wtd               )
+      call e2l_list%GetPointerToReal2D(index_e2l_state_h2osoi_liq , e2l_h2osoi_liq        )
+      call e2l_list%GetPointerToReal2D(index_e2l_state_h2osoi_ice , e2l_h2osoi_ice        )
+      call e2l_list%GetPointerToReal2D(index_e2l_state_smp        , e2l_smp               )
+      call e2l_list%GetPointerToReal2D(index_e2l_state_soilp      , e2l_soilp             )
 
-      begc = l2e_list%data_ptr(index_l2e_flux_et)%data%dim1_beg_clump(1)
-      endc = l2e_list%data_ptr(index_l2e_flux_et)%data%dim1_end_clump(1)
+      call e2l_list%GetPointerToReal1D(index_e2l_flux_qrecharge   , e2l_qrecharge         )
+
+      begc = bounds_proc_begc
+      endc = bounds_proc_endc
 
       allocate(frac_ice                    (begc:endc,1:nlevgrnd))
       allocate(total_mass_flux_col         (begc:endc))

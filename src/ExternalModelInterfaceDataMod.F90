@@ -90,11 +90,19 @@ module ExternalModelInterfaceDataMod
 
    contains
 
-     procedure, public :: Init        => EMIDListInit
-     procedure, public :: AddData     => EMIDListAddData
-     procedure, public :: AddDataByID => EMIDListAddDataByID
-     procedure, public :: Copy        => EMIDListCopy
-     procedure, public :: Destroy     => EMIDListDestroy
+     procedure, public :: Init               => EMIDListInit
+     procedure, public :: AddData            => EMIDListAddData
+     procedure, public :: AddDataByID        => EMIDListAddDataByID
+     procedure, public :: Copy               => EMIDListCopy
+     procedure, public :: Destroy            => EMIDListDestroy
+     procedure, public :: GetIntValue        => EMIDListGetIntValue
+     procedure, public :: GetPointerToInt1D  => EMIDListGetPointerToInt1D
+     procedure, public :: GetPointerToInt2D  => EMIDListGetPointerToInt2D
+     procedure, public :: GetPointerToInt3D  => EMIDListGetPointerToInt3D
+     procedure, public :: GetPointerToReal1D => EMIDListGetPointerToReal1D
+     procedure, public :: GetPointerToReal2D => EMIDListGetPointerToReal2D
+     procedure, public :: GetPointerToReal3D => EMIDListGetPointerToReal3D
+     procedure, public :: GetPointerToReal4D => EMIDListGetPointerToReal4D
 
   end type emi_data_list
 
@@ -1290,8 +1298,246 @@ contains
        cur_data => cur_data%next
     enddo
 
-
   end subroutine EMIDListCopy
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetIntValue(this, data_index, int_value)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    integer, intent(out) :: int_value
+    !
+    ! !LOCAL VARIABLES:
+    integer :: idx
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_int_1d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_int_1d.')
+    else
+       if (this%data_ptr(data_index)%data%dim1_end_proc /= &
+           this%data_ptr(data_index)%data%dim1_beg_proc) then
+          call endrun(msg='EMIDListGetIntValue: Only extracts values from data ' // &
+             'that has 1 value.')
+       endif
+       idx = this%data_ptr(data_index)%data%dim1_beg_proc
+       int_value = this%data_ptr(data_index)%data%data_int_1d(idx)
+    endif
+
+  end subroutine EMIDListGetIntValue
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToInt1D(this, data_index, int_1d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    integer, pointer :: int_1d(:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_int_1d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_int_1d.')
+    else
+       int_1d => this%data_ptr(data_index)%data%data_int_1d
+    endif
+
+  end subroutine EMIDListGetPointerToInt1D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToInt2D(this, data_index, int_2d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    integer, pointer :: int_2d(:,:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_int_2d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_int_2d.')
+    else
+       int_2d => this%data_ptr(data_index)%data%data_int_2d
+    endif
+
+  end subroutine EMIDListGetPointerToInt2D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToInt3D(this, data_index, int_3d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    integer, pointer :: int_3d(:,:,:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_int_3d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_int_3d.')
+    else
+       int_3d => this%data_ptr(data_index)%data%data_int_3d
+    endif
+
+  end subroutine EMIDListGetPointerToInt3D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToReal1D(this, data_index, real_1d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    real(r8), pointer :: real_1d(:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_real_1d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_real_1d.')
+    else
+       real_1d => this%data_ptr(data_index)%data%data_real_1d
+    endif
+
+  end subroutine EMIDListGetPointerToReal1D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToReal2D(this, data_index, real_2d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    real(r8), pointer :: real_2d(:,:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_real_2d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_real_2d.')
+    else
+       real_2d => this%data_ptr(data_index)%data%data_real_2d
+    endif
+
+  end subroutine EMIDListGetPointerToReal2D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToReal3D(this, data_index, real_3d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    real(r8), pointer :: real_3d(:,:,:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_real_3d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_real_3d.')
+    else
+       real_3d => this%data_ptr(data_index)%data%data_real_3d
+    endif
+
+  end subroutine EMIDListGetPointerToReal3D
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListGetPointerToReal4D(this, data_index, real_4d)
+    !
+    ! !DESCRIPTION:
+    ! Gives access to data pointer
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)              :: this
+    integer , intent(in) :: data_index
+    real(r8), pointer :: real_4d(:,:,:,:)
+    !
+    ! !LOCAL VARIABLES:
+
+    if (data_index > this%num_data) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to access ' // &
+          'data index that is larger than number of data in the list.')
+    endif
+
+    if (.not. associated(this%data_ptr(data_index)%data%data_real_4d)) then
+       call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
+          'an unallocated data_real_4d.')
+    else
+       real_4d => this%data_ptr(data_index)%data%data_real_4d
+    endif
+
+  end subroutine EMIDListGetPointerToReal4D
 
   !------------------------------------------------------------------------
   subroutine EMIDListDestroy(this)
