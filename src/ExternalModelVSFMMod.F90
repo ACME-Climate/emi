@@ -585,6 +585,7 @@ end subroutine EM_VSFM_Populate_E2L_List
     do c = bounds_proc_begc, bounds_proc_endc
        do j = 1, nlevgrnd
           icell = icell + 1
+          l = col_landunit(c)
 
           if ((col_active(c) == 1).and. &
                (lun_type(l) == istsoil .or. col_type(c) == icol_road_perv .or. &
