@@ -43,10 +43,12 @@ contains
     ! Determine which EMs are active
     !
     ! !USES:
-    use clm_varctl, only : use_betr
     use clm_varctl, only : use_ed
+#ifdef WITH_ACME
+    use clm_varctl, only : use_betr
     use clm_varctl, only : use_pflotran
     use clm_varctl, only : use_vsfm
+#endif
     !
     implicit none
     !
@@ -60,16 +62,17 @@ contains
     index_em_pflotran    = 0
     index_em_vsfm        = 0
 
-    ! Is BeTR active?
-    if (use_betr) then
-       num_em            = num_em + 1
-       index_em_betr     = num_em
-    endif
-
     ! Is FATES active?
     if (use_ed) then
        num_em            = num_em + 1
        index_em_fates    = num_em
+    endif
+
+#ifdef WITH_ACME
+    ! Is BeTR active?
+    if (use_betr) then
+       num_em            = num_em + 1
+       index_em_betr     = num_em
     endif
 
     ! Is PFLOTRAN active?
@@ -83,6 +86,7 @@ contains
        num_em            = num_em + 1
        index_em_vsfm     = num_em
     endif
+#endif
 
     if ( masterproc ) then
        write(iulog,*) 'Number of Exteranl Models = ', num_em
@@ -125,10 +129,17 @@ contains
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Init
 #endif
+#ifdef WITH_ACME
     use clm_instMod           , only : soilstate_vars
     use clm_instMod           , only : soilhydrology_vars
     use clm_instMod           , only : waterflux_vars
     use clm_instMod           , only : waterstate_vars
+#else
+    use clm_instMod           , only : soilstate_inst
+    use clm_instMod           , only : soilhydrology_inst
+    use clm_instMod           , only : waterflux_inst
+    use clm_instMod           , only : waterstate_inst
+#endif
     !
     implicit none
     !
@@ -856,7 +867,8 @@ contains
     integer                           :: istage
     integer                           :: count
 
-    associate(& 
+#ifdef WITH_ACME
+    associate(&
          mflx_infl_col         => waterflux_vars%mflx_infl_col         , &
          mflx_dew_col          => waterflux_vars%mflx_dew_col          , &
          mflx_snowlyr_disp_col => waterflux_vars%mflx_snowlyr_disp_col , &
@@ -865,7 +877,6 @@ contains
          mflx_et_col           => waterflux_vars%mflx_et_col           , &
          mflx_drain_col        => waterflux_vars%mflx_drain_col          &
          )
-
     count = 0
     cur_data => data_list%first
     do
@@ -952,6 +963,7 @@ contains
     enddo
 
     end associate
+#endif
 
   end subroutine EMID_Pack_WaterFlux_Vars_for_EM
 
@@ -982,6 +994,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
+#ifdef WITH_ACME
     associate( &
          mflx_recharge_col   => waterflux_vars%mflx_recharge_col, &
          mflx_snowlyr_col    => waterflux_vars%mflx_snowlyr_col   &
@@ -1027,6 +1040,7 @@ contains
     enddo
 
     end associate
+#endif
 
   end subroutine EMID_Unpack_WaterFlux_Vars_for_EM
 
@@ -1305,11 +1319,18 @@ contains
     integer                           :: istage
     integer                           :: count
 
-    associate(& 
+#ifdef WITH_ACME
+    associate(&
          h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Input:  [real(r8) (:,:) ]  ice water (kg/m2)
          h2osoi_liq =>    waterstate_vars%h2osoi_liq_col , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
          soilp_col  =>    waterstate_vars%soilp_col        & ! Input:  [real(r8) (:,:) ]  soil water pressure (Pa)
          )
+#else
+    associate(&
+         h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Input:  [real(r8) (:,:) ]  ice water (kg/m2)
+         h2osoi_liq =>    waterstate_vars%h2osoi_liq_col   & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
+         )
+#endif
 
     count = 0
     cur_data => data_list%first
@@ -1347,6 +1368,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
+#ifdef WITH_ACME
           case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -1355,6 +1377,7 @@ contains
                 enddo
              enddo
              cur_data%is_set = .true.
+#endif
 
           end select
 
@@ -1395,11 +1418,18 @@ contains
     integer                           :: istage
     integer                           :: count
 
-    associate(& 
+#if WITH_ACME
+    associate(&
          h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Output:  [real(r8) (:,:) ]  ice water (kg/m2)
          h2osoi_liq =>    waterstate_vars%h2osoi_liq_col , & ! Output:  [real(r8) (:,:) ]  liquid water (kg/m2)
          soilp_col  =>    waterstate_vars%soilp_col        & ! Output: [real(r8) (:,:) ]  soil water pressure (Pa)
          )
+#else
+    associate(&
+         h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Output:  [real(r8) (:,:) ]  ice water (kg/m2)
+         h2osoi_liq =>    waterstate_vars%h2osoi_liq_col   & ! Output:  [real(r8) (:,:) ]  liquid water (kg/m2)
+         )
+#endif
 
     count = 0
     cur_data => data_list%first
@@ -1439,6 +1469,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
+#if WITH_ACME
           case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
 
              do fc = 1, num_hydrologyc
@@ -1448,6 +1479,7 @@ contains
                 enddo
              enddo
              cur_data%is_set = .true.
+#endif
 
           end select
 
