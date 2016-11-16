@@ -1,4 +1,7 @@
 module ExternalModelVSFMMod
+
+#ifdef USE_PETSC_LIB
+
   !-----------------------------------------------------------------------
   ! !DESCRIPTION:
   ! This module provides
@@ -8,7 +11,7 @@ module ExternalModelVSFMMod
   use shr_log_mod                  , only : errMsg => shr_log_errMsg
   use ExternalModelInterfaceDataMod, only : emi_data_list, emi_data
   use mpp_varctl                   , only : iulog
-    use MultiPhysicsProbVSFM       , only : vsfm_mpp
+  use MultiPhysicsProbVSFM         , only : vsfm_mpp
   !
   implicit none
   !
@@ -378,7 +381,10 @@ end subroutine EM_VSFM_Populate_E2L_List
     use mpp_varctl                , only : lateral_connectivity
     use mpp_varcon                , only : max_lunit
     use mpp_varctl                , only : vsfm_lateral_model_type
-
+    use mpp_bounds                , only : bounds_proc_begg_all, bounds_proc_endg_all
+    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
+    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    use mpp_bounds                , only : nclumps
     use MultiPhysicsProbConstants , only : MESH_ALONG_GRAVITY
     use MultiPhysicsProbConstants , only : MESH_CLM_SOIL_COL
     use MultiPhysicsProbConstants , only : VAR_XC
@@ -408,10 +414,6 @@ end subroutine EM_VSFM_Populate_E2L_List
     use MultiPhysicsProbConstants , only : DISCRETIZATION_VERTICAL_ONLY
     use MultiPhysicsProbConstants , only : DISCRETIZATION_VERTICAL_WITH_SS
     use MultiPhysicsProbConstants , only : DISCRETIZATION_THREE_DIM
-    use mpp_bounds                , only : bounds_proc_begg_all, bounds_proc_endg_all
-    use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
-    use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
-    use mpp_bounds                , only : nclumps
     !
     implicit none
     !
@@ -2504,5 +2506,6 @@ end subroutine EM_VSFM_Populate_E2L_List
 
   end subroutine EM_VSFM_Solve
 
+#endif
 
 end module ExternalModelVSFMMod

@@ -10,8 +10,10 @@ module ExternalModelInterfaceMod
   use decompMod                     , only : bounds_type, get_proc_bounds 
   use abortutils                    , only : endrun
   use clm_varctl                    , only : iulog
-  use MultiPhysicsProbVSFM          , only : vsfm_mpp
   use ExternalModelInterfaceDataMod , only : emi_data_list, emi_data
+#ifdef USE_PETSC_LIB
+  use MultiPhysicsProbVSFM          , only : vsfm_mpp
+#endif
   !
   implicit none
   !
@@ -112,15 +114,17 @@ contains
     !
     ! !USES:
     use ExternalModelConstants, only : EM_INITIALIZATION_STAGE
+    use ExternalModelConstants, only : EM_ID_BeTR
+    use ExternalModelConstants, only : EM_ID_FATES
+    use ExternalModelConstants, only : EM_ID_PFLOTRAN
+    use ExternalModelConstants, only : EM_ID_VSFM
+#ifdef USE_PETSC_LIB
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Init
-    use ExternalModelConstants, only : EM_ID_BeTR
-    use ExternalModelConstants, only : EM_ID_FATES
-    use ExternalModelConstants, only : EM_ID_PFLOTRAN
-    use ExternalModelConstants, only : EM_ID_VSFM
+#endif
     use clm_instMod           , only : soilstate_vars
     use clm_instMod           , only : soilhydrology_vars
     use clm_instMod           , only : waterflux_vars
@@ -152,6 +156,8 @@ contains
     case (EM_ID_PFLOTRAN)
 
     case (EM_ID_VSFM)
+
+#ifdef USE_PETSC_LIB
        ! Initialize EM
 
        ! Initialize lists of data to be exchanged between ALM and VSFM
@@ -232,6 +238,9 @@ contains
        ! Clean up memory
        call l2e_init_list%Destroy()
        call e2l_init_list%Destroy()
+#else
+       call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
+#endif
 
     case default
        call endrun('Unknown External Model')
@@ -608,7 +617,9 @@ contains
     use TemperatureType        , only : temperature_type
     use WaterFluxType          , only : waterflux_type
     use WaterStateType         , only : waterstate_type
+#ifdef USE_PETSC_LIB
     use ExternalModelVSFMMod   , only : EM_VSFM_Solve
+#endif
     !
     implicit none
     !
@@ -699,7 +710,11 @@ contains
     case (EM_ID_FATES)
     case (EM_ID_PFLOTRAN)
     case (EM_ID_VSFM)
+#ifdef USE_PETSC_LIB
        call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_list(index_em), e2l_list(index_em))
+#else
+       call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
+#endif
     case default
        call endrun('Unknown External Model')
     end select
