@@ -90,10 +90,11 @@ module ExternalModelInterfaceDataMod
 
    contains
 
-     procedure, public :: Init    => EMIDListInit
-     procedure, public :: AddData => EMIDListAddData
-     procedure, public :: Copy    => EMIDListCopy
-     procedure, public :: Destroy => EMIDListDestroy
+     procedure, public :: Init        => EMIDListInit
+     procedure, public :: AddData     => EMIDListAddData
+     procedure, public :: AddDataByID => EMIDListAddDataByID
+     procedure, public :: Copy        => EMIDListCopy
+     procedure, public :: Destroy     => EMIDListDestroy
 
   end type emi_data_list
 
@@ -918,6 +919,336 @@ contains
 
   end subroutine EMIDListAddData
   
+  !------------------------------------------------------------------------
+  subroutine EMIDListAddDataByID(this, data_id, num_em_stages_val, em_stage_ids_val, index_of_new_data)
+    !
+    ! !DESCRIPTION:
+    ! Add a EMID to a list
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_WTD
+    use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
+
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_WTD
+    use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
+
+    use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
+
+    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
+    use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+
+    use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
+
+    use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
+    use ExternalModelConstants    , only : L2E_COLUMN_TYPE
+    use ExternalModelConstants    , only : L2E_COLUMN_LANDUNIT_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ
+    use ExternalModelConstants    , only : L2E_COLUMN_Z
+    use ExternalModelConstants    , only : L2E_COLUMN_AREA
+
+    use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
+    use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
+    use ExternalModelConstants    , only : L2E_LANDUNIT_URBANPOINT
+
+    use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
+    use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
+    use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data_list)                   :: this
+    integer         , intent(in)           :: data_id
+    integer         , intent(in)           :: num_em_stages_val
+    integer         , pointer , intent(in) :: em_stage_ids_val(:)
+    integer         , intent(out)          :: index_of_new_data
+    !
+    class(emi_data) , pointer              :: data
+    integer                                :: id_val
+    character (len=32)                     :: name_val
+    character (len=128)                    :: long_name_val
+    character (len=24)                     :: units_val
+
+    select case(data_id)
+
+       ! --------------------------------------------------------------
+       ! ALM-to-EM: State variables
+       ! --------------------------------------------------------------
+    case (L2E_STATE_TSOIL)
+       id_val        = L2E_STATE_TSOIL
+       name_val      = 'Soil temperature'
+       long_name_val = 'Soil temperature: ALM to External Model'
+       units_val     = '[K]'
+
+    case (L2E_STATE_H2OSOI_LIQ)
+       id_val        = L2E_STATE_H2OSOI_LIQ
+       name_val      = 'Soil liquid water'
+       long_name_val = 'Soil liquid water: ALM to External Model'
+       units_val     = '[kg/m2]'
+
+    case (L2E_STATE_H2OSOI_ICE)
+       id_val        = L2E_STATE_H2OSOI_ICE
+       name_val      = 'Soil ice water'
+       long_name_val = 'Soil ice water: ALM to External Model'
+       units_val     = '[kg/m2]'
+
+    case (L2E_STATE_WTD)
+       id_val        = L2E_STATE_WTD
+       name_val      = 'Water table depth'
+       long_name_val = 'Water table depth: ALM to External Model'
+       units_val     = '[m]'
+
+    case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
+       id_val        = L2E_STATE_VSFM_PROGNOSTIC_SOILP
+       name_val      = 'Soil liquid pressure'
+       long_name_val = 'Soil liquid pressure: ALM to External Model'
+       units_val     = '[Pa]'
+
+       ! --------------------------------------------------------------
+       ! EM-to-ALM: State variables
+       ! --------------------------------------------------------------
+    case (E2L_STATE_H2OSOI_LIQ)
+       id_val        = E2L_STATE_H2OSOI_LIQ
+       name_val      = 'Soil liquid water'
+       long_name_val = 'Soil liquid water: External Model to ALM'
+       units_val     = '[kg/m2]'
+
+    case (E2L_STATE_H2OSOI_ICE)
+       id_val        = E2L_STATE_H2OSOI_ICE
+       name_val      = 'Soil ice water'
+       long_name_val = 'Soil ice water: External Model to ALM'
+       units_val     = '[kg/m2]'
+
+    case (E2L_STATE_SOIL_MATRIC_POTENTIAL)
+       id_val        = E2L_STATE_SOIL_MATRIC_POTENTIAL
+       name_val      = 'Soil matric potential'
+       long_name_val = 'Soil matric potential: External Model to ALM'
+       units_val     = '[mm]'
+
+    case (E2L_STATE_WTD)
+       id_val        = E2L_STATE_WTD
+       name_val      = 'Water table depth'
+       long_name_val = 'Water table depth: External Model to ALM'
+       units_val     = '[m]'
+
+    case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
+       id_val        = E2L_STATE_VSFM_PROGNOSTIC_SOILP
+       name_val      = 'Soil liquid pressure'
+       long_name_val = 'Soil liquid pressure: External Model to ALM'
+       units_val     = '[Pa]'
+
+       ! --------------------------------------------------------------
+       ! ALM-to-EM: Flux variables
+       ! --------------------------------------------------------------
+    case (L2E_FLUX_INFIL_MASS_FLUX)
+       id_val        = L2E_FLUX_INFIL_MASS_FLUX
+       name_val      = 'Soil infiltration source'
+       long_name_val = 'Soil infiltration source: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_VERTICAL_ET_MASS_FLUX)
+       id_val        = L2E_FLUX_VERTICAL_ET_MASS_FLUX
+       name_val      = 'Evapotranspiration sink'
+       long_name_val = 'Evapotranspiration sink: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_DEW_MASS_FLUX)
+       id_val        = L2E_FLUX_DEW_MASS_FLUX
+       name_val      = 'Dew sink'
+       long_name_val = 'Dew sink: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX)
+       id_val        = L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+       name_val      = 'Snow sublimation sink'
+       long_name_val = 'Snow sublimation sink: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+       id_val        = L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+       name_val      = 'Snow layer disappearance sink'
+       long_name_val = 'Snow layer disappearance sink: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+       id_val        = L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+       name_val      = 'Snow layer disappearance sink'
+       long_name_val = 'Snow layer disappearance sink from restart: ALM to External Model'
+       units_val     = '[kg/s]'
+
+    case (L2E_FLUX_DRAINAGE_MASS_FLUX)
+       id_val        = L2E_FLUX_DRAINAGE_MASS_FLUX
+       name_val      = 'Drainage sink'
+       long_name_val = 'Drainage sink: ALM to External Model'
+       units_val     = '[kg/s]'
+
+       ! --------------------------------------------------------------
+       ! EM-to-ALM: Flux variables
+       ! --------------------------------------------------------------
+    case (E2L_FLUX_AQUIFER_RECHARGE)
+       id_val        = E2L_FLUX_AQUIFER_RECHARGE
+       name_val      = 'Aquifer recharge rate'
+       long_name_val = 'Aquifer recharge rate: External Model to ALM'
+       units_val     = '[mm/s]'
+
+    case (E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
+       id_val        = E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+       name_val      = 'Snow layer disappearance sink'
+       long_name_val = 'Snow layer disappearance sink initial value: External Model to ALM'
+       units_val     = '[kg/s]'
+
+       ! --------------------------------------------------------------
+       ! ALM-to-ELM: Filter variables
+       ! --------------------------------------------------------------
+    case (L2E_FILTER_HYDROLOGYC)
+       id_val        = L2E_FILTER_HYDROLOGYC
+       name_val      = 'Hydrology filter'
+       long_name_val = 'Hydrology filter: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_FILTER_NUM_HYDROLOGYC)
+       id_val        = L2E_FILTER_NUM_HYDROLOGYC
+       name_val      = 'Number of hydrology filter'
+       long_name_val = 'Number of hydrology filter: ALM to External Model'
+       units_val     = '[-]'
+
+       ! --------------------------------------------------------------
+       ! ALM-to-ELM: Column variables
+       ! --------------------------------------------------------------
+    case (L2E_COLUMN_ACTIVE)
+       id_val        = L2E_COLUMN_ACTIVE
+       name_val      = 'Column active'
+       long_name_val = 'Column active: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_COLUMN_TYPE)
+       id_val        = L2E_COLUMN_TYPE
+       name_val      = 'Column type'
+       long_name_val = 'Column type: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_COLUMN_LANDUNIT_INDEX)
+       id_val        = L2E_COLUMN_LANDUNIT_INDEX
+       name_val      = 'Column to landunit index'
+       long_name_val = 'Column landunit index: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_COLUMN_ZI)
+       id_val        = L2E_COLUMN_ZI
+       name_val      = 'Column layer interface depth'
+       long_name_val = 'Column layer interface depth: ALM to External Model'
+       units_val     = '[m]'
+
+
+    case (L2E_COLUMN_DZ)
+       id_val        = L2E_COLUMN_DZ
+       name_val      = 'Column layer thickness'
+       long_name_val = 'Column layer thickness: ALM to External Model'
+       units_val     = '[m]'
+
+    case (L2E_COLUMN_Z)
+       id_val        = L2E_COLUMN_Z
+       name_val      = 'Column layer centroid depth'
+       long_name_val = 'Column layer centroid depth: ALM to External Model'
+       units_val     = '[m]'
+
+    case (L2E_COLUMN_AREA)
+       id_val        = L2E_COLUMN_AREA
+       name_val      = 'Column surface area'
+       long_name_val = 'Column surface area: ALM to External Model'
+       units_val     = '[m2]'
+
+       ! --------------------------------------------------------------
+       ! ALM-to-ELM: Landunit variables
+       ! --------------------------------------------------------------
+    case (L2E_LANDUNIT_TYPE)
+       id_val        = L2E_LANDUNIT_TYPE
+       name_val      = 'Landunit type'
+       long_name_val = 'Landunit type: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_LANDUNIT_LAKEPOINT)
+       id_val        = L2E_LANDUNIT_LAKEPOINT
+       name_val      = 'Landunit lake point'
+       long_name_val = 'Landunit lake point: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_LANDUNIT_URBANPOINT)
+       id_val        = L2E_LANDUNIT_URBANPOINT
+       name_val      = 'Landunit urban point'
+       long_name_val = 'Landunit urban point: ALM to External Model'
+       units_val     = '[-]'
+
+       ! --------------------------------------------------------------
+       ! ALM-to-ELM: Parameters variables
+       ! --------------------------------------------------------------
+    case (L2E_PARAMETER_WATSATC)
+       id_val        = L2E_PARAMETER_WATSATC
+       name_val      = 'Soil porosity'
+       long_name_val = 'Soil porosity: ALM to External Model'
+       units_val     = '[m^3/m^3]'
+
+    case (L2E_PARAMETER_HKSATC)
+       id_val        = L2E_PARAMETER_HKSATC
+       name_val      = 'Soil hydraulic conductivity'
+       long_name_val = 'Soil hydraulic conductivity at saturation: ALM to External Model'
+       units_val     = '[mm/s]'
+
+    case (L2E_PARAMETER_BSWC)
+       id_val        = L2E_PARAMETER_BSWC
+       name_val      = 'Clapp and Hornberger parameter'
+       long_name_val = 'Clapp and Hornberger parameter: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_PARAMETER_SUCSATC)
+       id_val        = L2E_PARAMETER_SUCSATC
+       name_val      = 'Minimum soil suction'
+       long_name_val = 'Minimum soil suction: ALM to External Model'
+       units_val     = '[mm]'
+
+    case (L2E_PARAMETER_EFFPOROSITYC)
+       id_val        = L2E_PARAMETER_EFFPOROSITYC
+       name_val      = 'Effective porosity'
+       long_name_val = 'Effective porosity: ALM to External Model'
+       units_val     = ''
+
+    case default
+       write(iulog,*)'Unknown EMID id = ',data_id
+       call endrun(msg='EMIDSetup: Number of EM stages AND their IDs required.')
+    end select
+
+    allocate(data)
+    call data%Init()
+    call data%Setup(                        &
+         id            = id_val,            &
+         name          = name_val,          &
+         long_name     = long_name_val,     &
+         units         = units_val,         &
+         num_em_stages = num_em_stages_val, &
+         em_stage_ids  = em_stage_ids_val)
+    call this%AddData(data)
+    index_of_new_data = this%num_data
+
+    nullify(data)
+
+  end subroutine EMIDListAddDataByID
+
   !------------------------------------------------------------------------
   subroutine EMIDListCopy(this, data_list)
     !
