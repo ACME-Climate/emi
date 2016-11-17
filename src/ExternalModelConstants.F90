@@ -4,6 +4,7 @@ module ExternalModelConstants
   private
 
   integer, parameter, public :: EM_INITIALIZATION_STAGE                          = 1001
+  integer, parameter, public :: EM_FATES_SUNFRAC_STAGE                           = 21
 
   ! ID for various external models
   integer, public, parameter :: EM_ID_BeTR                                       = 1
@@ -24,6 +25,9 @@ module ExternalModelConstants
   integer, parameter, public :: E2L_STATE_SOIL_MATRIC_POTENTIAL                  = 103
   integer, parameter, public :: E2L_STATE_WTD                                    = 104
   integer, parameter, public :: E2L_STATE_VSFM_PROGNOSTIC_SOILP                  = 105
+  integer, parameter, public :: E2L_STATE_FSUN                                   = 106
+  integer, parameter, public :: E2L_STATE_LAISUN                                 = 107
+  integer, parameter, public :: E2L_STATE_LAISHA                                 = 108
 
   ! IDs for fluxes sent from ALM to External Model
   integer, parameter, public :: L2E_FLUX_INFIL_MASS_FLUX                         = 201
@@ -33,6 +37,8 @@ module ExternalModelConstants
   integer, parameter, public :: L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX         = 205
   integer, parameter, public :: L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX = 206
   integer, parameter, public :: L2E_FLUX_DRAINAGE_MASS_FLUX                      = 207
+  integer, parameter, public :: L2E_FLUX_SOLAR_DIRECT_RADDIATION                 = 208
+  integer, parameter, public :: L2E_FLUX_SOLAR_DIFFUSE_RADDIATION                = 209
 
   ! IDs for fluxes sent from External Model to ALM
   integer, parameter, public :: E2L_FLUX_AQUIFER_RECHARGE                        = 301
@@ -50,6 +56,8 @@ module ExternalModelConstants
   integer, parameter, public :: L2E_COLUMN_DZ                                    = 505
   integer, parameter, public :: L2E_COLUMN_Z                                     = 506
   integer, parameter, public :: L2E_COLUMN_AREA                                  = 507
+  integer, parameter, public :: L2E_COLUMN_GRIDCELL_INDEX                        = 508
+  integer, parameter, public :: L2E_COLUMN_PATCH_INDEX                           = 509
 
   ! IDs for landunit-level attributes sent from ALM to External Model
   integer, parameter, public :: L2E_LANDUNIT_TYPE                                = 601

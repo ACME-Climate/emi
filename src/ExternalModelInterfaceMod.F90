@@ -7,7 +7,7 @@ module ExternalModelInterfaceMod
   use shr_kind_mod                  , only : r8 => shr_kind_r8
   use spmdMod                       , only : masterproc, iam
   use shr_log_mod                   , only : errMsg => shr_log_errMsg
-  use decompMod                     , only : bounds_type, get_proc_bounds 
+  use decompMod                     , only : bounds_type, get_proc_bounds, get_proc_clumps
   use abortutils                    , only : endrun
   use clm_varctl                    , only : iulog
   use ExternalModelInterfaceDataMod , only : emi_data_list, emi_data
@@ -44,7 +44,7 @@ contains
     !
     ! !USES:
     use clm_varctl, only : use_ed
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     use clm_varctl, only : use_betr
     use clm_varctl, only : use_pflotran
     use clm_varctl, only : use_vsfm
@@ -54,6 +54,7 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer :: iem
+    integer :: nclumps
 
     ! Initializes
     num_em               = 0
@@ -68,7 +69,7 @@ contains
        index_em_fates    = num_em
     endif
 
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     ! Is BeTR active?
     if (use_betr) then
        num_em            = num_em + 1
@@ -100,10 +101,12 @@ contains
        call endrun(msg='More than 1 external model is not supported.')
     endif
 
-    allocate(l2e_list(num_em))
-    allocate(e2l_list(num_em))
+    nclumps = get_proc_clumps()
 
-    do iem = 1, 1, num_em
+    allocate(l2e_list(num_em*nclumps))
+    allocate(e2l_list(num_em*nclumps))
+
+    do iem = 1, 1, num_em*nclumps
        call l2e_list(iem)%Init()
        call e2l_list(iem)%Init()
     enddo
@@ -129,7 +132,7 @@ contains
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Init
 #endif
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     use clm_instMod           , only : soilstate_vars
     use clm_instMod           , only : soilhydrology_vars
     use clm_instMod           , only : waterflux_vars
@@ -140,6 +143,8 @@ contains
     use clm_instMod           , only : waterflux_inst
     use clm_instMod           , only : waterstate_inst
 #endif
+    use ExternalModelFATESMod , only : EM_FATES_Populate_L2E_List
+    use ExternalModelFATESMod , only : EM_FATES_Populate_E2L_List
     !
     implicit none
     !
@@ -156,13 +161,25 @@ contains
     integer, pointer              :: filter_col(:)
     integer, pointer              :: filter_lun(:)
     type(bounds_type)             :: bounds_proc
+    integer                       :: iem
+    integer                       :: nclumps
 
     em_stage = EM_INITIALIZATION_STAGE
+    nclumps   = get_proc_clumps()
 
     select case (em_id)
     case (EM_ID_BeTR)
 
     case (EM_ID_FATES)
+
+       !  - Data need during timestepping
+       do iem = (index_em_fates-1)*nclumps + 1, index_em_fates*nclumps
+          call EM_FATES_Populate_L2E_List(l2e_list(iem))
+          call EM_FATES_Populate_E2L_List(e2l_list(iem))
+
+          call EMI_Setup_Data_List(l2e_list(iem))
+          call EMI_Setup_Data_List(e2l_list(iem))
+       enddo
 
     case (EM_ID_PFLOTRAN)
 
@@ -316,6 +333,9 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
     use ExternalModelConstants    , only : E2L_STATE_WTD
     use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : E2L_STATE_FSUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISHA
 
     use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
@@ -324,6 +344,8 @@ contains
     use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
 
     use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -338,6 +360,8 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_DZ
     use ExternalModelConstants    , only : L2E_COLUMN_Z
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
+    use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -470,6 +494,8 @@ contains
           L2E_COLUMN_ACTIVE,                                &
           L2E_COLUMN_TYPE,                                  &
           L2E_COLUMN_LANDUNIT_INDEX,                        &
+          L2E_COLUMN_GRIDCELL_INDEX,                        &
+          L2E_COLUMN_PATCH_INDEX,                        &
           L2E_COLUMN_AREA)
 
        ! Dim: Column
@@ -538,10 +564,48 @@ contains
        dim1_beg_proc = bounds_proc%begl
        dim1_end_proc = bounds_proc%endl
 
+    case (L2E_FLUX_SOLAR_DIRECT_RADDIATION, &
+          L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
+
+       ! Dim: Grid x 2 (=radiation_bands)
+
+       ndim           = 2
+
+       do nc = 1, nclumps
+          call get_clump_bounds(nc, bounds_clump)
+          dim1_beg_clump(nc) = bounds_clump%begg
+          dim1_end_clump(nc) = bounds_clump%endg
+       enddo
+
+       dim2_beg_clump(:) = 1
+       dim2_end_clump(:) = 2
+
+       dim1_beg_proc     = bounds_proc%begg
+       dim1_end_proc     = bounds_proc%endg
+       dim2_beg_proc     = 1
+       dim2_end_proc     = 2
+
+    case (E2L_STATE_FSUN,       &
+          E2L_STATE_LAISUN,  &
+          E2L_STATE_LAISHA  &
+         )
+
+       ! Dim: Patch
+
+       ndim           = 1
+
+       do nc = 1, nclumps
+          call get_clump_bounds(nc, bounds_clump)
+          dim1_beg_clump(nc) = bounds_clump%begp
+          dim1_end_clump(nc) = bounds_clump%endp
+       enddo
+
+       dim1_beg_proc = bounds_proc%begp
+       dim1_end_proc = bounds_proc%endp
 
     case default
-       write(*,*)'Unknown data%id = ',data%id
-       write(*,*)'Unknown data%name = ',trim(data%name)
+       write(iulog,*)'Unknown data%id = ',data%id
+       write(iulog,*)'Unknown data%name = ',trim(data%name)
        call endrun(msg='Unknown data%id while trying to set dimensions.')
     end select
 
@@ -559,6 +623,9 @@ contains
           E2L_STATE_SOIL_MATRIC_POTENTIAL,                  &
           E2L_STATE_VSFM_PROGNOSTIC_SOILP,                  &
           E2L_STATE_WTD,                                    &
+          E2L_STATE_FSUN,                                   &
+          E2L_STATE_LAISUN,                                 &
+          E2L_STATE_LAISHA,                                 &
           L2E_FLUX_VERTICAL_ET_MASS_FLUX,                   &
           L2E_FLUX_DRAINAGE_MASS_FLUX,                      &
           L2E_FLUX_INFIL_MASS_FLUX,                         &
@@ -566,6 +633,8 @@ contains
           L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
           L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
           L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          L2E_FLUX_SOLAR_DIRECT_RADDIATION,                 &
+          L2E_FLUX_SOLAR_DIFFUSE_RADDIATION,                &
           E2L_FLUX_AQUIFER_RECHARGE,                        &
           E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
           L2E_COLUMN_ZI,                                    &
@@ -587,6 +656,8 @@ contains
           L2E_COLUMN_ACTIVE,         &
           L2E_COLUMN_TYPE,           &
           L2E_COLUMN_LANDUNIT_INDEX, &
+          L2E_COLUMN_GRIDCELL_INDEX, &
+          L2E_COLUMN_PATCH_INDEX, &
           L2E_LANDUNIT_TYPE,         &
           L2E_LANDUNIT_LAKEPOINT,    &
           L2E_LANDUNIT_URBANPOINT )
@@ -595,8 +666,8 @@ contains
        is_real_type   = .false.
 
     case default
-       write(*,*)'Unknown data%id = ',data%id
-       write(*,*)'Unknown data%name = ',trim(data%name)
+       write(iulog,*)'Unknown data%id = ',data%id
+       write(iulog,*)'Unknown data%name = ',trim(data%name)
        call endrun(msg='Unknown data%id while trying to specify data type.')
     end select
 
@@ -612,9 +683,10 @@ contains
 
 !-----------------------------------------------------------------------
   subroutine EMI_Driver(em_id, em_stage, dt, number_step,  &
-       num_hydrologyc, filter_hydrologyc,                  &
+       clump_rank, num_hydrologyc, filter_hydrologyc,        &
        soilhydrology_vars, soilstate_vars, waterflux_vars, &
-       waterstate_vars, temperature_vars)
+       waterstate_vars, temperature_vars,  atm2lnd_vars,    &
+       canopystate_vars)
     !
     ! !DESCRIPTION:
     !
@@ -628,9 +700,12 @@ contains
     use TemperatureType        , only : temperature_type
     use WaterFluxType          , only : waterflux_type
     use WaterStateType         , only : waterstate_type
+    use atm2lndType            , only : atm2lnd_type
+    use CanopyStateType        , only : canopystate_type
 #ifdef USE_PETSC_LIB
     use ExternalModelVSFMMod   , only : EM_VSFM_Solve
 #endif
+    use ExternalModelFATESMod  , only : EM_FATES_Solve
     !
     implicit none
     !
@@ -638,6 +713,7 @@ contains
     integer                             , intent(in)    :: em_stage
     real(r8)                 , optional , intent(in)    :: dt
     integer                  , optional , intent(in)    :: number_step
+    integer                  , optional , intent(in)    :: clump_rank
     integer                  , optional , intent(in)    :: num_hydrologyc       ! number of column soil points in column filter
     integer                  , optional , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
     type(soilhydrology_type) , optional , intent(inout) :: soilhydrology_vars
@@ -645,10 +721,16 @@ contains
     type(waterflux_type)     , optional , intent(inout) :: waterflux_vars
     type(waterstate_type)    , optional , intent(inout) :: waterstate_vars
     type(temperature_type)   , optional , intent(inout) :: temperature_vars
+    type(atm2lnd_type)       , optional , intent(inout) :: atm2lnd_vars
+    type(canopystate_type)   , optional ,  intent(inout) :: canopystate_vars
     !
-    integer  :: index_em
-    real(r8) :: dtime
-    integer  :: nstep
+    integer          :: index_em
+    real(r8)         :: dtime
+    integer          :: nstep
+    type(bounds_type):: bounds_proc
+    integer          :: num_filter_col
+    integer, pointer :: filter_col(:)
+    integer          :: ii
 
     ! Find the index_em
     select case (em_id)
@@ -706,6 +788,21 @@ contains
 
     endif
 
+    if (present(atm2lnd_vars)) then
+       call EMID_Pack_Atm2Land_Forcings_for_EM(l2e_list(index_em), em_stage, atm2lnd_vars)
+    endif
+
+    ! GB_FIX_ME: Create a temporary filter
+    call get_proc_bounds(bounds_proc)
+    num_filter_col = bounds_proc%endc - bounds_proc%begc + 1
+    allocate(filter_col(num_filter_col))
+    do ii = 1, num_filter_col
+       filter_col(ii) = bounds_proc%begc + ii - 1
+    enddo
+    call EMID_Pack_Column_for_EM(l2e_list(index_em), em_stage, &
+            num_filter_col, filter_col)
+    deallocate(filter_col)
+
     call EMID_Verify_All_Data_Is_Set(l2e_list(index_em), em_stage)
 
     ! ------------------------------------------------------------------------
@@ -719,6 +816,7 @@ contains
     select case (em_id)
     case (EM_ID_BeTR)
     case (EM_ID_FATES)
+       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_list(index_em), e2l_list(index_em))
     case (EM_ID_PFLOTRAN)
     case (EM_ID_VSFM)
 #ifdef USE_PETSC_LIB
@@ -765,7 +863,11 @@ contains
             num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
     endif
 
-    call EMID_Verify_All_Data_Is_Set(l2e_list(index_em), em_stage)
+    if (present(canopystate_vars)) then
+       call EMID_Unpack_CanopyState_Vars_for_EM(e2l_list(index_em), em_stage, canopystate_vars)
+    endif
+
+    call EMID_Verify_All_Data_Is_Set(e2l_list(index_em), em_stage)
 
   end subroutine EMI_Driver
   
@@ -867,7 +969,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     associate(&
          mflx_infl_col         => waterflux_vars%mflx_infl_col         , &
          mflx_dew_col          => waterflux_vars%mflx_dew_col          , &
@@ -994,7 +1096,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     associate( &
          mflx_recharge_col   => waterflux_vars%mflx_recharge_col, &
          mflx_snowlyr_col    => waterflux_vars%mflx_snowlyr_col   &
@@ -1121,6 +1223,8 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_DZ
     use ExternalModelConstants    , only : L2E_COLUMN_Z
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
+    use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
     use ColumnType                , only : col
     use clm_varpar                , only : nlevgrnd
     !
@@ -1210,6 +1314,19 @@ contains
              enddo
              cur_data%is_set = .true.
 
+          case (L2E_COLUMN_GRIDCELL_INDEX)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_int_1d(c) = col%gridcell(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_COLUMN_PATCH_INDEX)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_int_1d(c) = col%patchi(c)
+             enddo
+             cur_data%is_set = .true.
           end select
 
        endif
@@ -1319,7 +1436,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
     associate(&
          h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Input:  [real(r8) (:,:) ]  ice water (kg/m2)
          h2osoi_liq =>    waterstate_vars%h2osoi_liq_col , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
@@ -1368,7 +1485,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-#ifdef WITH_ACME
+#ifndef FATES_VIA_EMI
           case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
@@ -1879,5 +1996,148 @@ contains
     end associate
 
   end subroutine EMID_Unpack_SoilState_Vars_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Pack_Atm2Land_Forcings_for_EM(data_list, em_stage, atm2lnd_vars)
+    !
+    ! !DESCRIPTION:
+    ! Save data for EM from ALM's atmospheric forcing
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
+    use atm2lndType               , only : atm2lnd_type
+    use clm_varpar                , only : nlevsoi, nlevgrnd
+    !
+    implicit none
+    !
+    class(emi_data_list), intent(in) :: data_list
+    integer             , intent(in) :: em_stage
+    type(atm2lnd_type)  , intent(in) :: atm2lnd_vars
+    !
+    integer                           :: g
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_pack
+    integer                           :: istage
+    integer                           :: count
+
+    associate( &
+         forc_solad => atm2lnd_vars%forc_solad_grc, &
+         forc_solai => atm2lnd_vars%forc_solai_grc  &
+    )
+
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       need_to_pack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_pack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_pack) then
+
+          select case (cur_data%id)
+
+          case (L2E_FLUX_SOLAR_DIRECT_RADDIATION)
+             do g = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+                cur_data%data_real_2d(g,1:2) = forc_solad(g,1:2)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
+             do g = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+                cur_data%data_real_2d(g,1:2) = forc_solai(g,1:2)
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+
+  end subroutine EMID_Pack_Atm2Land_Forcings_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Unpack_CanopyState_Vars_for_EM(data_list, em_stage, canopystate_vars)
+    !
+    ! !DESCRIPTION:
+    ! Save data for EM from ALM's canopyState_vars
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : E2L_STATE_FSUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISHA
+    use CanopyStateType           , only : canopystate_type
+    use clm_varpar                , only : nlevsoi, nlevgrnd
+    !
+    implicit none
+    !
+    class(emi_data_list), intent(in) :: data_list
+    integer             , intent(in) :: em_stage
+    type(canopystate_type), optional ,  intent(inout) :: canopystate_vars
+    !
+    integer                           :: p
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_unpack
+    integer                           :: istage
+
+    associate( &
+         fsun       => canopystate_vars%fsun_patch,   &
+         laisun     => canopystate_vars%laisun_patch, &
+         laisha     => canopystate_vars%laisha_patch  &
+    )
+
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       need_to_unpack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_unpack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_unpack) then
+
+          select case (cur_data%id)
+
+          case (E2L_STATE_FSUN)
+             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+                fsun(p) = cur_data%data_real_1d(p)
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_LAISUN)
+             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+                laisun(p) = cur_data%data_real_1d(p)
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_LAISHA)
+             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+                laisha(p) = cur_data%data_real_1d(p)
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+
+  end subroutine EMID_Unpack_CanopyState_Vars_for_EM
 
 end module ExternalModelInterfaceMod

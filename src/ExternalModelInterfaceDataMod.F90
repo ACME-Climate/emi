@@ -945,6 +945,9 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
     use ExternalModelConstants    , only : E2L_STATE_WTD
     use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : E2L_STATE_FSUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISUN
+    use ExternalModelConstants    , only : E2L_STATE_LAISHA
 
     use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
@@ -953,6 +956,8 @@ contains
     use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
 
     use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -967,6 +972,8 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_DZ
     use ExternalModelConstants    , only : L2E_COLUMN_Z
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
+    use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -1061,6 +1068,24 @@ contains
        long_name_val = 'Soil liquid pressure: External Model to ALM'
        units_val     = '[Pa]'
 
+    case (E2L_STATE_FSUN)
+       id_val        = E2L_STATE_FSUN
+       name_val      = 'Fraction of canopy sunlit'
+       long_name_val = ': External Model to ALM'
+       units_val     = '[-]'
+
+    case (E2L_STATE_LAISUN)
+       id_val        = E2L_STATE_LAISUN
+       name_val      = 'Sunlit leaf area'
+       long_name_val = 'Sunlit leaf area: External Model to ALM'
+       units_val     = '[-]'
+
+    case (E2L_STATE_LAISHA)
+       id_val        = E2L_STATE_LAISHA
+       name_val      = 'Shaded leaf area'
+       long_name_val = 'Shaded leaf area: External Model to ALM'
+       units_val     = '[-]'
+
        ! --------------------------------------------------------------
        ! ALM-to-EM: Flux variables
        ! --------------------------------------------------------------
@@ -1105,6 +1130,18 @@ contains
        name_val      = 'Drainage sink'
        long_name_val = 'Drainage sink: ALM to External Model'
        units_val     = '[kg/s]'
+
+    case (L2E_FLUX_SOLAR_DIRECT_RADDIATION)
+       id_val        = L2E_FLUX_SOLAR_DIRECT_RADDIATION
+       name_val      = 'Direct beam solar radiation'
+       long_name_val = 'Direct beam solar radiation: ALM to External Model'
+       units_val     = '[W/m2]'
+
+    case (L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
+       id_val        = L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
+       name_val      = 'Diffuse beam solar radiation'
+       long_name_val = 'Diffuse beam solar radiation: ALM to External Model'
+       units_val     = '[W/m2]'
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: Flux variables
@@ -1181,6 +1218,18 @@ contains
        name_val      = 'Column surface area'
        long_name_val = 'Column surface area: ALM to External Model'
        units_val     = '[m2]'
+
+    case (L2E_COLUMN_GRIDCELL_INDEX)
+       id_val        = L2E_COLUMN_GRIDCELL_INDEX
+       name_val      = 'Column to gridcell index'
+       long_name_val = 'Column to gridcell index: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_COLUMN_PATCH_INDEX)
+       id_val        = L2E_COLUMN_PATCH_INDEX
+       name_val      = 'Column to patch index'
+       long_name_val = 'Column to patch index: ALM to External Model'
+       units_val     = '[-]'
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Landunit variables
