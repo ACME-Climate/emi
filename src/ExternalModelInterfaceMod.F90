@@ -7,7 +7,7 @@ module ExternalModelInterfaceMod
   use shr_kind_mod                  , only : r8 => shr_kind_r8
   use spmdMod                       , only : masterproc, iam
   use shr_log_mod                   , only : errMsg => shr_log_errMsg
-  use decompMod                     , only : bounds_type, get_proc_bounds, get_proc_clumps
+  use decompMod                     , only : bounds_type, get_proc_clumps
   use abortutils                    , only : endrun
   use clm_varctl                    , only : iulog
   use ExternalModelInterfaceDataMod , only : emi_data_list, emi_data
@@ -20,6 +20,7 @@ module ExternalModelInterfaceMod
   private
 
   integer :: num_em              ! Number of external models
+  integer :: nclumps
 
   ! Index of the various external models (EMs) in a simulation
   integer :: index_em_betr
@@ -54,7 +55,6 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer :: iem
-    integer :: nclumps
 
     ! Initializes
     num_em               = 0
@@ -106,7 +106,7 @@ contains
     allocate(l2e_list(num_em*nclumps))
     allocate(e2l_list(num_em*nclumps))
 
-    do iem = 1, 1, num_em*nclumps
+    do iem = 1, num_em*nclumps
        call l2e_list(iem)%Init()
        call e2l_list(iem)%Init()
     enddo
@@ -145,6 +145,7 @@ contains
 #endif
     use ExternalModelFATESMod , only : EM_FATES_Populate_L2E_List
     use ExternalModelFATESMod , only : EM_FATES_Populate_E2L_List
+    use decompMod             , only : get_clump_bounds
     !
     implicit none
     !
@@ -152,34 +153,48 @@ contains
     integer, intent(in)  :: em_id
     !
     ! !LOCAL VARIABLES:
-    class(emi_data_list), pointer :: l2e_init_list
-    class(emi_data_list), pointer :: e2l_init_list
+    class(emi_data_list), pointer :: l2e_init_list(:)
+    class(emi_data_list), pointer :: e2l_init_list(:)
     integer                       :: em_stage
     integer                       :: ii
     integer                       :: num_filter_col
     integer                       :: num_filter_lun
     integer, pointer              :: filter_col(:)
     integer, pointer              :: filter_lun(:)
-    type(bounds_type)             :: bounds_proc
+    type(bounds_type)             :: bounds_clump
     integer                       :: iem
-    integer                       :: nclumps
+    integer                       :: clump_rank
 
     em_stage = EM_INITIALIZATION_STAGE
-    nclumps   = get_proc_clumps()
 
     select case (em_id)
     case (EM_ID_BeTR)
 
     case (EM_ID_FATES)
 
-       !  - Data need during timestepping
-       do iem = (index_em_fates-1)*nclumps + 1, index_em_fates*nclumps
+       ! -------------------------------------------------------------
+       ! Data need during timestepping
+       ! -------------------------------------------------------------
+
+       ! Note: Each thread will exchange exactly the same data between
+       !       ALM and FATES
+       do clump_rank = 1, nclumps
+          iem = (index_em_fates-1)*nclumps + clump_rank
           call EM_FATES_Populate_L2E_List(l2e_list(iem))
           call EM_FATES_Populate_E2L_List(e2l_list(iem))
-
-          call EMI_Setup_Data_List(l2e_list(iem))
-          call EMI_Setup_Data_List(e2l_list(iem))
        enddo
+
+
+       !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
+       do clump_rank = 1, nclumps
+
+          call get_clump_bounds(clump_rank, bounds_clump)
+          iem = (index_em_fates-1)*nclumps + clump_rank
+
+          call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+       enddo
+       !$OMP END PARALLEL DO
 
     case (EM_ID_PFLOTRAN)
 
@@ -190,82 +205,96 @@ contains
 
        ! Initialize lists of data to be exchanged between ALM and VSFM
        ! during initialization step
-       allocate(l2e_init_list)
-       allocate(e2l_init_list)
+       allocate(l2e_init_list(nclumps))
+       allocate(e2l_init_list(nclumps))
 
-       call l2e_init_list%Init()
-       call e2l_init_list%Init()
+       do clump_rank = 1, nclumps
+          iem = (index_em_vsfm-1)*nclumps + 1
 
-       ! Fill the data list:
-       !  - Data need during the initialization
-       call EM_VSFM_Populate_L2E_Init_List(l2e_init_list)
-       call EM_VSFM_Populate_E2L_Init_List(e2l_init_list)
-       !  - Data need during timestepping
-       call EM_VSFM_Populate_L2E_List(l2e_list(index_em_vsfm))
-       call EM_VSFM_Populate_E2L_List(e2l_list(index_em_vsfm))
+          call l2e_init_list(clump_rank)%Init()
+          call e2l_init_list(clump_rank)%Init()
 
-       ! Allocate memory for data
-       call EMI_Setup_Data_List(l2e_init_list)
-       call EMI_Setup_Data_List(e2l_init_list)
-       call EMI_Setup_Data_List(l2e_list(index_em_vsfm))
-       call EMI_Setup_Data_List(e2l_list(index_em_vsfm))
+          ! Fill the data list:
+          !  - Data need during the initialization
+          call EM_VSFM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
+          call EM_VSFM_Populate_E2L_Init_List(e2l_init_list(clump_rank))
 
-       ! GB_FIX_ME: Create a temporary filter
-       call get_proc_bounds(bounds_proc)
-       num_filter_col = bounds_proc%endc - bounds_proc%begc + 1
-       num_filter_lun = bounds_proc%endl - bounds_proc%begl + 1
-
-       allocate(filter_col(num_filter_col))
-       allocate(filter_lun(num_filter_lun))
-
-       do ii = 1, num_filter_col
-          filter_col(ii) = bounds_proc%begc + ii - 1
+          !  - Data need during timestepping
+          call EM_VSFM_Populate_L2E_List(l2e_list(iem))
+          call EM_VSFM_Populate_E2L_List(e2l_list(iem))
        enddo
 
-       do ii = 1, num_filter_lun
-          filter_lun(ii) = bounds_proc%begl + ii - 1
+       !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
+       do clump_rank = 1, nclumps
+
+          call get_clump_bounds(clump_rank, bounds_clump)
+          iem = (index_em_vsfm-1)*nclumps + 1
+
+          ! Allocate memory for data
+          call EMI_Setup_Data_List(l2e_init_list(clump_rank), bounds_clump)
+          call EMI_Setup_Data_List(e2l_init_list(clump_rank), bounds_clump)
+          call EMI_Setup_Data_List(l2e_list(iem)            , bounds_clump)
+          call EMI_Setup_Data_List(e2l_list(iem)            , bounds_clump)
+
+          ! GB_FIX_ME: Create a temporary filter
+          num_filter_col = bounds_clump%endc - bounds_clump%begc + 1
+          num_filter_lun = bounds_clump%endl - bounds_clump%begl + 1
+
+          allocate(filter_col(num_filter_col))
+          allocate(filter_lun(num_filter_lun))
+
+          do ii = 1, num_filter_col
+             filter_col(ii) = bounds_clump%begc + ii - 1
+          enddo
+
+          do ii = 1, num_filter_lun
+             filter_lun(ii) = bounds_clump%begl + ii - 1
+          enddo
+
+          ! Reset values in the data list
+          call EMID_Reset_Data_for_EM(l2e_init_list(clump_rank), em_stage)
+          call EMID_Reset_Data_for_EM(e2l_init_list(clump_rank), em_stage)
+
+          ! Pack all ALM data needed by the external model
+          call EMID_Pack_WaterState_Vars_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterstate_vars)
+          call EMID_Pack_WaterFlux_Vars_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterflux_vars)
+          call EMID_Pack_SoilHydrology_Vars_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilhydrology_vars)
+          call EMID_Pack_SoilState_Vars_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilstate_vars)
+          call EMID_Pack_Column_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col)
+          call EMID_Pack_Landunit_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_lun, filter_lun)
+
+          ! Ensure all data needed by external model is packed
+          call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage)
+
+          ! Initialize the external model
+          call EM_VSFM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
+
+          ! Unpack all data sent from the external model
+          call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilstate_vars)
+          call EMID_Unpack_WaterState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterstate_vars)
+          call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterflux_vars)
+          call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilhydrology_vars)
+
+          ! Ensure all data sent by external model is unpacked
+          call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage)
+
+          ! Clean up memory
+          call l2e_init_list(clump_rank)%Destroy()
+          call e2l_init_list(clump_rank)%Destroy()
+
        enddo
+       !$OMP END PARALLEL DO
 
-       ! Reset values in the data list
-       call EMID_Reset_Data_for_EM(l2e_init_list, em_stage)
-       call EMID_Reset_Data_for_EM(e2l_init_list, em_stage)
-
-       ! Pack all ALM data needed by the external model
-       call EMID_Pack_WaterState_Vars_for_EM(l2e_init_list, em_stage, &
-            num_filter_col, filter_col, waterstate_vars)
-       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_init_list, em_stage, &
-            num_filter_col, filter_col, waterflux_vars)
-       call EMID_Pack_SoilHydrology_Vars_for_EM(l2e_init_list, em_stage, &
-            num_filter_col, filter_col, soilhydrology_vars)
-       call EMID_Pack_SoilState_Vars_for_EM(l2e_init_list, em_stage, &
-            num_filter_col, filter_col, soilstate_vars)
-       call EMID_Pack_Column_for_EM(l2e_init_list, em_stage, &
-            num_filter_col, filter_col)
-       call EMID_Pack_Landunit_for_EM(l2e_init_list, em_stage, &
-            num_filter_lun, filter_lun)
-
-       ! Ensure all data needed by external model is packed
-       call EMID_Verify_All_Data_Is_Set(l2e_init_list, em_stage)
-
-       ! Initialize the external model
-       call EM_VSFM_Init(l2e_init_list, e2l_init_list, iam)
-
-       ! Unpack all data sent from the external model
-       call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list, em_stage, &
-            num_filter_col, filter_col, soilstate_vars)
-       call EMID_Unpack_WaterState_Vars_for_EM(e2l_init_list, em_stage, &
-            num_filter_col, filter_col, waterstate_vars)
-       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_init_list, em_stage, &
-            num_filter_col, filter_col, waterflux_vars)
-       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_init_list, em_stage, &
-            num_filter_col, filter_col, soilhydrology_vars)
-
-       ! Ensure all data sent by external model is unpacked
-       call EMID_Verify_All_Data_Is_Set(e2l_init_list, em_stage)
-
-       ! Clean up memory
-       call l2e_init_list%Destroy()
-       call e2l_init_list%Destroy()
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
@@ -277,7 +306,7 @@ contains
   end subroutine EMI_Init_EM
 
   !-----------------------------------------------------------------------
-  subroutine EMI_Setup_Data_List(data_list)
+  subroutine EMI_Setup_Data_List(data_list, bounds_clump)
     !
     ! !DESCRIPTION:
     ! Setup the EMI data list
@@ -286,6 +315,7 @@ contains
     !
     ! !USES:
     class(emi_data_list) , intent(inout) :: data_list
+    type(bounds_type)    , intent (in)   :: bounds_clump
     !
     ! !LOCAL VARIABLES:
     class(emi_data)      , pointer       :: cur_data
@@ -306,7 +336,7 @@ contains
 
     do idata = 1, data_list%num_data
        cur_data => data_list%data_ptr(idata)%data
-       call EMI_Setup_Data(cur_data)
+       call EMI_Setup_Data(cur_data, bounds_clump)
     enddo
 
     do idata = 1, data_list%num_data
@@ -316,7 +346,7 @@ contains
   end subroutine EMI_Setup_Data_List
 
   !-----------------------------------------------------------------------
-  subroutine EMI_Setup_Data(data)
+  subroutine EMI_Setup_Data(data, bounds_clump)
     !
     ! !DESCRIPTION:
     ! Setup a EMI data
@@ -373,14 +403,12 @@ contains
     use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
 
-    use decompMod                 , only : get_proc_bounds
-    use decompMod                 , only : get_proc_clumps
-    use decompMod                 , only : get_clump_bounds
     use clm_varpar                , only : nlevgrnd
     !
     implicit none
     !
     class(emi_data), pointer, intent(inout) :: data
+    type(bounds_type)       , intent (in)   :: bounds_clump
     !
     ! !LOCAL VARIABLES:
     integer                                 :: ndim
@@ -390,20 +418,13 @@ contains
     integer                                 :: dim2_beg, dim2_end
     integer                                 :: dim3_beg, dim3_end
     integer                                 :: dim4_beg, dim4_end
-    !
     logical                                 :: is_int_type, is_real_type
-    !
-    type(bounds_type)                       :: bounds_proc
-    type(bounds_type)                       :: bounds_clump
 
-
-    ndim = 0
-
+    ndim      = 0
     dim1_beg  = 0
     dim2_beg  = 0
     dim3_beg  = 0
     dim4_beg  = 0
-    
     dim1_end  = 0
     dim2_end  = 0
     dim3_end  = 0
@@ -411,8 +432,6 @@ contains
 
     is_int_type    = .false.
     is_real_type   = .false.
-
-    call get_proc_bounds(bounds_proc)
 
     ! Determine the size of data
     select case (data%id)
@@ -438,8 +457,8 @@ contains
        ! Dim: Column x nlevgrnd
 
        ndim     = 2
-       dim1_beg = bounds_proc%begc
-       dim1_end = bounds_proc%endc
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
        dim2_beg = 1
        dim2_end = nlevgrnd
 
@@ -463,8 +482,8 @@ contains
        ! Dim: Column
 
        ndim     = 1
-       dim1_beg = bounds_proc%begc
-       dim1_end = bounds_proc%endc
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
 
     case (L2E_FILTER_NUM_HYDROLOGYC)
 
@@ -479,8 +498,8 @@ contains
        ! Dim: Column x (0:nlevgrnd)
 
        ndim     = 2
-       dim1_beg = bounds_proc%begc
-       dim1_end = bounds_proc%endc
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
        dim2_beg = 0
        dim2_end = nlevgrnd
 
@@ -492,8 +511,8 @@ contains
        ! Dim: Landunit
 
        ndim     = 1
-       dim1_beg = bounds_proc%begl
-       dim1_end = bounds_proc%endl
+       dim1_beg = bounds_clump%begl
+       dim1_end = bounds_clump%endl
 
     case (L2E_FLUX_SOLAR_DIRECT_RADDIATION, &
           L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
@@ -501,8 +520,8 @@ contains
        ! Dim: Grid x 2 (=radiation_bands)
 
        ndim     = 2
-       dim1_beg = bounds_proc%begg
-       dim1_end = bounds_proc%endg
+       dim1_beg = bounds_clump%begg
+       dim1_end = bounds_clump%endg
        dim2_beg = 1
        dim2_end = 2
 
@@ -514,8 +533,8 @@ contains
        ! Dim: Patch
 
        ndim     = 1
-       dim1_beg = bounds_proc%begp
-       dim1_end = bounds_proc%endp
+       dim1_beg = bounds_clump%begp
+       dim1_end = bounds_clump%endp
 
     case default
        write(iulog,*)'Unknown data%id = ',data%id
@@ -618,6 +637,7 @@ contains
     use ExternalModelVSFMMod   , only : EM_VSFM_Solve
 #endif
     use ExternalModelFATESMod  , only : EM_FATES_Solve
+    use decompMod              , only : get_clump_bounds
     !
     implicit none
     !
@@ -634,15 +654,16 @@ contains
     type(waterstate_type)    , optional , intent(inout) :: waterstate_vars
     type(temperature_type)   , optional , intent(inout) :: temperature_vars
     type(atm2lnd_type)       , optional , intent(inout) :: atm2lnd_vars
-    type(canopystate_type)   , optional ,  intent(inout) :: canopystate_vars
+    type(canopystate_type)   , optional , intent(inout) :: canopystate_vars
     !
     integer          :: index_em
     real(r8)         :: dtime
     integer          :: nstep
-    type(bounds_type):: bounds_proc
+    type(bounds_type):: bounds_clump
     integer          :: num_filter_col
     integer, pointer :: filter_col(:)
     integer          :: ii
+    integer          :: iem
 
     ! Find the index_em
     select case (em_id)
@@ -662,14 +683,20 @@ contains
     ! Pack the data for EM
     ! ------------------------------------------------------------------------
 
-    call EMID_Reset_Data_for_EM(l2e_list(index_em), em_stage)
-    call EMID_Reset_Data_for_EM(e2l_list(index_em), em_stage)
+    if (present(clump_rank)) then
+       iem = (index_em-1)*nclumps + clump_rank
+    else
+       iem = (index_em-1)*nclumps + 1
+    endif
+
+    call EMID_Reset_Data_for_EM(l2e_list(iem), em_stage)
+    call EMID_Reset_Data_for_EM(e2l_list(iem), em_stage)
 
     if ( present(temperature_vars) .and. &
          present(num_hydrologyc)   .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_Temperature_Vars_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_Temperature_Vars_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, temperature_vars)
     endif
 
@@ -677,7 +704,7 @@ contains
          present(num_hydrologyc)  .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_WaterState_Vars_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterstate_vars)
     endif
 
@@ -685,37 +712,43 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterflux_vars)
     endif
 
     if ( present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_Filter_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_Filter_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
-       call EMID_Pack_Column_for_EM(l2e_list(index_em), em_stage, &
+       call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
     endif
 
     if (present(atm2lnd_vars)) then
-       call EMID_Pack_Atm2Land_Forcings_for_EM(l2e_list(index_em), em_stage, atm2lnd_vars)
+       call EMID_Pack_Atm2Land_Forcings_for_EM(l2e_list(iem), em_stage, atm2lnd_vars)
     endif
 
     ! GB_FIX_ME: Create a temporary filter
-    call get_proc_bounds(bounds_proc)
-    num_filter_col = bounds_proc%endc - bounds_proc%begc + 1
+    if (present(clump_rank)) then
+       call get_clump_bounds(clump_rank, bounds_clump)
+    else
+       call get_clump_bounds(1, bounds_clump)
+    endif
+
+    num_filter_col = bounds_clump%endc - bounds_clump%begc + 1
+
     allocate(filter_col(num_filter_col))
     do ii = 1, num_filter_col
-       filter_col(ii) = bounds_proc%begc + ii - 1
+       filter_col(ii) = bounds_clump%begc + ii - 1
     enddo
-    call EMID_Pack_Column_for_EM(l2e_list(index_em), em_stage, &
+    call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
             num_filter_col, filter_col)
     deallocate(filter_col)
 
-    call EMID_Verify_All_Data_Is_Set(l2e_list(index_em), em_stage)
+    call EMID_Verify_All_Data_Is_Set(l2e_list(iem), em_stage)
 
     ! ------------------------------------------------------------------------
     ! Solve EM
@@ -728,11 +761,11 @@ contains
     select case (em_id)
     case (EM_ID_BeTR)
     case (EM_ID_FATES)
-       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_list(index_em), e2l_list(index_em))
+       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_list(iem), e2l_list(iem))
     case (EM_ID_PFLOTRAN)
     case (EM_ID_VSFM)
 #ifdef USE_PETSC_LIB
-       call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_list(index_em), e2l_list(index_em))
+       call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_list(iem), e2l_list(iem))
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
@@ -747,7 +780,7 @@ contains
          present(num_hydrologyc)  .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_WaterState_Vars_for_EM(e2l_list(index_em), em_stage, &
+       call EMID_Unpack_WaterState_Vars_for_EM(e2l_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterstate_vars)
     endif
 
@@ -755,7 +788,7 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_list(index_em), em_stage, &
+       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterflux_vars)
     endif
 
@@ -763,7 +796,7 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_SoilState_Vars_for_EM(e2l_list(index_em), em_stage, &
+       call EMID_Unpack_SoilState_Vars_for_EM(e2l_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, soilstate_vars)
     endif
 
@@ -771,15 +804,15 @@ contains
          present(num_hydrologyc)     .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_list(index_em), em_stage, &
+       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
     endif
 
     if (present(canopystate_vars)) then
-       call EMID_Unpack_CanopyState_Vars_for_EM(e2l_list(index_em), em_stage, canopystate_vars)
+       call EMID_Unpack_CanopyState_Vars_for_EM(e2l_list(iem), em_stage, canopystate_vars)
     endif
 
-    call EMID_Verify_All_Data_Is_Set(e2l_list(index_em), em_stage)
+    call EMID_Verify_All_Data_Is_Set(e2l_list(iem), em_stage)
 
   end subroutine EMI_Driver
   
