@@ -5,6 +5,7 @@ module ExternalModelConstants
 
   integer, parameter, public :: EM_INITIALIZATION_STAGE                          = 1001
   integer, parameter, public :: EM_FATES_SUNFRAC_STAGE                           = 21
+  integer, parameter, public :: EM_VSFM_SOIL_HYDRO_STAGE                         = 41
 
   ! ID for various external models
   integer, public, parameter :: EM_ID_BeTR                                       = 1

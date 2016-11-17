@@ -203,7 +203,7 @@ contains
     ! Create a list of all variables needed by VSFM from ALM
     !
     ! !USES:
-    use ExternalModelVSFMConstants, only : EM_VSFM_SOIL_HYDRO_STAGE
+    use ExternalModelConstants    , only : EM_VSFM_SOIL_HYDRO_STAGE
     use ExternalModelConstants    , only : L2E_STATE_TSOIL
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
@@ -258,7 +258,7 @@ contains
     ! Create a list of all variables to be returned by VSFM from ALM
     !
     ! !USES:
-    use ExternalModelVSFMConstants, only : EM_VSFM_SOIL_HYDRO_STAGE
+    use ExternalModelConstants    , only : EM_VSFM_SOIL_HYDRO_STAGE
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
     use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
@@ -1641,9 +1641,38 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !------------------------------------------------------------------------
   subroutine EM_VSFM_Solve(em_stage, dt, nstep, l2e_list, e2l_list)
-
     !
     ! !DESCRIPTION:
+    ! The VSFM dirver subroutine
+    !
+    ! !USES:
+    use ExternalModelConstants , only : EM_VSFM_SOIL_HYDRO_STAGE
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    integer              , intent(in)    :: em_stage
+    real(r8)             , intent(in)    :: dt
+    integer              , intent(in)    :: nstep
+    class(emi_data_list) , intent(in)    :: l2e_list
+    class(emi_data_list) , intent(inout) :: e2l_list
+    !
+
+    select case (em_stage)
+    case (EM_VSFM_SOIL_HYDRO_STAGE)
+       call EM_VSFM_Solve_Soil_Hydro(em_stage, dt, nstep, l2e_list, e2l_list)
+    case default
+       write(iulog,*)'EM_FATES_Solve: Unknown em_stage.'
+       call endrun(msg=errMsg(__FILE__, __LINE__))
+    end select
+
+  end subroutine EM_VSFM_Solve
+
+    !------------------------------------------------------------------------
+  subroutine EM_VSFM_Solve_Soil_Hydro(em_stage, dt, nstep, l2e_list, e2l_list)
+    !
+    ! !DESCRIPTION:
+    ! Solve the Variably Saturated Flow Model (VSFM) in soil columns.
     !
     ! !USES:
     use shr_kind_mod              , only : r8 => shr_kind_r8
@@ -2504,7 +2533,7 @@ end subroutine EM_VSFM_Populate_E2L_List
       deallocate(vsfm_soilp_col_1d           )
       deallocate(vsfm_sat_col_1d             )
 
-  end subroutine EM_VSFM_Solve
+  end subroutine EM_VSFM_Solve_Soil_Hydro
 
 #endif
 
