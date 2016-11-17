@@ -385,17 +385,11 @@ contains
     ! !LOCAL VARIABLES:
     integer                                 :: ndim
     integer                                 :: nc
-    integer                                 :: nclumps   ! Number of threads
     !
-    integer, dimension(:), pointer          :: dim1_beg_clump, dim1_end_clump
-    integer, dimension(:), pointer          :: dim2_beg_clump, dim2_end_clump
-    integer, dimension(:), pointer          :: dim3_beg_clump, dim3_end_clump
-    integer, dimension(:), pointer          :: dim4_beg_clump, dim4_end_clump
-    !
-    integer                                 :: dim1_beg_proc, dim1_end_proc
-    integer                                 :: dim2_beg_proc, dim2_end_proc
-    integer                                 :: dim3_beg_proc, dim3_end_proc
-    integer                                 :: dim4_beg_proc, dim4_end_proc
+    integer                                 :: dim1_beg, dim1_end
+    integer                                 :: dim2_beg, dim2_end
+    integer                                 :: dim3_beg, dim3_end
+    integer                                 :: dim4_beg, dim4_end
     !
     logical                                 :: is_int_type, is_real_type
     !
@@ -403,39 +397,17 @@ contains
     type(bounds_type)                       :: bounds_clump
 
 
-    nclumps = get_proc_clumps()
-
     ndim = 0
 
-    allocate(dim1_beg_clump(nclumps))
-    allocate(dim2_beg_clump(nclumps))
-    allocate(dim3_beg_clump(nclumps))
-    allocate(dim4_beg_clump(nclumps))
+    dim1_beg  = 0
+    dim2_beg  = 0
+    dim3_beg  = 0
+    dim4_beg  = 0
     
-    allocate(dim1_end_clump(nclumps))
-    allocate(dim2_end_clump(nclumps))
-    allocate(dim3_end_clump(nclumps))
-    allocate(dim4_end_clump(nclumps))
-
-    dim1_beg_clump(:) = 0
-    dim2_beg_clump(:) = 0
-    dim3_beg_clump(:) = 0
-    dim4_beg_clump(:) = 0
-
-    dim1_end_clump(:) = 0
-    dim2_end_clump(:) = 0
-    dim3_end_clump(:) = 0
-    dim4_end_clump(:) = 0
-
-    dim1_beg_proc  = 0
-    dim2_beg_proc  = 0
-    dim3_beg_proc  = 0
-    dim4_beg_proc  = 0
-    
-    dim1_end_proc  = 0
-    dim2_end_proc  = 0
-    dim3_end_proc  = 0
-    dim4_end_proc  = 0
+    dim1_end  = 0
+    dim2_end  = 0
+    dim3_end  = 0
+    dim4_end  = 0
 
     is_int_type    = .false.
     is_real_type   = .false.
@@ -465,21 +437,11 @@ contains
 
        ! Dim: Column x nlevgrnd
 
-       ndim           = 2
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begc
-          dim1_end_clump(nc) = bounds_clump%endc
-       enddo
-
-       dim2_beg_clump(:) = 1
-       dim2_end_clump(:) = nlevgrnd
-
-       dim1_beg_proc     = bounds_proc%begc
-       dim1_end_proc     = bounds_proc%endc
-       dim2_beg_proc     = 1
-       dim2_end_proc     = nlevgrnd
+       ndim     = 2
+       dim1_beg = bounds_proc%begc
+       dim1_end = bounds_proc%endc
+       dim2_beg = 1
+       dim2_end = nlevgrnd
 
     case (L2E_FLUX_INFIL_MASS_FLUX,                         &
           L2E_STATE_WTD,                                    &
@@ -500,51 +462,27 @@ contains
 
        ! Dim: Column
 
-       ndim           = 1
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begc
-          dim1_end_clump(nc) = bounds_clump%endc
-       enddo
-
-       dim1_beg_proc = bounds_proc%begc
-       dim1_end_proc = bounds_proc%endc
+       ndim     = 1
+       dim1_beg = bounds_proc%begc
+       dim1_end = bounds_proc%endc
 
     case (L2E_FILTER_NUM_HYDROLOGYC)
 
        ! Dim: 1
 
-       ndim           = 1
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = 1
-          dim1_end_clump(nc) = 1
-       enddo
-
-       dim1_beg_proc = 1
-       dim1_end_proc = 1
+       ndim     = 1
+       dim1_beg = 1
+       dim1_end = 1
 
     case (L2E_COLUMN_ZI)
 
        ! Dim: Column x (0:nlevgrnd)
 
-       ndim           = 2
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begc
-          dim1_end_clump(nc) = bounds_clump%endc
-       enddo
-
-       dim2_beg_clump(:) = 1
-       dim2_end_clump(:) = nlevgrnd
-
-       dim1_beg_proc     = bounds_proc%begc
-       dim1_end_proc     = bounds_proc%endc
-       dim2_beg_proc     = 0
-       dim2_end_proc     = nlevgrnd
+       ndim     = 2
+       dim1_beg = bounds_proc%begc
+       dim1_end = bounds_proc%endc
+       dim2_beg = 0
+       dim2_end = nlevgrnd
 
     case (L2E_LANDUNIT_TYPE,       &
           L2E_LANDUNIT_LAKEPOINT,  &
@@ -553,37 +491,20 @@ contains
 
        ! Dim: Landunit
 
-       ndim           = 1
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begl
-          dim1_end_clump(nc) = bounds_clump%endl
-       enddo
-
-       dim1_beg_proc = bounds_proc%begl
-       dim1_end_proc = bounds_proc%endl
+       ndim     = 1
+       dim1_beg = bounds_proc%begl
+       dim1_end = bounds_proc%endl
 
     case (L2E_FLUX_SOLAR_DIRECT_RADDIATION, &
           L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
 
        ! Dim: Grid x 2 (=radiation_bands)
 
-       ndim           = 2
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begg
-          dim1_end_clump(nc) = bounds_clump%endg
-       enddo
-
-       dim2_beg_clump(:) = 1
-       dim2_end_clump(:) = 2
-
-       dim1_beg_proc     = bounds_proc%begg
-       dim1_end_proc     = bounds_proc%endg
-       dim2_beg_proc     = 1
-       dim2_end_proc     = 2
+       ndim     = 2
+       dim1_beg = bounds_proc%begg
+       dim1_end = bounds_proc%endg
+       dim2_beg = 1
+       dim2_end = 2
 
     case (E2L_STATE_FSUN,       &
           E2L_STATE_LAISUN,  &
@@ -592,16 +513,9 @@ contains
 
        ! Dim: Patch
 
-       ndim           = 1
-
-       do nc = 1, nclumps
-          call get_clump_bounds(nc, bounds_clump)
-          dim1_beg_clump(nc) = bounds_clump%begp
-          dim1_end_clump(nc) = bounds_clump%endp
-       enddo
-
-       dim1_beg_proc = bounds_proc%begp
-       dim1_end_proc = bounds_proc%endp
+       ndim     = 1
+       dim1_beg = bounds_proc%begp
+       dim1_end = bounds_proc%endp
 
     case default
        write(iulog,*)'Unknown data%id = ',data%id
@@ -671,11 +585,9 @@ contains
        call endrun(msg='Unknown data%id while trying to specify data type.')
     end select
 
-    call data%SetDimensions(ndim, nclumps,                               &
-         dim1_beg_clump, dim1_end_clump, dim2_beg_clump, dim2_end_clump, &
-         dim3_beg_clump, dim3_end_clump, dim4_beg_clump, dim4_end_clump, &
-         dim1_beg_proc, dim1_end_proc, dim2_beg_proc, dim2_end_proc,     &
-         dim3_beg_proc, dim3_end_proc, dim4_beg_proc, dim4_end_proc)
+    call data%SetDimensions(ndim,                               &
+         dim1_beg, dim1_end, dim2_beg, dim2_end,     &
+         dim3_beg, dim3_end, dim4_beg, dim4_end)
 
     call data%SetType(is_int_type, is_real_type)
 
@@ -2048,13 +1960,13 @@ contains
           select case (cur_data%id)
 
           case (L2E_FLUX_SOLAR_DIRECT_RADDIATION)
-             do g = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+             do g = cur_data%dim1_beg, cur_data%dim1_end
                 cur_data%data_real_2d(g,1:2) = forc_solad(g,1:2)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
-             do g = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+             do g = cur_data%dim1_beg, cur_data%dim1_end
                 cur_data%data_real_2d(g,1:2) = forc_solai(g,1:2)
              enddo
              cur_data%is_set = .true.
@@ -2117,19 +2029,19 @@ contains
           select case (cur_data%id)
 
           case (E2L_STATE_FSUN)
-             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+             do p = cur_data%dim1_beg, cur_data%dim1_end
                 fsun(p) = cur_data%data_real_1d(p)
              enddo
              cur_data%is_set = .true.
 
           case (E2L_STATE_LAISUN)
-             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+             do p = cur_data%dim1_beg, cur_data%dim1_end
                 laisun(p) = cur_data%data_real_1d(p)
              enddo
              cur_data%is_set = .true.
 
           case (E2L_STATE_LAISHA)
-             do p = cur_data%dim1_beg_proc, cur_data%dim1_end_proc
+             do p = cur_data%dim1_beg, cur_data%dim1_end
                 laisha(p) = cur_data%data_real_1d(p)
              enddo
              cur_data%is_set = .true.

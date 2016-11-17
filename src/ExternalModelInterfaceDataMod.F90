@@ -36,15 +36,10 @@ module ExternalModelInterfaceDataMod
      character (len=10) :: dim3_name
      character (len=10) :: dim4_name
 
-     integer, dimension(:), pointer :: dim1_beg_clump, dim1_end_clump
-     integer, dimension(:), pointer :: dim2_beg_clump, dim2_end_clump
-     integer, dimension(:), pointer :: dim3_beg_clump, dim3_end_clump
-     integer, dimension(:), pointer :: dim4_beg_clump, dim4_end_clump
-
-     integer :: dim1_beg_proc, dim1_end_proc
-     integer :: dim2_beg_proc, dim2_end_proc
-     integer :: dim3_beg_proc, dim3_end_proc
-     integer :: dim4_beg_proc, dim4_end_proc
+     integer :: dim1_beg, dim1_end
+     integer :: dim2_beg, dim2_end
+     integer :: dim3_beg, dim3_end
+     integer :: dim4_beg, dim4_end
 
      integer, pointer :: data_int_1d(:)
      integer, pointer :: data_int_2d(:,:)
@@ -137,25 +132,15 @@ contains
     this%dim3_name      = ""
     this%dim4_name      = ""
 
-    nullify(this%dim1_beg_clump)
-    nullify(this%dim2_beg_clump)
-    nullify(this%dim3_beg_clump)
-    nullify(this%dim4_beg_clump)
+    this%dim1_beg  = 0
+    this%dim2_beg  = 0
+    this%dim3_beg  = 0
+    this%dim4_beg  = 0
     
-    nullify(this%dim1_end_clump)
-    nullify(this%dim2_end_clump)
-    nullify(this%dim3_end_clump)
-    nullify(this%dim4_end_clump)
-
-    this%dim1_beg_proc  = 0
-    this%dim2_beg_proc  = 0
-    this%dim3_beg_proc  = 0
-    this%dim4_beg_proc  = 0
-    
-    this%dim1_end_proc  = 0
-    this%dim2_end_proc  = 0
-    this%dim3_end_proc  = 0
-    this%dim4_end_proc  = 0
+    this%dim1_end  = 0
+    this%dim2_end  = 0
+    this%dim3_end  = 0
+    this%dim4_end  = 0
 
     nullify(this%data_int_1d)
     nullify(this%data_int_2d)
@@ -183,7 +168,6 @@ contains
     class(emi_data), intent(in) :: default_data
     !
     ! !LOCAL VARIABLES:
-    integer :: nclumps
     integer :: ier                    ! error code
 
     call this%Init()
@@ -209,63 +193,15 @@ contains
     this%dim3_name      = trim(default_data%dim3_name)
     this%dim4_name      = trim(default_data%dim4_name)
 
-    if (associated(default_data%dim1_beg_clump)) then
-       nclumps = size(default_data%dim1_beg_clump)
-       allocate(this%dim1_beg_clump(nclumps))
-       this%dim1_beg_clump(:) = default_data%dim1_beg_clump
-    endif
-
-    if (associated(default_data%dim2_beg_clump)) then
-       nclumps = size(default_data%dim2_beg_clump)
-       allocate(this%dim2_beg_clump(nclumps))
-       this%dim2_beg_clump(:) = default_data%dim2_beg_clump
-    endif
-
-    if (associated(default_data%dim3_beg_clump)) then
-       nclumps = size(default_data%dim3_beg_clump)
-       allocate(this%dim3_beg_clump(nclumps))
-       this%dim3_beg_clump(:) = default_data%dim3_beg_clump
-    endif
-
-    if (associated(default_data%dim4_beg_clump)) then
-       nclumps = size(default_data%dim4_beg_clump)
-       allocate(this%dim4_beg_clump(nclumps))
-       this%dim4_beg_clump(:) = default_data%dim4_beg_clump
-    endif
-
-    if (associated(default_data%dim1_end_clump)) then
-       nclumps = size(default_data%dim1_end_clump)
-       allocate(this%dim1_end_clump(nclumps))
-       this%dim1_end_clump(:) = default_data%dim1_end_clump
-    endif
-
-    if (associated(default_data%dim2_end_clump)) then
-       nclumps = size(default_data%dim2_end_clump)
-       allocate(this%dim2_end_clump(nclumps))
-       this%dim2_end_clump(:) = default_data%dim2_end_clump
-    endif
-
-    if (associated(default_data%dim3_end_clump)) then
-       nclumps = size(default_data%dim3_end_clump)
-       allocate(this%dim3_end_clump(nclumps))
-       this%dim3_end_clump(:) = default_data%dim3_end_clump
-    endif
-
-    if (associated(default_data%dim4_end_clump)) then
-       nclumps = size(default_data%dim4_end_clump)
-       allocate(this%dim4_end_clump(nclumps))
-       this%dim4_end_clump(:) = default_data%dim4_end_clump
-    endif
-
-    this%dim1_beg_proc  = this%dim1_beg_proc
-    this%dim2_beg_proc  = this%dim2_beg_proc
-    this%dim3_beg_proc  = this%dim3_beg_proc
-    this%dim4_beg_proc  = this%dim4_beg_proc
+    this%dim1_beg  = this%dim1_beg
+    this%dim2_beg  = this%dim2_beg
+    this%dim3_beg  = this%dim3_beg
+    this%dim4_beg  = this%dim4_beg
     
-    this%dim1_end_proc  = this%dim1_end_proc
-    this%dim2_end_proc  = this%dim2_end_proc
-    this%dim3_end_proc  = this%dim3_end_proc
-    this%dim4_end_proc  = this%dim4_end_proc
+    this%dim1_end  = this%dim1_end
+    this%dim2_end  = this%dim2_end
+    this%dim3_end  = this%dim3_end
+    this%dim4_end  = this%dim4_end
 
     if (associated(default_data%data_int_1d)) then
        call EMIDAllocateMemory_Int_1D(this)
@@ -447,11 +383,9 @@ contains
   end subroutine EMIDSetEMStages
 
   !------------------------------------------------------------------------
-  subroutine EMIDSetDimensions(this, ndim, nclumps,                 &
-    dim1_beg_clump, dim1_end_clump, dim2_beg_clump, dim2_end_clump, &
-    dim3_beg_clump, dim3_end_clump, dim4_beg_clump, dim4_end_clump, &
-    dim1_beg_proc, dim1_end_proc, dim2_beg_proc, dim2_end_proc,     &
-    dim3_beg_proc, dim3_end_proc, dim4_beg_proc, dim4_end_proc)
+  subroutine EMIDSetDimensions(this, ndim, &
+    dim1_beg, dim1_end, dim2_beg, dim2_end,     &
+    dim3_beg, dim3_end, dim4_beg, dim4_end)
     !
     ! !DESCRIPTION:
     ! Sets dimenions for the data and allocates memory
@@ -461,47 +395,22 @@ contains
     ! !ARGUMENTS:
     class(emi_data)  , intent(inout) :: this
     integer          , intent (in)   :: ndim
-    integer          , intent (in)   :: nclumps
-    integer, pointer , intent (in)   :: dim1_beg_clump(:), dim1_end_clump(:)
-    integer, pointer , intent (in)   :: dim2_beg_clump(:), dim2_end_clump(:)
-    integer, pointer , intent (in)   :: dim3_beg_clump(:), dim3_end_clump(:)
-    integer, pointer , intent (in)   :: dim4_beg_clump(:), dim4_end_clump(:)
-    integer          , intent (in)   :: dim1_beg_proc, dim1_end_proc
-    integer          , intent (in)   :: dim2_beg_proc, dim2_end_proc
-    integer          , intent (in)   :: dim3_beg_proc, dim3_end_proc
-    integer          , intent (in)   :: dim4_beg_proc, dim4_end_proc
-
-    allocate(this%dim1_beg_clump(nclumps))
-    allocate(this%dim2_beg_clump(nclumps))
-    allocate(this%dim3_beg_clump(nclumps))
-    allocate(this%dim4_beg_clump(nclumps))
-    
-    allocate(this%dim1_end_clump(nclumps))
-    allocate(this%dim2_end_clump(nclumps))
-    allocate(this%dim3_end_clump(nclumps))
-    allocate(this%dim4_end_clump(nclumps))
+    integer          , intent (in)   :: dim1_beg, dim1_end
+    integer          , intent (in)   :: dim2_beg, dim2_end
+    integer          , intent (in)   :: dim3_beg, dim3_end
+    integer          , intent (in)   :: dim4_beg, dim4_end
 
     this%ndim = ndim
 
-    this%dim1_beg_clump(:) = dim1_beg_clump(:)
-    this%dim2_beg_clump(:) = dim2_beg_clump(:)
-    this%dim3_beg_clump(:) = dim3_beg_clump(:)
-    this%dim4_beg_clump(:) = dim4_beg_clump(:)
+    this%dim1_beg = dim1_beg
+    this%dim2_beg = dim2_beg
+    this%dim3_beg = dim3_beg
+    this%dim4_beg = dim4_beg
 
-    this%dim1_end_clump(:) = dim1_end_clump(:)
-    this%dim2_end_clump(:) = dim2_end_clump(:)
-    this%dim3_end_clump(:) = dim3_end_clump(:)
-    this%dim4_end_clump(:) = dim4_end_clump(:)
-
-    this%dim1_beg_proc = dim1_beg_proc
-    this%dim2_beg_proc = dim2_beg_proc
-    this%dim3_beg_proc = dim3_beg_proc
-    this%dim4_beg_proc = dim4_beg_proc
-
-    this%dim1_end_proc = dim1_end_proc
-    this%dim2_end_proc = dim2_end_proc
-    this%dim3_end_proc = dim3_end_proc
-    this%dim4_end_proc = dim4_end_proc
+    this%dim1_end = dim1_end
+    this%dim2_end = dim2_end
+    this%dim3_end = dim3_end
+    this%dim4_end = dim4_end
 
   end subroutine EMIDSetDimensions
 
@@ -603,7 +512,7 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_int_1d(this%dim1_beg_proc:this%dim1_end_proc), &
+    allocate(this%data_int_1d(this%dim1_beg:this%dim1_end), &
              stat=ier)
 
     if (ier /= 0) then
@@ -627,8 +536,8 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_int_2d(this%dim1_beg_proc:this%dim1_end_proc, &
-                              this%dim2_beg_proc:this%dim2_end_proc  ), &
+    allocate(this%data_int_2d(this%dim1_beg:this%dim1_end, &
+                              this%dim2_beg:this%dim2_end  ), &
              stat=ier)
 
     if (ier /= 0) then
@@ -651,9 +560,9 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_int_3d( this%dim1_beg_proc:this%dim1_end_proc, &
-                               this%dim2_beg_proc:this%dim2_end_proc, &
-                               this%dim3_beg_proc:this%dim3_end_proc  ), &
+    allocate(this%data_int_3d( this%dim1_beg:this%dim1_end, &
+                               this%dim2_beg:this%dim2_end, &
+                               this%dim3_beg:this%dim3_end  ), &
              stat=ier)
 
     if (ier /= 0) then
@@ -677,7 +586,7 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_real_1d(this%dim1_beg_proc:this%dim1_end_proc), &
+    allocate(this%data_real_1d(this%dim1_beg:this%dim1_end), &
              stat=ier)
 
     if (ier /= 0) then
@@ -701,8 +610,8 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_real_2d(this%dim1_beg_proc:this%dim1_end_proc, &
-                               this%dim2_beg_proc:this%dim2_end_proc  ), &
+    allocate(this%data_real_2d(this%dim1_beg:this%dim1_end, &
+                               this%dim2_beg:this%dim2_end  ), &
              stat=ier)
 
     if (ier /= 0) then
@@ -726,9 +635,9 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_real_3d(this%dim1_beg_proc:this%dim1_end_proc, &
-                               this%dim2_beg_proc:this%dim2_end_proc, &
-                               this%dim3_beg_proc:this%dim3_end_proc  ), &
+    allocate(this%data_real_3d(this%dim1_beg:this%dim1_end, &
+                               this%dim2_beg:this%dim2_end, &
+                               this%dim3_beg:this%dim3_end  ), &
              stat=ier)
 
     if (ier /= 0) then
@@ -752,10 +661,10 @@ contains
     ! !LOCAL VARIABLES:
     integer         :: ier ! error code
 
-    allocate(this%data_real_4d(this%dim1_beg_proc:this%dim1_end_proc, &
-                               this%dim2_beg_proc:this%dim2_end_proc, &
-                               this%dim3_beg_proc:this%dim3_end_proc, &
-                               this%dim4_beg_proc:this%dim4_end_proc  ), &
+    allocate(this%data_real_4d(this%dim1_beg:this%dim1_end, &
+                               this%dim2_beg:this%dim2_end, &
+                               this%dim3_beg:this%dim3_end, &
+                               this%dim4_beg:this%dim4_end  ), &
              stat=ier)
 
     if (ier /= 0) then
@@ -1374,12 +1283,12 @@ contains
        call endrun(msg='EMIDListGetPointerToData: Attempting to asscess ' // &
           'an unallocated data_int_1d.')
     else
-       if (this%data_ptr(data_index)%data%dim1_end_proc /= &
-           this%data_ptr(data_index)%data%dim1_beg_proc) then
+       if (this%data_ptr(data_index)%data%dim1_end /= &
+           this%data_ptr(data_index)%data%dim1_beg) then
           call endrun(msg='EMIDListGetIntValue: Only extracts values from data ' // &
              'that has 1 value.')
        endif
-       idx = this%data_ptr(data_index)%data%dim1_beg_proc
+       idx = this%data_ptr(data_index)%data%dim1_beg
        int_value = this%data_ptr(data_index)%data%data_int_1d(idx)
     endif
 
