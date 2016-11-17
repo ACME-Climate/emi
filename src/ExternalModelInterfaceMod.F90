@@ -1324,7 +1324,12 @@ contains
           case (L2E_COLUMN_PATCH_INDEX)
              do fc = 1, num_filter
                 c = filter(fc)
+#ifndef FATES_VIA_EMI
+                cur_data%data_int_1d(c) = col%pfti(c)
+#else
                 cur_data%data_int_1d(c) = col%patchi(c)
+#endif
+
              enddo
              cur_data%is_set = .true.
           end select
@@ -1535,7 +1540,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#if WITH_ACME
+#ifndef FATES_VIA_EMI
     associate(&
          h2osoi_ice =>    waterstate_vars%h2osoi_ice_col , & ! Output:  [real(r8) (:,:) ]  ice water (kg/m2)
          h2osoi_liq =>    waterstate_vars%h2osoi_liq_col , & ! Output:  [real(r8) (:,:) ]  liquid water (kg/m2)
@@ -1586,7 +1591,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-#if WITH_ACME
+#ifndef FATES_VIA_EMI
           case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
 
              do fc = 1, num_hydrologyc
