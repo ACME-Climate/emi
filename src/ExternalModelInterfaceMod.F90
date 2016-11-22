@@ -914,7 +914,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifndef FATES_VIA_EMI
+#ifdef VSFM_VIA_EMI
     associate(&
          mflx_infl_col         => waterflux_vars%mflx_infl_col         , &
          mflx_dew_col          => waterflux_vars%mflx_dew_col          , &
@@ -1041,7 +1041,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifndef FATES_VIA_EMI
+#ifdef VSFM_VIA_EMI
     associate( &
          mflx_recharge_col   => waterflux_vars%mflx_recharge_col, &
          mflx_snowlyr_col    => waterflux_vars%mflx_snowlyr_col   &
