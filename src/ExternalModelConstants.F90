@@ -4,11 +4,13 @@ module ExternalModelConstants
   private
 
   integer, parameter, public :: EM_INITIALIZATION_STAGE                          = 1001
+  integer, parameter, public :: EM_BETR_BEGIN_MASS_BALANCE_STAGE                 = 11
+  integer, parameter, public :: EM_BETR_PRE_DIAG_WATER_FLUX_STAGE                = 12
   integer, parameter, public :: EM_FATES_SUNFRAC_STAGE                           = 21
   integer, parameter, public :: EM_VSFM_SOIL_HYDRO_STAGE                         = 41
 
   ! ID for various external models
-  integer, public, parameter :: EM_ID_BeTR                                       = 1
+  integer, public, parameter :: EM_ID_BETR                                       = 1
   integer, public, parameter :: EM_ID_FATES                                      = 2
   integer, public, parameter :: EM_ID_PFLOTRAN                                   = 3
   integer, public, parameter :: EM_ID_VSFM                                       = 4
@@ -19,6 +21,17 @@ module ExternalModelConstants
   integer, parameter, public :: L2E_STATE_H2OSOI_ICE                             = 3
   integer, parameter, public :: L2E_STATE_WTD                                    = 4
   integer, parameter, public :: L2E_STATE_VSFM_PROGNOSTIC_SOILP                  = 5
+  integer, parameter, public :: L2E_STATE_FRAC_H2OSFC                            = 6
+  integer, parameter, public :: L2E_STATE_FRAC_INUNDATED                         = 7
+  integer, parameter, public :: L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI                 = 8
+  integer, parameter, public :: L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI                 = 9
+  integer, parameter, public :: L2E_STATE_H2OSOI_VOL_NLEVSOI                     = 10
+  integer, parameter, public :: L2E_STATE_AIR_VOL_NLEVSOI                        = 11
+  integer, parameter, public :: L2E_STATE_RHO_VAP_NLEVSOI                        = 12
+  integer, parameter, public :: L2E_STATE_RHVAP_SOI_NLEVSOI                      = 13
+  integer, parameter, public :: L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI          = 14
+  integer, parameter, public :: L2E_STATE_H2OSOI_LIQ_NLEVSOI                     = 15
+  integer, parameter, public :: L2E_STATE_H2OSOI_ICE_NLEVSOI                     = 16
 
   ! IDs for states sent from External Model to ALM
   integer, parameter, public :: E2L_STATE_H2OSOI_LIQ                             = 101
@@ -48,6 +61,8 @@ module ExternalModelConstants
   ! IDs for filter variables sent from ALM to External Model
   integer, parameter, public :: L2E_FILTER_HYDROLOGYC                            = 401
   integer, parameter, public :: L2E_FILTER_NUM_HYDROLOGYC                        = 402
+  integer, parameter, public :: L2E_FILTER_NOLAKEC                               = 403
+  integer, parameter, public :: L2E_FILTER_NUM_NOLAKEC                           = 404
 
   ! IDs for column-level attributes sent from ALM to External Model
   integer, parameter, public :: L2E_COLUMN_ACTIVE                                = 501

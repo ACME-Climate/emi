@@ -848,6 +848,17 @@ contains
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
     use ExternalModelConstants    , only : L2E_STATE_WTD
     use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
+    use ExternalModelConstants    , only : L2E_STATE_FRAC_H2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_FRAC_INUNDATED
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_VOL_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_AIR_VOL_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_RHO_VAP_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_RHVAP_SOI_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSOI
 
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
@@ -873,6 +884,8 @@ contains
 
     use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
     use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC
 
     use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
     use ExternalModelConstants    , only : L2E_COLUMN_TYPE
@@ -943,6 +956,72 @@ contains
        name_val      = 'Soil liquid pressure'
        long_name_val = 'Soil liquid pressure: ALM to External Model'
        units_val     = '[Pa]'
+
+    case (L2E_STATE_FRAC_H2OSFC)
+       id_val        = L2E_STATE_FRAC_H2OSFC
+       name_val      = 'Fraction of standing water'
+       long_name_val = 'Fraction of standing water: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_STATE_FRAC_INUNDATED)
+       id_val        = L2E_STATE_FRAC_INUNDATED
+       name_val      = 'Fraction of inundated surface'
+       long_name_val = 'Fraction of inundated surface: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI)
+       id_val        = L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
+       name_val      = 'Volumetric liquid content'
+       long_name_val = 'Volumetric liquid content: ALM to External Model'
+       units_val     = '[m3/m3]'
+
+    case (L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI)
+       id_val        = L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
+       name_val      = 'Volumetric ice content'
+       long_name_val = 'Volumetric ice content: ALM to External Model'
+       units_val     = '[m3/m3]'
+
+    case (L2E_STATE_H2OSOI_VOL_NLEVSOI)
+       id_val        = L2E_STATE_H2OSOI_VOL_NLEVSOI
+       name_val      = 'Volumetric soil water'
+       long_name_val = 'Volumetric soil water: ALM to External Model'
+       units_val     = '[m3/m3]'
+
+    case (L2E_STATE_AIR_VOL_NLEVSOI)
+       id_val        = L2E_STATE_AIR_VOL_NLEVSOI
+       name_val      = 'Air filled porosity'
+       long_name_val = 'Air filled porosity: ALM to External Model'
+       units_val     = '[m3/m3]'
+
+    case (L2E_STATE_RHO_VAP_NLEVSOI)
+       id_val        = L2E_STATE_RHO_VAP_NLEVSOI
+       name_val      = 'Water vapor pressure'
+       long_name_val = 'Water vapor pressure: ALM to External Model'
+       units_val     = '[Pa]'
+
+    case (L2E_STATE_RHVAP_SOI_NLEVSOI)
+       id_val        = L2E_STATE_RHVAP_SOI_NLEVSOI
+       name_val      = 'Relative humidity'
+       long_name_val = 'Relative humidity: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI)
+       id_val        = L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
+       name_val      = 'Matric potential in soil & snow lyrs'
+       long_name_val = 'Matric potential in soil & snow lyrs: ALM to External Model'
+       units_val     = '[mm]'
+
+    case (L2E_STATE_H2OSOI_LIQ_NLEVSOI)
+       id_val        = L2E_STATE_H2OSOI_LIQ_NLEVSOI
+       name_val      = 'Soil liquid water'
+       long_name_val = 'Soil liquid water: ALM to External Model'
+       units_val     = '[kg/m2]'
+
+    case (L2E_STATE_H2OSOI_ICE_NLEVSOI)
+       id_val        = L2E_STATE_H2OSOI_ICE_NLEVSOI
+       name_val      = 'Soil ice water'
+       long_name_val = 'Soil ice water: ALM to External Model'
+       units_val     = '[kg/m2]'
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: State variables
@@ -1082,6 +1161,18 @@ contains
        long_name_val = 'Number of hydrology filter: ALM to External Model'
        units_val     = '[-]'
 
+    case (L2E_FILTER_NOLAKEC)
+       id_val        = L2E_FILTER_HYDROLOGYC
+       name_val      = 'Non-lake filter'
+       long_name_val = 'Non-lake filter: ALM to External Model'
+       units_val     = '[-]'
+
+    case (L2E_FILTER_NUM_NOLAKEC)
+       id_val        = L2E_FILTER_NUM_HYDROLOGYC
+       name_val      = 'Number of non-lake filter'
+       long_name_val = 'Number of non-lake filter: ALM to External Model'
+       units_val     = '[-]'
+
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Column variables
        ! --------------------------------------------------------------
@@ -1196,7 +1287,7 @@ contains
 
     case default
        write(iulog,*)'Unknown EMID id = ',data_id
-       call endrun(msg='EMIDSetup: Number of EM stages AND their IDs required.')
+       call endrun(msg='EMIDListAddDataByID: Number of EM stages AND their IDs required.')
     end select
 
     allocate(data)
