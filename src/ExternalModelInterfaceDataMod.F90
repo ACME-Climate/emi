@@ -65,6 +65,7 @@ module ExternalModelInterfaceDataMod
      procedure, public :: SetAvgFlag       => EMIDSetAvgFlag
      procedure, public :: SetLongName      => EMIDSetLongName
      procedure, public :: SetEMStages      => EMIDSetEMStages
+     procedure, public :: AppendEMStages   => EMIDAppendEMStages
      procedure, public :: AllocateMemory   => EMIDAllocateMemory
      procedure, public :: Reset            => EMIDReset
      procedure, public :: Destroy          => EMIDDestroy
@@ -98,6 +99,8 @@ module ExternalModelInterfaceDataMod
      procedure, public :: GetPointerToReal2D => EMIDListGetPointerToReal2D
      procedure, public :: GetPointerToReal3D => EMIDListGetPointerToReal3D
      procedure, public :: GetPointerToReal4D => EMIDListGetPointerToReal4D
+     procedure, public :: IsDataIDPresent    => EMIDIsDataIDPresent
+     procedure, public :: AppendDataEMStages => EMIDListAppendDataEMStages
 
   end type emi_data_list
 
@@ -381,6 +384,72 @@ contains
     this%em_stage_ids(:) = em_stages(:)
 
   end subroutine EMIDSetEMStages
+
+  !------------------------------------------------------------------------
+  subroutine EMIDAppendEMStages(this, num_em_stages, em_stages)
+    !
+    ! !DESCRIPTION:
+    ! Appends the number of external model IDs and stages in which the data would be
+    ! exchanged.
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data), intent(inout) :: this
+    integer, intent (in)           :: num_em_stages
+    integer, intent (in), pointer  :: em_stages(:)
+    !
+    integer                        :: num_em_stages_combined
+    integer, pointer               :: em_stages_combined(:)
+    integer                        :: num_unique_em_stages
+    integer, pointer               :: unique_em_stages(:)
+    integer                        :: iem
+    integer                        :: ii, jj
+
+    if (size(em_stages) /= num_em_stages) then
+       call endrun(msg='Number of EM stage IDs /= Number of EM Stages.')
+    endif
+
+    num_em_stages_combined = num_em_stages + this%num_em_stages
+
+    allocate(em_stages_combined(num_em_stages_combined))
+    allocate(unique_em_stages  (num_em_stages_combined))
+
+    do iem = 1,this%num_em_stages
+       em_stages_combined(iem) = this%em_stage_ids(iem)
+    enddo
+    do iem = this%num_em_stages+1,num_em_stages_combined
+       em_stages_combined(iem) = em_stages(iem-this%num_em_stages)
+    enddo
+
+    unique_em_stages(:)  = 1
+    num_unique_em_stages = num_em_stages_combined
+
+    do ii = 1, num_em_stages_combined
+       do jj = ii+1, num_em_stages_combined
+          if (em_stages_combined(ii) == em_stages_combined(jj)) then
+             unique_em_stages(jj) = 0
+             num_unique_em_stages = num_unique_em_stages - 1
+          endif
+       enddo
+    enddo
+
+    deallocate(this%em_stage_ids)
+    allocate(this%em_stage_ids(num_unique_em_stages))
+
+    this%num_em_stages   = num_unique_em_stages
+    jj = 0
+    do ii = 1, num_em_stages_combined
+       if (unique_em_stages(ii) == 1) then
+          jj = jj + 1
+          this%em_stage_ids(jj) = em_stages_combined(ii)
+       endif
+    enddo
+
+    deallocate(em_stages_combined)
+    deallocate(unique_em_stages  )
+
+  end subroutine EMIDAppendEMStages
 
   !------------------------------------------------------------------------
   subroutine EMIDSetDimensions(this, ndim, &
@@ -837,6 +906,73 @@ contains
   end subroutine EMIDListAddData
   
   !------------------------------------------------------------------------
+  subroutine EMIDIsDataIDPresent(this, data_id, data_present)
+    !
+    ! !DESCRIPTION:
+    ! Determine if the EMID, given by data_id, is present in the list
+    !
+    ! !ARGUMENTS:
+    implicit none
+    !
+    class(emi_data_list)     :: this
+    integer, intent(in)      :: data_id
+    logical, intent(inout)   :: data_present
+    !
+    class(emi_data), pointer :: cur_data
+
+    data_present = .false.
+
+    cur_data => this%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       if (cur_data%id == data_id) then
+          data_present = .true.
+          exit
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+  end subroutine EMIDIsDataIDPresent
+
+  !------------------------------------------------------------------------
+  subroutine EMIDListAppendDataEMStages(this, data_id, num_em_stages_val, em_stage_ids_val, index_of_new_data)
+    !
+    ! !DESCRIPTION:
+    ! Append EM stages of a data
+    !
+    ! !ARGUMENTS:
+    implicit none
+    !
+    class(emi_data_list)          :: this
+    integer, intent(in)           :: data_id
+    integer, intent(in)           :: num_em_stages_val
+    integer, pointer , intent(in) :: em_stage_ids_val(:)
+    integer, intent(out)          :: index_of_new_data
+    !
+    class(emi_data), pointer      :: cur_data
+    integer                       :: index_of_data
+
+    index_of_data = 0
+
+    cur_data => this%first
+    do
+       if (.not.associated(cur_data)) exit
+
+       index_of_data = index_of_data + 1
+       if (cur_data%id == data_id) then
+          call cur_data%AppendEMStages(num_em_stages_val, em_stage_ids_val)
+          index_of_new_data = index_of_data
+          exit
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+  end subroutine EMIDListAppendDataEMStages
+
+  !------------------------------------------------------------------------
   subroutine EMIDListAddDataByID(this, data_id, num_em_stages_val, em_stage_ids_val, index_of_new_data)
     !
     ! !DESCRIPTION:
@@ -921,7 +1057,16 @@ contains
     character (len=32)                     :: name_val
     character (len=128)                    :: long_name_val
     character (len=24)                     :: units_val
-    logical                                :: is_int_type, is_real_type
+    logical                                :: is_int_type
+    logical                                :: is_real_type
+    logical                                :: data_present
+
+    call this%IsDataIDPresent(data_id, data_present)
+    if (data_present) then
+       call this%AppendDataEMStages(data_id, num_em_stages_val, &
+                  em_stage_ids_val, index_of_new_data)
+       return
+    endif
 
     is_int_type    = .false.
     is_real_type   = .false.
