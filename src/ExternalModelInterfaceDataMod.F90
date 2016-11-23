@@ -921,6 +921,10 @@ contains
     character (len=32)                     :: name_val
     character (len=128)                    :: long_name_val
     character (len=24)                     :: units_val
+    logical                                :: is_int_type, is_real_type
+
+    is_int_type    = .false.
+    is_real_type   = .false.
 
     select case(data_id)
 
@@ -932,96 +936,112 @@ contains
        name_val      = 'Soil temperature'
        long_name_val = 'Soil temperature: ALM to External Model'
        units_val     = '[K]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVGRND)
        id_val        = L2E_STATE_H2OSOI_LIQ_NLEVGRND
        name_val      = 'Soil liquid water'
        long_name_val = 'Soil liquid water: ALM to External Model'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_ICE_NLEVGRND)
        id_val        = L2E_STATE_H2OSOI_ICE_NLEVGRND
        name_val      = 'Soil ice water'
        long_name_val = 'Soil ice water: ALM to External Model'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
     case (L2E_STATE_WTD)
        id_val        = L2E_STATE_WTD
        name_val      = 'Water table depth'
        long_name_val = 'Water table depth: ALM to External Model'
        units_val     = '[m]'
+       is_real_type  = .true.
 
     case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
        id_val        = L2E_STATE_VSFM_PROGNOSTIC_SOILP
        name_val      = 'Soil liquid pressure'
        long_name_val = 'Soil liquid pressure: ALM to External Model'
        units_val     = '[Pa]'
+       is_real_type  = .true.
 
     case (L2E_STATE_FRAC_H2OSFC)
        id_val        = L2E_STATE_FRAC_H2OSFC
        name_val      = 'Fraction of standing water'
        long_name_val = 'Fraction of standing water: ALM to External Model'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (L2E_STATE_FRAC_INUNDATED)
        id_val        = L2E_STATE_FRAC_INUNDATED
        name_val      = 'Fraction of inundated surface'
        long_name_val = 'Fraction of inundated surface: ALM to External Model'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
        name_val      = 'Volumetric liquid content'
        long_name_val = 'Volumetric liquid content: ALM to External Model'
        units_val     = '[m3/m3]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
        name_val      = 'Volumetric ice content'
        long_name_val = 'Volumetric ice content: ALM to External Model'
        units_val     = '[m3/m3]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_VOL_NLEVSOI
        name_val      = 'Volumetric soil water'
        long_name_val = 'Volumetric soil water: ALM to External Model'
        units_val     = '[m3/m3]'
+       is_real_type  = .true.
 
     case (L2E_STATE_AIR_VOL_NLEVSOI)
        id_val        = L2E_STATE_AIR_VOL_NLEVSOI
        name_val      = 'Air filled porosity'
        long_name_val = 'Air filled porosity: ALM to External Model'
        units_val     = '[m3/m3]'
+       is_real_type  = .true.
 
     case (L2E_STATE_RHO_VAP_NLEVSOI)
        id_val        = L2E_STATE_RHO_VAP_NLEVSOI
        name_val      = 'Water vapor pressure'
        long_name_val = 'Water vapor pressure: ALM to External Model'
        units_val     = '[Pa]'
+       is_real_type  = .true.
 
     case (L2E_STATE_RHVAP_SOI_NLEVSOI)
        id_val        = L2E_STATE_RHVAP_SOI_NLEVSOI
        name_val      = 'Relative humidity'
        long_name_val = 'Relative humidity: ALM to External Model'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI)
        id_val        = L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
        name_val      = 'Matric potential in soil & snow lyrs'
        long_name_val = 'Matric potential in soil & snow lyrs: ALM to External Model'
        units_val     = '[mm]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_LIQ_NLEVSOI
        name_val      = 'Soil liquid water'
        long_name_val = 'Soil liquid water: ALM to External Model'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
     case (L2E_STATE_H2OSOI_ICE_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_ICE_NLEVSOI
        name_val      = 'Soil ice water'
        long_name_val = 'Soil ice water: ALM to External Model'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: State variables
@@ -1031,48 +1051,56 @@ contains
        name_val      = 'Soil liquid water'
        long_name_val = 'Soil liquid water: External Model to ALM'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
     case (E2L_STATE_H2OSOI_ICE)
        id_val        = E2L_STATE_H2OSOI_ICE
        name_val      = 'Soil ice water'
        long_name_val = 'Soil ice water: External Model to ALM'
        units_val     = '[kg/m2]'
+       is_real_type  = .true.
 
     case (E2L_STATE_SOIL_MATRIC_POTENTIAL)
        id_val        = E2L_STATE_SOIL_MATRIC_POTENTIAL
        name_val      = 'Soil matric potential'
        long_name_val = 'Soil matric potential: External Model to ALM'
        units_val     = '[mm]'
+       is_real_type  = .true.
 
     case (E2L_STATE_WTD)
        id_val        = E2L_STATE_WTD
        name_val      = 'Water table depth'
        long_name_val = 'Water table depth: External Model to ALM'
        units_val     = '[m]'
+       is_real_type  = .true.
 
     case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
        id_val        = E2L_STATE_VSFM_PROGNOSTIC_SOILP
        name_val      = 'Soil liquid pressure'
        long_name_val = 'Soil liquid pressure: External Model to ALM'
        units_val     = '[Pa]'
+       is_real_type  = .true.
 
     case (E2L_STATE_FSUN)
        id_val        = E2L_STATE_FSUN
        name_val      = 'Fraction of canopy sunlit'
        long_name_val = ': External Model to ALM'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (E2L_STATE_LAISUN)
        id_val        = E2L_STATE_LAISUN
        name_val      = 'Sunlit leaf area'
        long_name_val = 'Sunlit leaf area: External Model to ALM'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (E2L_STATE_LAISHA)
        id_val        = E2L_STATE_LAISHA
        name_val      = 'Shaded leaf area'
        long_name_val = 'Shaded leaf area: External Model to ALM'
        units_val     = '[-]'
+       is_real_type  = .true.
 
        ! --------------------------------------------------------------
        ! ALM-to-EM: Flux variables
@@ -1082,54 +1110,63 @@ contains
        name_val      = 'Soil infiltration source'
        long_name_val = 'Soil infiltration source: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_VERTICAL_ET_MASS_FLUX)
        id_val        = L2E_FLUX_VERTICAL_ET_MASS_FLUX
        name_val      = 'Evapotranspiration sink'
        long_name_val = 'Evapotranspiration sink: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_DEW_MASS_FLUX)
        id_val        = L2E_FLUX_DEW_MASS_FLUX
        name_val      = 'Dew sink'
        long_name_val = 'Dew sink: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX)
        id_val        = L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
        name_val      = 'Snow sublimation sink'
        long_name_val = 'Snow sublimation sink: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
        name_val      = 'Snow layer disappearance sink'
        long_name_val = 'Snow layer disappearance sink: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
        name_val      = 'Snow layer disappearance sink'
        long_name_val = 'Snow layer disappearance sink from restart: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_DRAINAGE_MASS_FLUX)
        id_val        = L2E_FLUX_DRAINAGE_MASS_FLUX
        name_val      = 'Drainage sink'
        long_name_val = 'Drainage sink: ALM to External Model'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_SOLAR_DIRECT_RADDIATION)
        id_val        = L2E_FLUX_SOLAR_DIRECT_RADDIATION
        name_val      = 'Direct beam solar radiation'
        long_name_val = 'Direct beam solar radiation: ALM to External Model'
        units_val     = '[W/m2]'
+       is_real_type  = .true.
 
     case (L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
        id_val        = L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
        name_val      = 'Diffuse beam solar radiation'
        long_name_val = 'Diffuse beam solar radiation: ALM to External Model'
        units_val     = '[W/m2]'
+       is_real_type  = .true.
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: Flux variables
@@ -1139,12 +1176,14 @@ contains
        name_val      = 'Aquifer recharge rate'
        long_name_val = 'Aquifer recharge rate: External Model to ALM'
        units_val     = '[mm/s]'
+       is_real_type  = .true.
 
     case (E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
        name_val      = 'Snow layer disappearance sink'
        long_name_val = 'Snow layer disappearance sink initial value: External Model to ALM'
        units_val     = '[kg/s]'
+       is_real_type  = .true.
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Filter variables
@@ -1154,24 +1193,28 @@ contains
        name_val      = 'Hydrology filter'
        long_name_val = 'Hydrology filter: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_FILTER_NUM_HYDROLOGYC)
        id_val        = L2E_FILTER_NUM_HYDROLOGYC
        name_val      = 'Number of hydrology filter'
        long_name_val = 'Number of hydrology filter: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_FILTER_NOLAKEC)
        id_val        = L2E_FILTER_HYDROLOGYC
        name_val      = 'Non-lake filter'
        long_name_val = 'Non-lake filter: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_FILTER_NUM_NOLAKEC)
        id_val        = L2E_FILTER_NUM_HYDROLOGYC
        name_val      = 'Number of non-lake filter'
        long_name_val = 'Number of non-lake filter: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Column variables
@@ -1181,55 +1224,63 @@ contains
        name_val      = 'Column active'
        long_name_val = 'Column active: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_COLUMN_TYPE)
        id_val        = L2E_COLUMN_TYPE
        name_val      = 'Column type'
        long_name_val = 'Column type: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_COLUMN_LANDUNIT_INDEX)
        id_val        = L2E_COLUMN_LANDUNIT_INDEX
        name_val      = 'Column to landunit index'
        long_name_val = 'Column landunit index: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_COLUMN_ZI)
        id_val        = L2E_COLUMN_ZI
        name_val      = 'Column layer interface depth'
        long_name_val = 'Column layer interface depth: ALM to External Model'
        units_val     = '[m]'
-
+       is_real_type  = .true.
 
     case (L2E_COLUMN_DZ)
        id_val        = L2E_COLUMN_DZ
        name_val      = 'Column layer thickness'
        long_name_val = 'Column layer thickness: ALM to External Model'
        units_val     = '[m]'
+       is_real_type  = .true.
 
     case (L2E_COLUMN_Z)
        id_val        = L2E_COLUMN_Z
        name_val      = 'Column layer centroid depth'
        long_name_val = 'Column layer centroid depth: ALM to External Model'
        units_val     = '[m]'
+       is_real_type  = .true.
 
     case (L2E_COLUMN_AREA)
        id_val        = L2E_COLUMN_AREA
        name_val      = 'Column surface area'
        long_name_val = 'Column surface area: ALM to External Model'
        units_val     = '[m2]'
+       is_real_type  = .true.
 
     case (L2E_COLUMN_GRIDCELL_INDEX)
        id_val        = L2E_COLUMN_GRIDCELL_INDEX
        name_val      = 'Column to gridcell index'
        long_name_val = 'Column to gridcell index: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_COLUMN_PATCH_INDEX)
        id_val        = L2E_COLUMN_PATCH_INDEX
        name_val      = 'Column to patch index'
        long_name_val = 'Column to patch index: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Landunit variables
@@ -1239,18 +1290,21 @@ contains
        name_val      = 'Landunit type'
        long_name_val = 'Landunit type: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_LANDUNIT_LAKEPOINT)
        id_val        = L2E_LANDUNIT_LAKEPOINT
        name_val      = 'Landunit lake point'
        long_name_val = 'Landunit lake point: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
     case (L2E_LANDUNIT_URBANPOINT)
        id_val        = L2E_LANDUNIT_URBANPOINT
        name_val      = 'Landunit urban point'
        long_name_val = 'Landunit urban point: ALM to External Model'
        units_val     = '[-]'
+       is_int_type   = .true.
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Parameters variables
@@ -1260,30 +1314,35 @@ contains
        name_val      = 'Soil porosity'
        long_name_val = 'Soil porosity: ALM to External Model'
        units_val     = '[m^3/m^3]'
+       is_real_type  = .true.
 
     case (L2E_PARAMETER_HKSATC)
        id_val        = L2E_PARAMETER_HKSATC
        name_val      = 'Soil hydraulic conductivity'
        long_name_val = 'Soil hydraulic conductivity at saturation: ALM to External Model'
        units_val     = '[mm/s]'
+       is_real_type  = .true.
 
     case (L2E_PARAMETER_BSWC)
        id_val        = L2E_PARAMETER_BSWC
        name_val      = 'Clapp and Hornberger parameter'
        long_name_val = 'Clapp and Hornberger parameter: ALM to External Model'
        units_val     = '[-]'
+       is_real_type  = .true.
 
     case (L2E_PARAMETER_SUCSATC)
        id_val        = L2E_PARAMETER_SUCSATC
        name_val      = 'Minimum soil suction'
        long_name_val = 'Minimum soil suction: ALM to External Model'
        units_val     = '[mm]'
+       is_real_type  = .true.
 
     case (L2E_PARAMETER_EFFPOROSITYC)
        id_val        = L2E_PARAMETER_EFFPOROSITYC
        name_val      = 'Effective porosity'
        long_name_val = 'Effective porosity: ALM to External Model'
        units_val     = ''
+       is_real_type  = .true.
 
     case default
        write(iulog,*)'Unknown EMID id = ',data_id
@@ -1299,6 +1358,7 @@ contains
          units         = units_val,         &
          num_em_stages = num_em_stages_val, &
          em_stage_ids  = em_stage_ids_val)
+    call data%SetType(is_int_type, is_real_type)
     call this%AddData(data)
     index_of_new_data = this%num_data
 

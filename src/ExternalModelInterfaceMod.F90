@@ -457,7 +457,6 @@ contains
     integer                                 :: dim2_beg, dim2_end
     integer                                 :: dim3_beg, dim3_end
     integer                                 :: dim4_beg, dim4_end
-    logical                                 :: is_int_type, is_real_type
 
     ndim      = 0
     dim1_beg  = 0
@@ -468,9 +467,6 @@ contains
     dim2_end  = 0
     dim3_end  = 0
     dim4_end  = 0
-
-    is_int_type    = .false.
-    is_real_type   = .false.
 
     ! Determine the size of data
     select case (data%id)
@@ -603,86 +599,9 @@ contains
        call endrun(msg='Unknown data%id while trying to set dimensions.')
     end select
 
-
-    ! Determine the type of data
-    select case (data%id)
-       
-    case (L2E_STATE_TSOIL_NLEVGRND,                         &
-          L2E_STATE_H2OSOI_LIQ_NLEVGRND,                    &
-          L2E_STATE_H2OSOI_ICE_NLEVGRND,                    &
-          L2E_STATE_WTD,                                    &
-          L2E_STATE_VSFM_PROGNOSTIC_SOILP,                  &
-          L2E_STATE_FRAC_H2OSFC,                            &
-          L2E_STATE_FRAC_INUNDATED,                         &
-          L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI,                 &
-          L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI,                 &
-          L2E_STATE_H2OSOI_VOL_NLEVSOI,                     &
-          L2E_STATE_AIR_VOL_NLEVSOI,                        &
-          L2E_STATE_RHO_VAP_NLEVSOI,                        &
-          L2E_STATE_RHVAP_SOI_NLEVSOI,                      &
-          L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI,          &
-          L2E_STATE_H2OSOI_LIQ_NLEVSOI,                     &
-          L2E_STATE_H2OSOI_ICE_NLEVSOI,                     &
-          E2L_STATE_H2OSOI_LIQ,                             &
-          E2L_STATE_H2OSOI_ICE,                             &
-          E2L_STATE_SOIL_MATRIC_POTENTIAL,                  &
-          E2L_STATE_VSFM_PROGNOSTIC_SOILP,                  &
-          E2L_STATE_WTD,                                    &
-          E2L_STATE_FSUN,                                   &
-          E2L_STATE_LAISUN,                                 &
-          E2L_STATE_LAISHA,                                 &
-          L2E_FLUX_VERTICAL_ET_MASS_FLUX,                   &
-          L2E_FLUX_DRAINAGE_MASS_FLUX,                      &
-          L2E_FLUX_INFIL_MASS_FLUX,                         &
-          L2E_FLUX_DEW_MASS_FLUX,                           &
-          L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
-          L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
-          L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          L2E_FLUX_SOLAR_DIRECT_RADDIATION,                 &
-          L2E_FLUX_SOLAR_DIFFUSE_RADDIATION,                &
-          E2L_FLUX_AQUIFER_RECHARGE,                        &
-          E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
-          L2E_COLUMN_ZI,                                    &
-          L2E_COLUMN_DZ,                                    &
-          L2E_COLUMN_Z,                                     &
-          L2E_COLUMN_AREA,                                  &
-          L2E_PARAMETER_WATSATC,                            &
-          L2E_PARAMETER_HKSATC,                             &
-          L2E_PARAMETER_BSWC,                               &
-          L2E_PARAMETER_SUCSATC,                            &
-          L2E_PARAMETER_EFFPOROSITYC                        &
-          )
-
-       is_int_type    = .false.
-       is_real_type   = .true.
-
-    case (L2E_FILTER_HYDROLOGYC,     &
-          L2E_FILTER_NUM_HYDROLOGYC, &
-          L2E_FILTER_NOLAKEC       , &
-          L2E_FILTER_NUM_NOLAKEC   , &
-          L2E_COLUMN_ACTIVE,         &
-          L2E_COLUMN_TYPE,           &
-          L2E_COLUMN_LANDUNIT_INDEX, &
-          L2E_COLUMN_GRIDCELL_INDEX, &
-          L2E_COLUMN_PATCH_INDEX,    &
-          L2E_LANDUNIT_TYPE,         &
-          L2E_LANDUNIT_LAKEPOINT,    &
-          L2E_LANDUNIT_URBANPOINT )
-
-       is_int_type    = .true.
-       is_real_type   = .false.
-
-    case default
-       write(iulog,*)'Unknown data%id = ',data%id
-       write(iulog,*)'Unknown data%name = ',trim(data%name)
-       call endrun(msg='Unknown data%id while trying to specify data type.')
-    end select
-
     call data%SetDimensions(ndim,                               &
          dim1_beg, dim1_end, dim2_beg, dim2_end,     &
          dim3_beg, dim3_end, dim4_beg, dim4_end)
-
-    call data%SetType(is_int_type, is_real_type)
 
   end subroutine EMI_Setup_Data
 
