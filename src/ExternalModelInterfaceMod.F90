@@ -377,9 +377,9 @@ contains
     ! Setup a EMI data
     !
     ! !USES:
-    use ExternalModelConstants    , only : L2E_STATE_TSOIL
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVGRND
     use ExternalModelConstants    , only : L2E_STATE_WTD
     use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
     use ExternalModelConstants    , only : L2E_STATE_FRAC_H2OSFC
@@ -475,9 +475,9 @@ contains
     ! Determine the size of data
     select case (data%id)
 
-    case (L2E_STATE_TSOIL,                 &
-          L2E_STATE_H2OSOI_LIQ,            &
-          L2E_STATE_H2OSOI_ICE,            &
+    case (L2E_STATE_TSOIL_NLEVGRND,        &
+          L2E_STATE_H2OSOI_LIQ_NLEVGRND,   &
+          L2E_STATE_H2OSOI_ICE_NLEVGRND,   &
           L2E_STATE_VSFM_PROGNOSTIC_SOILP, &
           E2L_STATE_H2OSOI_LIQ,            &
           E2L_STATE_H2OSOI_ICE,            &
@@ -607,9 +607,9 @@ contains
     ! Determine the type of data
     select case (data%id)
        
-    case (L2E_STATE_TSOIL,                                  &
-          L2E_STATE_H2OSOI_LIQ,                             &
-          L2E_STATE_H2OSOI_ICE,                             &
+    case (L2E_STATE_TSOIL_NLEVGRND,                         &
+          L2E_STATE_H2OSOI_LIQ_NLEVGRND,                    &
+          L2E_STATE_H2OSOI_ICE_NLEVGRND,                    &
           L2E_STATE_WTD,                                    &
           L2E_STATE_VSFM_PROGNOSTIC_SOILP,                  &
           L2E_STATE_FRAC_H2OSFC,                            &
@@ -1476,8 +1476,8 @@ contains
     ! Pack data from ALM's waterstate_vars for EM
     !
     ! !USES:
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVGRND
     use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
     use ExternalModelConstants    , only : L2E_STATE_FRAC_H2OSFC
     use ExternalModelConstants    , only : L2E_STATE_FRAC_INUNDATED
@@ -1550,7 +1550,7 @@ contains
 
           select case (cur_data%id)
 
-          case (L2E_STATE_H2OSOI_LIQ)
+          case (L2E_STATE_H2OSOI_LIQ_NLEVGRND)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1559,7 +1559,7 @@ contains
              enddo
              cur_data%is_set = .true.
 
-          case (L2E_STATE_H2OSOI_ICE)
+          case (L2E_STATE_H2OSOI_ICE_NLEVGRND)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
@@ -1799,7 +1799,7 @@ contains
     ! Pack data from ALM's temperature_vars for EM
     !
     ! !USES:
-    use ExternalModelConstants , only : L2E_STATE_TSOIL
+    use ExternalModelConstants , only : L2E_STATE_TSOIL_NLEVGRND
     use TemperatureType        , only : temperature_type
     use clm_varpar             , only : nlevgrnd
     !
@@ -1839,7 +1839,7 @@ contains
 
           select case (cur_data%id)
 
-          case (L2E_STATE_TSOIL)
+          case (L2E_STATE_TSOIL_NLEVGRND)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd

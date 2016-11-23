@@ -16,9 +16,9 @@ module ExternalModelConstants
   integer, public, parameter :: EM_ID_VSFM                                       = 4
 
   ! IDs for state variables sent from ALM to External Model
-  integer, parameter, public :: L2E_STATE_TSOIL                                  = 1
-  integer, parameter, public :: L2E_STATE_H2OSOI_LIQ                             = 2
-  integer, parameter, public :: L2E_STATE_H2OSOI_ICE                             = 3
+  integer, parameter, public :: L2E_STATE_TSOIL_NLEVGRND                         = 1
+  integer, parameter, public :: L2E_STATE_H2OSOI_LIQ_NLEVGRND                    = 2
+  integer, parameter, public :: L2E_STATE_H2OSOI_ICE_NLEVGRND                    = 3
   integer, parameter, public :: L2E_STATE_WTD                                    = 4
   integer, parameter, public :: L2E_STATE_VSFM_PROGNOSTIC_SOILP                  = 5
   integer, parameter, public :: L2E_STATE_FRAC_H2OSFC                            = 6

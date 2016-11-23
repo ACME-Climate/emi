@@ -204,9 +204,9 @@ contains
     !
     ! !USES:
     use ExternalModelConstants    , only : EM_VSFM_SOIL_HYDRO_STAGE
-    use ExternalModelConstants    , only : L2E_STATE_TSOIL
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVGRND
     use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
@@ -233,9 +233,9 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_VSFM_SOIL_HYDRO_STAGE
 
-    call l2e_list%AddDataByID(L2E_STATE_TSOIL                          , number_em_stages, em_stages, index_l2e_state_tsoil           )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, index_l2e_state_h2osoi_liq      )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, index_l2e_state_h2osoi_ice      )
+    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND                 , number_em_stages, em_stages, index_l2e_state_tsoil           )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND            , number_em_stages, em_stages, index_l2e_state_h2osoi_liq      )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND            , number_em_stages, em_stages, index_l2e_state_h2osoi_ice      )
     call l2e_list%AddDataByID(L2E_FLUX_INFIL_MASS_FLUX                 , number_em_stages, em_stages, index_l2e_flux_infil            )
     call l2e_list%AddDataByID(L2E_FLUX_VERTICAL_ET_MASS_FLUX           , number_em_stages, em_stages, index_l2e_flux_et               )
     call l2e_list%AddDataByID(L2E_FLUX_DEW_MASS_FLUX                   , number_em_stages, em_stages, index_l2e_flux_dew              )

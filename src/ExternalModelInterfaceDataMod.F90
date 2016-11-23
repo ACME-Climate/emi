@@ -843,9 +843,9 @@ contains
     ! Add a EMID to a list
     !
     ! !USES:
-    use ExternalModelConstants    , only : L2E_STATE_TSOIL
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE
+    use ExternalModelConstants    , only : L2E_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVGRND
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVGRND
     use ExternalModelConstants    , only : L2E_STATE_WTD
     use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
     use ExternalModelConstants    , only : L2E_STATE_FRAC_H2OSFC
@@ -927,20 +927,20 @@ contains
        ! --------------------------------------------------------------
        ! ALM-to-EM: State variables
        ! --------------------------------------------------------------
-    case (L2E_STATE_TSOIL)
-       id_val        = L2E_STATE_TSOIL
+    case (L2E_STATE_TSOIL_NLEVGRND)
+       id_val        = L2E_STATE_TSOIL_NLEVGRND
        name_val      = 'Soil temperature'
        long_name_val = 'Soil temperature: ALM to External Model'
        units_val     = '[K]'
 
-    case (L2E_STATE_H2OSOI_LIQ)
-       id_val        = L2E_STATE_H2OSOI_LIQ
+    case (L2E_STATE_H2OSOI_LIQ_NLEVGRND)
+       id_val        = L2E_STATE_H2OSOI_LIQ_NLEVGRND
        name_val      = 'Soil liquid water'
        long_name_val = 'Soil liquid water: ALM to External Model'
        units_val     = '[kg/m2]'
 
-    case (L2E_STATE_H2OSOI_ICE)
-       id_val        = L2E_STATE_H2OSOI_ICE
+    case (L2E_STATE_H2OSOI_ICE_NLEVGRND)
+       id_val        = L2E_STATE_H2OSOI_ICE_NLEVGRND
        name_val      = 'Soil ice water'
        long_name_val = 'Soil ice water: ALM to External Model'
        units_val     = '[kg/m2]'
