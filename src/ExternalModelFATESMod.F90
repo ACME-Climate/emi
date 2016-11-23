@@ -161,10 +161,6 @@ contains
     !
     implicit none
     !
-#include "finclude/petscsys.h"
-#include "finclude/petscsnes.h"
-#include "finclude/petscsnes.h90"
-    !
     ! !ARGUMENTS:
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
@@ -202,10 +198,6 @@ contains
 #endif
     !
     implicit none
-    !
-#include "finclude/petscsys.h"
-#include "finclude/petscsnes.h"
-#include "finclude/petscsnes.h90"
     !
     ! !ARGUMENTS:
     integer              , intent(in)    :: clump_rank
