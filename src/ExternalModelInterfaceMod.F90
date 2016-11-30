@@ -27,6 +27,7 @@ module ExternalModelInterfaceMod
   integer :: index_em_fates
   integer :: index_em_pflotran
   integer :: index_em_vsfm
+  integer :: index_em_ptm
 
   class(emi_data_list), pointer :: l2e_list(:)
   class(emi_data_list), pointer :: e2l_list(:)
@@ -49,6 +50,9 @@ contains
     use clm_varctl, only : use_betr
     use clm_varctl, only : use_pflotran
     use clm_varctl, only : use_vsfm
+#endif
+#ifdef VSFM_VIA_EMI
+    use clm_varctl, only : use_petsc_thermal_model
 #endif
     !
     implicit none
@@ -87,6 +91,15 @@ contains
        num_em            = num_em + 1
        index_em_vsfm     = num_em
     endif
+
+#ifdef VSFM_VIA_EMI
+    ! Is PETSc based Thermal Model active?
+    if (use_petsc_thermal_model) then
+       num_em            = num_em + 1
+       index_em_ptm      = num_em
+    endif
+#endif
+
 #endif
 
     if ( masterproc ) then
@@ -125,12 +138,15 @@ contains
     use ExternalModelConstants, only : EM_ID_FATES
     use ExternalModelConstants, only : EM_ID_PFLOTRAN
     use ExternalModelConstants, only : EM_ID_VSFM
+    use ExternalModelConstants, only : EM_ID_PTM
 #ifdef USE_PETSC_LIB
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Init
+    use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_List
+    use ExternalModelPTMMod   , only : EM_PTM_Populate_E2L_List
 #endif
 #ifndef FATES_VIA_EMI
     use clm_instMod           , only : soilstate_vars
@@ -324,6 +340,40 @@ contains
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
 
+    case (EM_ID_PTM)
+
+#ifdef USE_PETSC_LIB
+#ifdef VSFM_VIA_EMI
+
+       do clump_rank = 1, nclumps
+          iem = (index_em_ptm - 1)*nclumps + 1
+
+          ! Fill the data list:
+          !  - Data need during timestepping
+          call EM_PTM_Populate_L2E_List(l2e_list(iem))
+          call EM_PTM_Populate_E2L_List(e2l_list(iem))
+       enddo
+
+       !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
+       do clump_rank = 1, nclumps
+
+          call get_clump_bounds(clump_rank, bounds_clump)
+          iem = (index_em_ptm - 1)*nclumps + 1
+
+          ! Allocate memory for data
+          call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+
+       enddo
+       !$OMP END PARALLEL DO
+
+#else
+       call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
+#endif
+#else
+       call endrun('PTM is on but code was not compiled with -DUSE_PETSC_LIB')
+#endif
+
     case default
        call endrun('Unknown External Model')
     end select
@@ -393,6 +443,13 @@ contains
     use ExternalModelConstants    , only : L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_TSNOW
+    use ExternalModelConstants    , only : L2E_STATE_TH2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_FRAC_SNOW_EFFECTIVE
 
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
@@ -402,6 +459,9 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_FSUN
     use ExternalModelConstants    , only : E2L_STATE_LAISUN
     use ExternalModelConstants    , only : E2L_STATE_LAISHA
+    use ExternalModelConstants    , only : E2L_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants    , only : E2L_STATE_TSNOW_NLEVSNOW
+    use ExternalModelConstants    , only : E2L_STATE_TH2OSFC
 
     use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
@@ -412,6 +472,11 @@ contains
     use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
     use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
+    use ExternalModelConstants    , only : L2E_FLUX_ABSORBED_SOLAR_RADIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOIL_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_H2OSFC_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
 
     use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -420,6 +485,8 @@ contains
     use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
     use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC
     use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC
+    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC_AND_NOURBANC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
 
     use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
     use ExternalModelConstants    , only : L2E_COLUMN_TYPE
@@ -430,6 +497,7 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -443,6 +511,7 @@ contains
 
     use clm_varpar                , only : nlevgrnd
     use clm_varpar                , only : nlevsoi
+    use clm_varpar                , only : nlevsno
     !
     implicit none
     !
@@ -479,6 +548,7 @@ contains
           E2L_STATE_H2OSOI_ICE,            &
           E2L_STATE_SOIL_MATRIC_POTENTIAL, &
           E2L_STATE_VSFM_PROGNOSTIC_SOILP, &
+          E2L_STATE_TSOIL_NLEVGRND,        &
           L2E_FLUX_VERTICAL_ET_MASS_FLUX,  &
           L2E_FLUX_DRAINAGE_MASS_FLUX,     &
           L2E_COLUMN_DZ,                   &
@@ -515,17 +585,50 @@ contains
        dim2_beg = 1
        dim2_end = nlevsoi
 
+    case (L2E_STATE_TSNOW,               &
+          L2E_STATE_H2OSOI_LIQ_NLEVSNOW, &
+          L2E_STATE_H2OSOI_ICE_NLEVSNOW, &
+          E2L_STATE_TSNOW_NLEVSNOW  )
+
+       ! Dim: Column x -nlevsno+1:0
+
+       ndim     = 2
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
+       dim2_beg = -nlevsno + 1
+       dim2_end = 0
+
+    case (L2E_FLUX_ABSORBED_SOLAR_RADIATION)
+
+       ! Dim: Column x -nlevsno+1:1
+
+       ndim     = 2
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
+       dim2_beg = -nlevsno + 1
+       dim2_end = 1
+
     case (L2E_STATE_FRAC_H2OSFC,                            &
           L2E_STATE_FRAC_INUNDATED,                         &
+          L2E_STATE_TH2OSFC,                                &
+          L2E_STATE_H2OSNOW,                                &
+          L2E_STATE_H2OSFC,                                 &
+          L2E_STATE_FRAC_SNOW_EFFECTIVE,                    &
           L2E_FLUX_INFIL_MASS_FLUX,                         &
           L2E_STATE_WTD,                                    &
           E2L_STATE_WTD,                                    &
+          E2L_STATE_TH2OSFC,                                &
           L2E_FILTER_HYDROLOGYC,                            &
           L2E_FILTER_NOLAKEC,                               &
+          L2E_FILTER_NOLAKEC_AND_NOURBANC,                  &
           L2E_FLUX_DEW_MASS_FLUX,                           &
           L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
           L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
           L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
+          L2E_FLUX_SOIL_HEAT_FLUX,                          &
+          L2E_FLUX_SNOW_HEAT_FLUX,                          &
+          L2E_FLUX_H2OSFC_HEAT_FLUX,                        &
+          L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX,                 &
           E2L_FLUX_AQUIFER_RECHARGE,                        &
           E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
           L2E_COLUMN_ACTIVE,                                &
@@ -533,6 +636,7 @@ contains
           L2E_COLUMN_LANDUNIT_INDEX,                        &
           L2E_COLUMN_GRIDCELL_INDEX,                        &
           L2E_COLUMN_PATCH_INDEX,                           &
+          L2E_COLUMN_NUM_SNOW_LAYERS,                       &
           L2E_COLUMN_AREA)
 
        ! Dim: Column
@@ -542,7 +646,8 @@ contains
        dim1_end = bounds_clump%endc
 
     case (L2E_FILTER_NUM_HYDROLOGYC, &
-          L2E_FILTER_NUM_NOLAKEC)
+          L2E_FILTER_NUM_NOLAKEC,    &
+          L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC)
 
        ! Dim: 1
 
@@ -609,9 +714,10 @@ contains
   subroutine EMI_Driver(em_id, em_stage, dt, number_step,  &
        clump_rank, num_hydrologyc, filter_hydrologyc,      &
        num_nolakec, filter_nolakec,                        &
+       num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, &
        soilhydrology_vars, soilstate_vars, waterflux_vars, &
        waterstate_vars, temperature_vars,  atm2lnd_vars,   &
-       canopystate_vars)
+       canopystate_vars, energyflux_vars)
     !
     ! !DESCRIPTION:
     !
@@ -620,6 +726,7 @@ contains
     use ExternalModelConstants , only : EM_ID_FATES
     use ExternalModelConstants , only : EM_ID_PFLOTRAN
     use ExternalModelConstants , only : EM_ID_VSFM
+    use ExternalModelConstants , only : EM_ID_PTM
     use SoilStateType          , only : soilstate_type
     use SoilHydrologyType      , only : soilhydrology_type
     use TemperatureType        , only : temperature_type
@@ -627,8 +734,10 @@ contains
     use WaterStateType         , only : waterstate_type
     use atm2lndType            , only : atm2lnd_type
     use CanopyStateType        , only : canopystate_type
+    use EnergyFluxType         , only : energyflux_type
 #ifdef USE_PETSC_LIB
     use ExternalModelVSFMMod   , only : EM_VSFM_Solve
+    use ExternalModelPTMMod    , only : EM_PTM_Solve
 #endif
     use ExternalModelFATESMod  , only : EM_FATES_Solve
     use ExternalModelBETRMod   , only : EM_BETR_Solve
@@ -645,6 +754,8 @@ contains
     integer                  , optional , intent(in)    :: filter_hydrologyc(:) ! column filter for soil points
     integer                  , optional , intent(in)    :: num_nolakec
     integer                  , optional , intent(in)    :: filter_nolakec(:)
+    integer                  , optional , intent(in)    :: num_nolakec_and_nourbanc
+    integer                  , optional , intent(in)    :: filter_nolakec_and_nourbanc(:)
     type(soilhydrology_type) , optional , intent(inout) :: soilhydrology_vars
     type(soilstate_type)     , optional , intent(inout) :: soilstate_vars
     type(waterflux_type)     , optional , intent(inout) :: waterflux_vars
@@ -652,6 +763,7 @@ contains
     type(temperature_type)   , optional , intent(inout) :: temperature_vars
     type(atm2lnd_type)       , optional , intent(inout) :: atm2lnd_vars
     type(canopystate_type)   , optional , intent(inout) :: canopystate_vars
+    type(energyflux_type)    , optional , intent(inout) :: energyflux_vars
     !
     integer          :: index_em
     real(r8)         :: dtime
@@ -672,6 +784,8 @@ contains
        index_em = index_em_pflotran
     case (EM_ID_VSFM)
        index_em = index_em_vsfm
+    case (EM_ID_PTM)
+       index_em = index_em_ptm
     case default
        call endrun('Unknown External Model')
     end select
@@ -695,6 +809,12 @@ contains
 
        call EMID_Pack_Temperature_Vars_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, temperature_vars)
+
+       elseif (present(num_nolakec_and_nourbanc)  .and. &
+               present(filter_nolakec_and_nourbanc)) then
+
+       call EMID_Pack_Temperature_Vars_for_EM(l2e_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
 
     if ( present(waterstate_vars)) then
@@ -703,6 +823,12 @@ contains
 
           call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
                num_hydrologyc, filter_hydrologyc, waterstate_vars)
+
+       elseif (present(num_nolakec_and_nourbanc)  .and. &
+               present(filter_nolakec_and_nourbanc)) then
+
+          call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
+               num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, waterstate_vars)
        else
           ! GB_FIX_ME: Create a temporary filter
           if (present(clump_rank)) then
@@ -730,6 +856,14 @@ contains
             num_hydrologyc, filter_hydrologyc, waterflux_vars)
     endif
 
+    if ( present(num_nolakec_and_nourbanc) .and. &
+         present(filter_nolakec_and_nourbanc)) then
+
+       call EMID_Pack_EnergyFlux_Vars_for_EM(l2e_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, energyflux_vars)
+
+    endif
+
     if ( present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
@@ -749,6 +883,20 @@ contains
 
        call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
+
+    endif
+
+    if ( present(num_nolakec_and_nourbanc) .and. &
+         present(filter_nolakec_and_nourbanc)) then
+
+       call EMID_Pack_Filter_for_EM(l2e_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
+
+       call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
+
+       call EMID_Pack_Landunit_for_EM(l2e_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
 
     endif
 
@@ -798,6 +946,14 @@ contains
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
+
+    case (EM_ID_PTM)
+#ifdef VSFM_VIA_EMI
+       call EM_PTM_Solve(em_stage, dtime, nstep, l2e_list(iem), e2l_list(iem))
+#else
+       call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
+#endif
+
     case default
        call endrun('Unknown External Model')
     end select
@@ -839,6 +995,14 @@ contains
 
     if (present(canopystate_vars)) then
        call EMID_Unpack_CanopyState_Vars_for_EM(e2l_list(iem), em_stage, canopystate_vars)
+    endif
+
+    if ( present(temperature_vars) .and. &
+         present(num_nolakec_and_nourbanc)     .and. &
+         present(filter_nolakec_and_nourbanc)) then
+
+       call EMID_Unpack_Temperature_Vars_for_EM(e2l_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
 
     call EMID_Verify_All_Data_Is_Set(e2l_list(iem), em_stage)
@@ -1129,7 +1293,11 @@ contains
     !
     ! !USES:
     use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC
+    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC_AND_NOURBANC
     use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
     !
     implicit none
     !
@@ -1142,13 +1310,10 @@ contains
     class(emi_data), pointer          :: cur_data
     logical                           :: need_to_pack
     integer                           :: istage
-    integer                           :: count
 
-    count = 0
     cur_data => data_list%first
     do
        if (.not.associated(cur_data)) exit
-       count = count + 1
 
        need_to_pack = .false.
        do istage = 1, cur_data%num_em_stages
@@ -1162,13 +1327,13 @@ contains
 
           select case (cur_data%id)
 
-          case (L2E_FILTER_HYDROLOGYC)
+          case (L2E_FILTER_HYDROLOGYC, L2E_FILTER_NOLAKEC, L2E_FILTER_NOLAKEC_AND_NOURBANC)
              do i = 1, num_filter
                 cur_data%data_int_1d(i) = filter(i)
              enddo
              cur_data%is_set = .true.
 
-          case (L2E_FILTER_NUM_HYDROLOGYC)
+          case (L2E_FILTER_NUM_HYDROLOGYC, L2E_FILTER_NUM_NOLAKEC, L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC)
 
              cur_data%data_int_1d(1) = num_filter
              cur_data%is_set = .true.
@@ -1199,6 +1364,7 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
     use ColumnType                , only : col
     use clm_varpar                , only : nlevgrnd
     !
@@ -1303,9 +1469,16 @@ contains
 #else
                 cur_data%data_int_1d(c) = col%patchi(c)
 #endif
-
              enddo
              cur_data%is_set = .true.
+
+          case (L2E_COLUMN_NUM_SNOW_LAYERS)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_int_1d(c) = col%snl(c)
+             enddo
+             cur_data%is_set = .true.
+
           end select
 
        endif
@@ -1409,6 +1582,11 @@ contains
     use ExternalModelConstants    , only : L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_FRAC_SNOW_EFFECTIVE
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     use clm_varpar                , only : nlevsoi
@@ -1429,15 +1607,18 @@ contains
 
 #ifndef FATES_VIA_EMI
     associate(&
-         h2osoi_ice    => waterstate_vars%h2osoi_ice_col    , & ! Input:  [real(r8) (:,:) ]  ice water (kg/m2)
-         h2osoi_liq    => waterstate_vars%h2osoi_liq_col    , & ! Input:  [real(r8) (:,:) ]  liquid water (kg/m2)
-         soilp_col     => waterstate_vars%soilp_col         , & ! Input:  [real(r8) (:,:) ]  soil water pressure (Pa)
-         frac_h2osfc   => waterstate_vars%frac_h2osfc_col   , & ! Input:  [real(r8) (:)   ]  col fractional area of surface water (-)
-         finundated    => waterstate_vars%finundated_col    , & ! Input:  [real(r8) (:)   ]  fraction of column that is inundated (-)
+         h2osoi_ice    => waterstate_vars%h2osoi_ice_col    , & ! Input:  [real(r8) (:,:) ] ice water (kg/m2)
+         h2osoi_liq    => waterstate_vars%h2osoi_liq_col    , & ! Input:  [real(r8) (:,:) ] liquid water (kg/m2)
+         soilp_col     => waterstate_vars%soilp_col         , & ! Input:  [real(r8) (:,:) ] soil water pressure (Pa)
+         frac_h2osfc   => waterstate_vars%frac_h2osfc_col   , & ! Input:  [real(r8) (:)   ] col fractional area of surface water (-)
+         finundated    => waterstate_vars%finundated_col    , & ! Input:  [real(r8) (:)   ] fraction of column that is inundated (-)
          h2osoi_liqvol => waterstate_vars%h2osoi_liqvol_col , & ! Input:  [real(r8) (:,:) ] volumetric liquid water content (m3/m3)
          h2osoi_icevol => waterstate_vars%h2osoi_icevol_col , & ! Input:  [real(r8) (:,:) ] volumetric ice content (m3/m3)
          h2osoi_vol    => waterstate_vars%h2osoi_vol_col    , & ! Input:  [real(r8) (:,:) ] volumetric soil water (m3/m3)
          air_vol       => waterstate_vars%air_vol_col       , & ! Input:  [real(r8) (:,:) ] air filled porosity (m3/m3)
+         frac_sno_eff  => waterstate_vars%frac_sno_eff_col  , & ! Input:  [real(r8) (:)   ] eff. fraction of ground covered by snow (0 to 1)
+         h2osno        => waterstate_vars%h2osno_col        , & ! Input:  [real(r8) (:)   ] snow water (mm H2O)
+         h2osfc        => waterstate_vars%h2osfc_col        , & ! Input:  [real(r8) (:)   ] surface water (mm)
 #ifdef BETR_VIA_EMI
          rho_vap       => waterstate_vars%rho_vap_col       , & ! Input:  [real(r8) (:,:) ] water vapor pressure (Pa)
          rhvap_soi     => waterstate_vars%rhvap_soi_col     , & ! Input:  [real(r8) (:,:) ] relative humidity (-)
@@ -1594,6 +1775,44 @@ contains
              enddo
              cur_data%is_set = .true.
 
+          case (L2E_STATE_H2OSNOW)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = h2osno(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_H2OSFC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = h2osfc(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_FRAC_SNOW_EFFECTIVE)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = frac_sno_eff(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_H2OSOI_LIQ_NLEVSNOW)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = -nlevsoi+1,0
+                   cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_H2OSOI_ICE_NLEVSNOW)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = -nlevsoi+1,0
+                   cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
 
 #endif
 
@@ -1719,8 +1938,10 @@ contains
     !
     ! !USES:
     use ExternalModelConstants , only : L2E_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants , only : L2E_STATE_TSNOW
+    use ExternalModelConstants , only : L2E_STATE_TH2OSFC
     use TemperatureType        , only : temperature_type
-    use clm_varpar             , only : nlevgrnd
+    use clm_varpar             , only : nlevgrnd, nlevsno
     !
     implicit none
     !
@@ -1737,7 +1958,8 @@ contains
     integer                             :: count
 
     associate(& 
-         t_soisno => temperature_vars%t_soisno_col                & ! Input:  [real(r8) (:,:) ]  soil temperature (Kelvin)
+         t_soisno => temperature_vars%t_soisno_col, & ! Input: [real(r8) (:,:) ]  soil temperature (Kelvin)
+         t_h2osfc => temperature_vars%t_h2osfc_col  & ! Input: [real(r8) (:)   ]  surface water temperature
          )
 
     count = 0
@@ -1767,6 +1989,22 @@ contains
              enddo
              cur_data%is_set = .true.
 
+          case (L2E_STATE_TSNOW)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = -nlevsno+1, 0
+                   cur_data%data_real_2d(c,j) = t_soisno(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_TH2OSFC)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                cur_data%data_real_1d(c) = t_h2osfc(c)
+             enddo
+             cur_data%is_set = .true.
+
           end select
 
        endif
@@ -1777,6 +2015,93 @@ contains
     end associate
 
   end subroutine EMID_Pack_Temperature_Vars_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Unpack_Temperature_Vars_for_EM(data_list, em_stage, &
+        num_filter, filter, temperature_vars)
+    !
+    ! !DESCRIPTION:
+    ! Unpack data from EM into ALM's temperature_vars
+    !
+    ! !USES:
+    use ExternalModelConstants , only : E2L_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants , only : E2L_STATE_TSNOW_NLEVSNOW
+    use ExternalModelConstants , only : E2L_STATE_TH2OSFC
+    use TemperatureType        , only : temperature_type
+    use clm_varpar             , only : nlevgrnd, nlevsno
+    !
+    implicit none
+    !
+    class(emi_data_list)   , intent(in) :: data_list
+    integer                , intent(in) :: em_stage
+    integer                , intent(in) :: num_filter
+    integer                , intent(in) :: filter(:)
+    type(temperature_type) , intent(in) :: temperature_vars
+    !
+    integer                             :: c,fc,j
+    class(emi_data), pointer            :: cur_data
+    logical                             :: need_to_unpack
+    integer                             :: istage
+    integer                             :: count
+
+    associate(& 
+         t_soisno => temperature_vars%t_soisno_col, & ! Input: [real(r8) (:,:) ]  soil temperature (Kelvin)
+         t_h2osfc => temperature_vars%t_h2osfc_col  & ! Input: [real(r8) (:)   ]  surface water temperature
+         )
+
+    count = 0
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+       count = count + 1
+
+       need_to_unpack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_unpack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_unpack) then
+
+          select case (cur_data%id)
+
+          case (E2L_STATE_TSOIL_NLEVGRND)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevgrnd
+                   t_soisno(c,j) = cur_data%data_real_2d(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_TSNOW_NLEVSNOW)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = -nlevsno+1, 0
+                   t_soisno(c,j) = cur_data%data_real_2d(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_TH2OSFC)
+             do fc = 1, num_filter
+                c = filter(fc)
+                t_h2osfc(c) = cur_data%data_real_1d(c)
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+
+  end subroutine EMID_Unpack_Temperature_Vars_for_EM
 
 !-----------------------------------------------------------------------
   subroutine EMID_Pack_SoilHydrology_Vars_for_EM(data_list, em_stage, &
@@ -2240,5 +2565,115 @@ contains
     end associate
 
   end subroutine EMID_Unpack_CanopyState_Vars_for_EM
+
+!-----------------------------------------------------------------------
+  subroutine EMID_Pack_EnergyFlux_Vars_for_EM(data_list, em_stage, &
+        num_filter_col, filter_col, energyflux_vars)
+    !
+    ! !DESCRIPTION:
+    ! Pack data from ALM's energyflux_vars for EM
+    !
+    ! !USES:
+    use ExternalModelConstants    , only : L2E_FLUX_ABSORBED_SOLAR_RADIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOIL_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_H2OSFC_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
+    use EnergyFluxType            , only : energyflux_type
+    use clm_varpar                , only : nlevsno
+    !
+    implicit none
+    !
+    class(emi_data_list) , intent(in) :: data_list
+    integer              , intent(in) :: em_stage
+    integer              , intent(in) :: num_filter_col       ! number of points in column filter
+    integer              , intent(in) :: filter_col(:)        ! column filter for soil points
+    type(energyflux_type), intent(in) :: energyflux_vars
+    !
+    integer                           :: c,fc,j
+    class(emi_data), pointer          :: cur_data
+    logical                           :: need_to_pack
+    integer                           :: istage
+    integer                           :: count
+
+#ifdef VSFM_VIA_EMI
+    associate(&
+         sabg_lyr    => energyflux_vars%eflx_sabg_lyr_col    , &
+         hs_soil     => energyflux_vars%eflx_hs_soil_col     , &
+         hs_top_snow => energyflux_vars%eflx_hs_top_snow_col , &
+         hs_h2osfc   => energyflux_vars%eflx_hs_h2osfc_col   , &
+         dhsdT       => energyflux_vars%eflx_dhsdT_col         &
+         )
+    count = 0
+    cur_data => data_list%first
+    do
+       if (.not.associated(cur_data)) exit
+       count = count + 1
+
+       need_to_pack = .false.
+       do istage = 1, cur_data%num_em_stages
+          if (cur_data%em_stage_ids(istage) == em_stage) then
+             need_to_pack = .true.
+             exit
+          endif
+       enddo
+
+       if (need_to_pack) then
+
+          select case (cur_data%id)
+
+          case (L2E_FLUX_ABSORBED_SOLAR_RADIATION)
+
+             do fc = 1, num_filter_col
+                c = filter_col(fc)
+                do j = -nlevsno+1, 1
+                   cur_data%data_real_2d(c,j) = sabg_lyr(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_FLUX_SOIL_HEAT_FLUX)
+
+             do fc = 1, num_filter_col
+                c = filter_col(fc)
+                cur_data%data_real_1d(c) = hs_soil(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_FLUX_SNOW_HEAT_FLUX)
+
+             do fc = 1, num_filter_col
+                c = filter_col(fc)
+                cur_data%data_real_1d(c) = hs_top_snow(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_FLUX_H2OSFC_HEAT_FLUX)
+
+             do fc = 1, num_filter_col
+                c = filter_col(fc)
+                cur_data%data_real_1d(c) = hs_h2osfc(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX)
+
+             do fc = 1, num_filter_col
+                c = filter_col(fc)
+                cur_data%data_real_1d(c) = dhsdT(c)
+             enddo
+             cur_data%is_set = .true.
+
+          end select
+
+       endif
+
+       cur_data => cur_data%next
+    enddo
+
+    end associate
+#endif
+
+  end subroutine EMID_Pack_EnergyFlux_Vars_for_EM
 
 end module ExternalModelInterfaceMod

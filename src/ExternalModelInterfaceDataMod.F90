@@ -995,6 +995,13 @@ contains
     use ExternalModelConstants    , only : L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSOI
     use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSOI
+    use ExternalModelConstants    , only : L2E_STATE_TSNOW
+    use ExternalModelConstants    , only : L2E_STATE_TH2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSNOW
+    use ExternalModelConstants    , only : L2E_STATE_H2OSFC
+    use ExternalModelConstants    , only : L2E_STATE_FRAC_SNOW_EFFECTIVE
 
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
@@ -1004,6 +1011,9 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_FSUN
     use ExternalModelConstants    , only : E2L_STATE_LAISUN
     use ExternalModelConstants    , only : E2L_STATE_LAISHA
+    use ExternalModelConstants    , only : E2L_STATE_TSOIL_NLEVGRND
+    use ExternalModelConstants    , only : E2L_STATE_TSNOW_NLEVSNOW
+    use ExternalModelConstants    , only : E2L_STATE_TH2OSFC
 
     use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
@@ -1014,6 +1024,11 @@ contains
     use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
     use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
     use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
+    use ExternalModelConstants    , only : L2E_FLUX_ABSORBED_SOLAR_RADIATION
+    use ExternalModelConstants    , only : L2E_FLUX_SOIL_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_SNOW_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_H2OSFC_HEAT_FLUX
+    use ExternalModelConstants    , only : L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
 
     use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
     use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -1022,6 +1037,8 @@ contains
     use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
     use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC
     use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC
+    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC_AND_NOURBANC
+    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
 
     use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
     use ExternalModelConstants    , only : L2E_COLUMN_TYPE
@@ -1032,6 +1049,7 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_AREA
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
+    use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -1188,6 +1206,55 @@ contains
        units_val     = '[kg/m2]'
        is_real_type  = .true.
 
+    case (L2E_STATE_TSNOW)
+       id_val        = L2E_STATE_TSNOW
+       name_val      = 'Temperature snow'
+       long_name_val = 'Temperature snow: ALM to External Model'
+       units_val     = '[K]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_TH2OSFC)
+       id_val        = L2E_STATE_TH2OSFC
+       name_val      = 'Temperature of standing water'
+       long_name_val = 'Temperature of standing water: ALM to External Model'
+       units_val     = '[K]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_H2OSOI_LIQ_NLEVSNOW)
+       id_val        = L2E_STATE_H2OSOI_LIQ_NLEVSNOW
+       name_val      = 'Liquid water in snow'
+       long_name_val = 'Liquid water in snow: ALM to External Model'
+       units_val     = '[kg/m2]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_H2OSOI_ICE_NLEVSNOW)
+       id_val        = L2E_STATE_H2OSOI_ICE_NLEVSNOW
+       name_val      = 'Ice water in snow'
+       long_name_val = 'Ice water in snow: ALM to External Model'
+       units_val     = '[kg/m2]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_H2OSNOW)
+       id_val        = L2E_STATE_H2OSNOW
+       name_val      = 'Snow water'
+       long_name_val = 'Snow water: ALM to External Model'
+       units_val     = '[mm H2O]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_H2OSFC)
+       id_val        = L2E_STATE_H2OSFC
+       name_val      = 'Standing water'
+       long_name_val = 'Standing water: ALM to External Model'
+       units_val     = '[mm H2O]'
+       is_real_type  = .true.
+
+    case (L2E_STATE_FRAC_SNOW_EFFECTIVE)
+       id_val        = L2E_STATE_FRAC_SNOW_EFFECTIVE
+       name_val      = 'Frac. of grnd covered with snow'
+       long_name_val = 'Frac. of ground covered with snow: ALM to External Model'
+       units_val     = '[-]'
+       is_real_type  = .true.
+
        ! --------------------------------------------------------------
        ! EM-to-ALM: State variables
        ! --------------------------------------------------------------
@@ -1245,6 +1312,27 @@ contains
        name_val      = 'Shaded leaf area'
        long_name_val = 'Shaded leaf area: External Model to ALM'
        units_val     = '[-]'
+       is_real_type  = .true.
+
+    case (E2L_STATE_TSOIL_NLEVGRND)
+       id_val        = E2L_STATE_TSOIL_NLEVGRND
+       name_val      = 'Soil temperature'
+       long_name_val = 'Soil temperature: External Model to ALM'
+       units_val     = '[K]'
+       is_real_type  = .true.
+
+    case (E2L_STATE_TSNOW_NLEVSNOW)
+       id_val        = E2L_STATE_TSNOW_NLEVSNOW
+       name_val      = 'Snow temperature'
+       long_name_val = 'Snow temperature: External Model to ALM'
+       units_val     = '[K]'
+       is_real_type  = .true.
+
+    case (E2L_STATE_TH2OSFC)
+       id_val        = E2L_STATE_TH2OSFC
+       name_val      = 'Standing water temperature'
+       long_name_val = 'Standing water temperature: External Model to ALM'
+       units_val     = '[K]'
        is_real_type  = .true.
 
        ! --------------------------------------------------------------
@@ -1313,6 +1401,41 @@ contains
        units_val     = '[W/m2]'
        is_real_type  = .true.
 
+    case (L2E_FLUX_ABSORBED_SOLAR_RADIATION)
+       id_val        = L2E_FLUX_ABSORBED_SOLAR_RADIATION
+       name_val      = 'Absorbed solar radiation'
+       long_name_val = 'Absorbed beam solar radiation: ALM to External Model'
+       units_val     = '[W/m2]'
+       is_real_type  = .true.
+
+    case (L2E_FLUX_SOIL_HEAT_FLUX)
+       id_val        = L2E_FLUX_SOIL_HEAT_FLUX
+       name_val      = 'Net heat flux into soil'
+       long_name_val = 'Net heat flux into soil: ALM to External Model'
+       units_val     = '[W/m2]'
+       is_real_type  = .true.
+
+    case (L2E_FLUX_SNOW_HEAT_FLUX)
+       id_val        = L2E_FLUX_SNOW_HEAT_FLUX
+       name_val      = 'Net heat flux into snow'
+       long_name_val = 'Net heat flux into snow: ALM to External Model'
+       units_val     = '[W/m2]'
+       is_real_type  = .true.
+
+    case (L2E_FLUX_H2OSFC_HEAT_FLUX)
+       id_val        = L2E_FLUX_H2OSFC_HEAT_FLUX
+       name_val      = 'Net heat flux into standing water'
+       long_name_val = 'Net heat flux into standing water: ALM to External Model'
+       units_val     = '[W/m2]'
+       is_real_type  = .true.
+
+    case (L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX)
+       id_val        = L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
+       name_val      = 'Derivative of heat flux w.r.t. temperature'
+       long_name_val = 'Derivative of heat flux w.r.t. temperature: ALM to External Model'
+       units_val     = '[W/m2]'
+       is_real_type  = .true.
+
        ! --------------------------------------------------------------
        ! EM-to-ALM: Flux variables
        ! --------------------------------------------------------------
@@ -1358,6 +1481,20 @@ contains
        id_val        = L2E_FILTER_NUM_HYDROLOGYC
        name_val      = 'Number of non-lake filter'
        long_name_val = 'Number of non-lake filter: ALM to External Model'
+       units_val     = '[-]'
+       is_int_type   = .true.
+
+    case (L2E_FILTER_NOLAKEC_AND_NOURBANC)
+       id_val        = L2E_FILTER_NOLAKEC_AND_NOURBANC
+       name_val      = 'Non-lake & non-urban filter'
+       long_name_val = 'Non-lake & non-urban filter: ALM to External Model'
+       units_val     = '[-]'
+       is_int_type   = .true.
+
+    case (L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC)
+       id_val        = L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
+       name_val      = 'Number of non-lake & non-urban filter'
+       long_name_val = 'Number of non-lake & non-urban filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
 
@@ -1427,6 +1564,13 @@ contains
        units_val     = '[-]'
        is_int_type   = .true.
 
+    case (L2E_COLUMN_NUM_SNOW_LAYERS)
+       id_val        = L2E_COLUMN_NUM_SNOW_LAYERS
+       name_val      = 'Number of snow layers'
+       long_name_val = 'Number of snow layers: ALM to External Model'
+       units_val     = '[-]'
+       is_int_type   = .true.
+
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Landunit variables
        ! --------------------------------------------------------------
@@ -1491,7 +1635,7 @@ contains
 
     case default
        write(iulog,*)'Unknown EMID id = ',data_id
-       call endrun(msg='EMIDListAddDataByID: Number of EM stages AND their IDs required.')
+       call endrun(msg='EMIDListAddDataByID: Unknown EMID id.')
     end select
 
     allocate(data)
