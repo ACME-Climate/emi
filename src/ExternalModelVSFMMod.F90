@@ -16,34 +16,41 @@ module ExternalModelVSFMMod
   implicit none
   !
 
-  integer :: index_l2e_col_active
-  integer :: index_l2e_col_type
-  integer :: index_l2e_col_landunit_index
-  integer :: index_l2e_col_zi
-  integer :: index_l2e_col_dz
-  integer :: index_l2e_col_z
-  integer :: index_l2e_col_area
+  ! ----------------------------------------------------------------------
+  ! Indicies required during the initialization
+  ! ----------------------------------------------------------------------
+  integer :: index_l2e_init_col_active
+  integer :: index_l2e_init_col_type
+  integer :: index_l2e_init_col_landunit_index
+  integer :: index_l2e_init_col_zi
+  integer :: index_l2e_init_col_dz
+  integer :: index_l2e_init_col_z
+  integer :: index_l2e_init_col_area
 
-  integer :: index_l2e_landunit_type
-  integer :: index_l2e_landunit_lakepoint
-  integer :: index_l2e_landunit_urbanpoint
+  integer :: index_l2e_init_state_wtd
+  integer :: index_l2e_init_state_soilp
 
-  integer :: index_l2e_parameter_watsatc
-  integer :: index_l2e_parameter_hksatc
-  integer :: index_l2e_parameter_bswc
-  integer :: index_l2e_parameter_sucsatc
-  integer :: index_l2e_parameter_effporosityc
+  integer :: index_e2l_init_state_h2osoi_liq
+  integer :: index_e2l_init_state_h2osoi_ice
+  integer :: index_e2l_init_state_smp
+  integer :: index_e2l_init_state_wtd
 
-  integer :: index_l2e_state_init_wtd
-  integer :: index_l2e_state_init_soilp
+  integer :: index_e2l_init_flux_mflx_snowlyr_col
+  integer :: index_l2e_init_flux_mflx_snowlyr_col
 
-  integer :: index_e2l_state_init_h2osoi_liq
-  integer :: index_e2l_state_init_h2osoi_ice
-  integer :: index_e2l_state_init_smp
-  integer :: index_e2l_state_init_wtd
+  integer :: index_l2e_init_landunit_type
+  integer :: index_l2e_init_landunit_lakepoint
+  integer :: index_l2e_init_landunit_urbanpoint
 
-  integer :: index_e2l_flux_init_mflx_snowlyr_col
-  integer :: index_l2e_flux_init_mflx_snowlyr_col
+  integer :: index_l2e_init_parameter_watsatc
+  integer :: index_l2e_init_parameter_hksatc
+  integer :: index_l2e_init_parameter_bswc
+  integer :: index_l2e_init_parameter_sucsatc
+  integer :: index_l2e_init_parameter_effporosityc
+
+  ! ----------------------------------------------------------------------
+  ! Indicies required during timestepping
+  ! ----------------------------------------------------------------------
 
   integer :: index_l2e_state_tsoil
   integer :: index_l2e_state_h2osoi_liq
@@ -130,28 +137,28 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call l2e_init_list%AddDataByID(L2E_STATE_WTD                                    , number_em_stages, em_stages, index_l2e_state_init_wtd             )
-    call l2e_init_list%AddDataByID(L2E_STATE_VSFM_PROGNOSTIC_SOILP                  , number_em_stages, em_stages, index_l2e_state_init_soilp           )
+    call l2e_init_list%AddDataByID(L2E_STATE_WTD                                    , number_em_stages, em_stages, index_l2e_init_state_wtd             )
+    call l2e_init_list%AddDataByID(L2E_STATE_VSFM_PROGNOSTIC_SOILP                  , number_em_stages, em_stages, index_l2e_init_state_soilp           )
 
-    call l2e_init_list%AddDataByID(L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_l2e_flux_init_mflx_snowlyr_col )
+    call l2e_init_list%AddDataByID(L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_l2e_init_flux_mflx_snowlyr_col )
 
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE                                , number_em_stages, em_stages, index_l2e_col_active                 )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_TYPE                                  , number_em_stages, em_stages, index_l2e_col_type                   )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX                        , number_em_stages, em_stages, index_l2e_col_landunit_index         )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI                                    , number_em_stages, em_stages, index_l2e_col_zi                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ                                    , number_em_stages, em_stages, index_l2e_col_dz                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_Z                                     , number_em_stages, em_stages, index_l2e_col_z                      )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_AREA                                  , number_em_stages, em_stages, index_l2e_col_area                   )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE                                , number_em_stages, em_stages, index_l2e_init_col_active                 )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_TYPE                                  , number_em_stages, em_stages, index_l2e_init_col_type                   )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX                        , number_em_stages, em_stages, index_l2e_init_col_landunit_index         )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI                                    , number_em_stages, em_stages, index_l2e_init_col_zi                     )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ                                    , number_em_stages, em_stages, index_l2e_init_col_dz                     )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_Z                                     , number_em_stages, em_stages, index_l2e_init_col_z                      )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_AREA                                  , number_em_stages, em_stages, index_l2e_init_col_area                   )
 
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE                                , number_em_stages, em_stages, index_l2e_landunit_type              )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT                           , number_em_stages, em_stages, index_l2e_landunit_lakepoint         )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT                          , number_em_stages, em_stages, index_l2e_landunit_urbanpoint        )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE                                , number_em_stages, em_stages, index_l2e_init_landunit_type              )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT                           , number_em_stages, em_stages, index_l2e_init_landunit_lakepoint         )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT                          , number_em_stages, em_stages, index_l2e_init_landunit_urbanpoint        )
 
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC                            , number_em_stages, em_stages, index_l2e_parameter_watsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_HKSATC                             , number_em_stages, em_stages, index_l2e_parameter_hksatc           )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_BSWC                               , number_em_stages, em_stages, index_l2e_parameter_bswc             )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_SUCSATC                            , number_em_stages, em_stages, index_l2e_parameter_sucsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_EFFPOROSITYC                       , number_em_stages, em_stages, index_l2e_parameter_effporosityc     )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC                            , number_em_stages, em_stages, index_l2e_init_parameter_watsatc          )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_HKSATC                             , number_em_stages, em_stages, index_l2e_init_parameter_hksatc           )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_BSWC                               , number_em_stages, em_stages, index_l2e_init_parameter_bswc             )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_SUCSATC                            , number_em_stages, em_stages, index_l2e_init_parameter_sucsatc          )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_EFFPOROSITYC                       , number_em_stages, em_stages, index_l2e_init_parameter_effporosityc     )
 
   end subroutine EM_VSFM_Populate_L2E_Init_List
 
@@ -186,11 +193,11 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, index_e2l_state_init_h2osoi_liq      )
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, index_e2l_state_init_h2osoi_ice      )
-    call e2l_init_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL          , number_em_stages, em_stages, index_e2l_state_init_smp             )
-    call e2l_init_list%AddDataByID(E2L_STATE_WTD                            , number_em_stages, em_stages, index_e2l_state_init_wtd             )
-    call e2l_init_list%AddDataByID(E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_e2l_flux_init_mflx_snowlyr_col )
+    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, index_e2l_init_state_h2osoi_liq      )
+    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, index_e2l_init_state_h2osoi_ice      )
+    call e2l_init_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL          , number_em_stages, em_stages, index_e2l_init_state_smp             )
+    call e2l_init_list%AddDataByID(E2L_STATE_WTD                            , number_em_stages, em_stages, index_e2l_init_state_wtd             )
+    call e2l_init_list%AddDataByID(E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_e2l_init_flux_mflx_snowlyr_col )
 
     deallocate(em_stages)
 
@@ -495,16 +502,16 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi             , zi           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_col_dz             , dz           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_col_z              , z            )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi             , zi           )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_dz             , dz           )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_z              , z            )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active          , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type            , col_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index  , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type       , lun_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_lakepoint  , lun_lakpoi   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_urbanpoint , lun_urbpoi   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active          , col_active   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type            , col_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index  , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type       , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
 
     if (nclumps /= 1) then
        call endrun(msg='ERROR VSFM only supported for clumps = 1')
@@ -1232,17 +1239,17 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_watsatc      , clm_watsat       )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_hksatc       , clm_hksat        )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_bswc         , clm_bsw          )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_sucsatc      , clm_sucsat       )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_parameter_effporosityc , clm_eff_porosity )
-    call l2e_init_list%GetPointerToReal1D(index_l2e_state_init_wtd         , clm_zwt          )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_watsatc      , clm_watsat       )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_hksatc       , clm_hksat        )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_bswc         , clm_bsw          )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_sucsatc      , clm_sucsat       )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_effporosityc , clm_eff_porosity )
+    call l2e_init_list%GetPointerToReal1D(index_l2e_init_state_wtd         , clm_zwt          )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active              , col_active       )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type                , col_type         )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index      , col_landunit     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type           , lun_type         )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active              , col_active       )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type                , col_type         )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index      , col_landunit     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type           , lun_type         )
 
     ! Allocate memory
     allocate(vsfm_filter       (bounds_proc_begc_all:bounds_proc_endc_all           ))
@@ -1339,13 +1346,13 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal1D(index_l2e_state_init_wtd    , clm_zwt      )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi            , clm_zi       )
+    call l2e_init_list%GetPointerToReal1D(index_l2e_init_state_wtd    , clm_zwt      )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi            , clm_zi       )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_active         , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_type           , col_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_col_landunit_index , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_landunit_type      , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active         , col_active   )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type           , col_type     )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type      , lun_type     )
 
     ! Allocate memory
     allocate(press_ic_1d ((bounds_proc_endc_all - bounds_proc_begc_all + 1)*nlevgrnd))
@@ -1539,17 +1546,17 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal1D(index_l2e_flux_init_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
+    call l2e_init_list%GetPointerToReal1D(index_l2e_init_flux_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_state_init_soilp           , l2e_soilp            )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_col_zi                     , l2e_col_zi           )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_state_soilp           , l2e_soilp            )
+    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi                     , l2e_col_zi           )
 
-    call e2l_init_list%GetPointerToReal1D(index_e2l_state_init_wtd             , e2l_zwt              )
-    call e2l_init_list%GetPointerToReal1D(index_e2l_flux_init_mflx_snowlyr_col , e2l_mflx_snowlyr_col )
+    call e2l_init_list%GetPointerToReal1D(index_e2l_init_state_wtd             , e2l_zwt              )
+    call e2l_init_list%GetPointerToReal1D(index_e2l_init_flux_mflx_snowlyr_col , e2l_mflx_snowlyr_col )
 
-    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_h2osoi_liq      , e2l_h2osoi_liq       )
-    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_h2osoi_ice      , e2l_h2osoi_ice       )
-    call e2l_init_list%GetPointerToReal2D(index_e2l_state_init_smp             , e2l_smp_l            )
+    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_h2osoi_liq      , e2l_h2osoi_liq       )
+    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_h2osoi_ice      , e2l_h2osoi_ice       )
+    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_smp             , e2l_smp_l            )
 
     ! PreSolve: Allows saturation value to be computed based on ICs and stored
     !           in GE auxvar
