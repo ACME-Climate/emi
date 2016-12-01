@@ -94,6 +94,9 @@ module ExternalModelConstants
   integer, parameter, public :: L2E_COLUMN_GRIDCELL_INDEX                        = 508
   integer, parameter, public :: L2E_COLUMN_PATCH_INDEX                           = 509
   integer, parameter, public :: L2E_COLUMN_NUM_SNOW_LAYERS                       = 510
+  integer, parameter, public :: L2E_COLUMN_ZI_SNOW_AND_SOIL                      = 511
+  integer, parameter, public :: L2E_COLUMN_DZ_SNOW_AND_SOIL                      = 512
+  integer, parameter, public :: L2E_COLUMN_Z_SNOW_AND_SOIL                       = 513
 
   ! IDs for landunit-level attributes sent from ALM to External Model
   integer, parameter, public :: L2E_LANDUNIT_TYPE                                = 601
@@ -106,5 +109,8 @@ module ExternalModelConstants
   integer, parameter, public :: L2E_PARAMETER_BSWC                               = 703
   integer, parameter, public :: L2E_PARAMETER_SUCSATC                            = 704
   integer, parameter, public :: L2E_PARAMETER_EFFPOROSITYC                       = 705
+  integer, parameter, public :: L2E_PARAMETER_CSOL                               = 706
+  integer, parameter, public :: L2E_PARAMETER_TKMG                               = 707
+  integer, parameter, public :: L2E_PARAMETER_TKDRY                              = 708
 
 end module ExternalModelConstants

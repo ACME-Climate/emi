@@ -1050,6 +1050,9 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_Z_SNOW_AND_SOIL
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -1060,6 +1063,9 @@ contains
     use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
     use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
+    use ExternalModelConstants    , only : L2E_PARAMETER_CSOL
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKMG
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKDRY
     !
     implicit none
     !
@@ -1571,6 +1577,27 @@ contains
        units_val     = '[-]'
        is_int_type   = .true.
 
+    case (L2E_COLUMN_ZI_SNOW_AND_SOIL)
+       id_val        = L2E_COLUMN_ZI_SNOW_AND_SOIL
+       name_val      = 'Column layer interface depth'
+       long_name_val = 'Column layer interface depth: ALM to External Model'
+       units_val     = '[m]'
+       is_real_type  = .true.
+
+    case (L2E_COLUMN_DZ_SNOW_AND_SOIL)
+       id_val        = L2E_COLUMN_DZ_SNOW_AND_SOIL
+       name_val      = 'Column layer thickness'
+       long_name_val = 'Column layer thickness: ALM to External Model'
+       units_val     = '[m]'
+       is_real_type  = .true.
+
+    case (L2E_COLUMN_Z_SNOW_AND_SOIL)
+       id_val        = L2E_COLUMN_Z_SNOW_AND_SOIL
+       name_val      = 'Column layer centroid depth'
+       long_name_val = 'Column layer centroid depth: ALM to External Model'
+       units_val     = '[m]'
+       is_real_type  = .true.
+
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Landunit variables
        ! --------------------------------------------------------------
@@ -1630,7 +1657,28 @@ contains
        id_val        = L2E_PARAMETER_EFFPOROSITYC
        name_val      = 'Effective porosity'
        long_name_val = 'Effective porosity: ALM to External Model'
-       units_val     = ''
+       units_val     = '[-]'
+       is_real_type  = .true.
+
+    case (L2E_PARAMETER_CSOL)
+       id_val        = L2E_PARAMETER_CSOL
+       name_val      = 'Heat capacity'
+       long_name_val = 'Heat capacity: ALM to External Model'
+       units_val     = '[W/m/K]'
+       is_real_type  = .true.
+
+    case (L2E_PARAMETER_TKMG)
+       id_val        = L2E_PARAMETER_TKMG
+       name_val      = 'Thermal conductivity minerals'
+       long_name_val = 'Thermal conductivity minerals: ALM to External Model'
+       units_val     = '[W/m/K]'
+       is_real_type  = .true.
+
+    case (L2E_PARAMETER_TKDRY)
+       id_val        = L2E_PARAMETER_TKDRY
+       name_val      = 'Thermal conductivity dry soils'
+       long_name_val = 'Thermal conductivity dry soils: ALM to External Model'
+       units_val     = '[W/m/K]'
        is_real_type  = .true.
 
     case default

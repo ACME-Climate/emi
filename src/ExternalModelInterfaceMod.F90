@@ -145,8 +145,10 @@ contains
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
     use ExternalModelVSFMMod  , only : EM_VSFM_Init
+    use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_Init_List
     use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_List
     use ExternalModelPTMMod   , only : EM_PTM_Populate_E2L_List
+    use ExternalModelPTMMod   , only : EM_PTM_Init
 #endif
 #ifndef FATES_VIA_EMI
     use clm_instMod           , only : soilstate_vars
@@ -345,10 +347,19 @@ contains
 #ifdef USE_PETSC_LIB
 #ifdef VSFM_VIA_EMI
 
+       ! Initialize lists of data to be exchanged between ALM and VSFM
+       ! during initialization step
+       allocate(l2e_init_list(nclumps))
+
        do clump_rank = 1, nclumps
           iem = (index_em_ptm - 1)*nclumps + 1
 
+          call l2e_init_list(clump_rank)%Init()
+
           ! Fill the data list:
+          !  - Data need during the initialization
+          call EM_PTM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
+
           !  - Data need during timestepping
           call EM_PTM_Populate_L2E_List(l2e_list(iem))
           call EM_PTM_Populate_E2L_List(e2l_list(iem))
@@ -361,8 +372,47 @@ contains
           iem = (index_em_ptm - 1)*nclumps + 1
 
           ! Allocate memory for data
+          call EMI_Setup_Data_List(l2e_init_list(iem), bounds_clump)
           call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
           call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+
+          ! Reset values in the data list
+          call EMID_Reset_Data_for_EM(l2e_init_list(clump_rank), em_stage)
+
+          ! GB_FIX_ME: Create a temporary filter
+          num_filter_col = bounds_clump%endc - bounds_clump%begc + 1
+          num_filter_lun = bounds_clump%endl - bounds_clump%begl + 1
+
+          allocate(filter_col(num_filter_col))
+          allocate(filter_lun(num_filter_lun))
+
+          do ii = 1, num_filter_col
+             filter_col(ii) = bounds_clump%begc + ii - 1
+          enddo
+
+          do ii = 1, num_filter_lun
+             filter_lun(ii) = bounds_clump%begl + ii - 1
+          enddo
+
+          ! Reset values in the data list
+          call EMID_Reset_Data_for_EM(l2e_init_list(clump_rank), em_stage)
+
+          ! Pack all ALM data needed by the external model
+          call EMID_Pack_SoilState_Vars_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilstate_vars)
+          call EMID_Pack_Column_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col)
+          call EMID_Pack_Landunit_for_EM(l2e_init_list(clump_rank), em_stage, &
+               num_filter_lun, filter_lun)
+
+          ! Ensure all data needed by external model is packed
+          call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage)
+
+          ! Initialize the external model
+          call EM_PTM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
+
+          ! Clean up memory
+          call l2e_init_list(clump_rank)%Destroy()
 
        enddo
        !$OMP END PARALLEL DO
@@ -498,6 +548,9 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_Z_SNOW_AND_SOIL
 
     use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
     use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
@@ -508,6 +561,9 @@ contains
     use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
     use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
+    use ExternalModelConstants    , only : L2E_PARAMETER_CSOL
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKMG
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKDRY
 
     use clm_varpar                , only : nlevgrnd
     use clm_varpar                , only : nlevsoi
@@ -557,7 +613,10 @@ contains
           L2E_PARAMETER_HKSATC,            &
           L2E_PARAMETER_BSWC,              &
           L2E_PARAMETER_SUCSATC,           &
-          L2E_PARAMETER_EFFPOROSITYC   )
+          L2E_PARAMETER_EFFPOROSITYC,      &
+          L2E_PARAMETER_CSOL,              &
+          L2E_PARAMETER_TKMG,              &
+          L2E_PARAMETER_TKDRY              )
 
        ! Dim: Column x nlevgrnd
 
@@ -565,6 +624,17 @@ contains
        dim1_beg = bounds_clump%begc
        dim1_end = bounds_clump%endc
        dim2_beg = 1
+       dim2_end = nlevgrnd
+
+    case (L2E_COLUMN_DZ_SNOW_AND_SOIL, &
+          L2E_COLUMN_Z_SNOW_AND_SOIL   )
+
+       ! Dim: Column x -nlevsno+1:nlevgrnd
+
+       ndim     = 2
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
+       dim2_beg = -nlevsno+1
        dim2_end = nlevgrnd
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVSOI,           &
@@ -663,6 +733,16 @@ contains
        dim1_beg = bounds_clump%begc
        dim1_end = bounds_clump%endc
        dim2_beg = 0
+       dim2_end = nlevgrnd
+
+    case (L2E_COLUMN_ZI_SNOW_AND_SOIL)
+
+       ! Dim: Column x (-nlevsno:nlevgrnd)
+
+       ndim     = 2
+       dim1_beg = bounds_clump%begc
+       dim1_end = bounds_clump%endc
+       dim2_beg = -nlevsno
        dim2_end = nlevgrnd
 
     case (L2E_LANDUNIT_TYPE,       &
@@ -1365,8 +1445,11 @@ contains
     use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
     use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
+    use ExternalModelConstants    , only : L2E_COLUMN_ZI_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_DZ_SNOW_AND_SOIL
+    use ExternalModelConstants    , only : L2E_COLUMN_Z_SNOW_AND_SOIL
     use ColumnType                , only : col
-    use clm_varpar                , only : nlevgrnd
+    use clm_varpar                , only : nlevgrnd, nlevsno
     !
     implicit none
     !
@@ -1476,6 +1559,33 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 cur_data%data_int_1d(c) = col%snl(c)
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_COLUMN_ZI_SNOW_AND_SOIL)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = -nlevsno, nlevgrnd
+                   cur_data%data_real_2d(c,j) = col%zi(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_COLUMN_DZ_SNOW_AND_SOIL)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = -nlevsno+1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = col%dz(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_COLUMN_Z_SNOW_AND_SOIL)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = -nlevsno+1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = col%z(c,j)
+                enddo
              enddo
              cur_data%is_set = .true.
 
@@ -2256,6 +2366,9 @@ contains
     use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
     use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
+    use ExternalModelConstants    , only : L2E_PARAMETER_CSOL
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKMG
+    use ExternalModelConstants    , only : L2E_PARAMETER_TKDRY
     use SoilStateType             , only : soilstate_type
     use clm_varpar                , only : nlevsoi, nlevgrnd
     !
@@ -2274,11 +2387,14 @@ contains
     integer                           :: count
 
     associate( &
-         watsat       => soilstate_vars%watsat_col,      &
-         hksat        => soilstate_vars%hksat_col,       &
-         bsw          => soilstate_vars%bsw_col,         &
-         sucsat       => soilstate_vars%sucsat_col,      &
-         eff_porosity => soilstate_vars%eff_porosity_col &
+         watsat       => soilstate_vars%watsat_col,       &
+         hksat        => soilstate_vars%hksat_col,        &
+         bsw          => soilstate_vars%bsw_col,          &
+         sucsat       => soilstate_vars%sucsat_col,       &
+         eff_porosity => soilstate_vars%eff_porosity_col, &
+         csol         => soilstate_vars%csol_col,         &
+         tkmg         => soilstate_vars%tkmg_col,         &
+         tkdry        => soilstate_vars%tkdry_col         &
     )
 
     count = 0
@@ -2340,6 +2456,33 @@ contains
                 c = filter_hydrologyc(fc)
                 do j = 1, nlevgrnd
                    cur_data%data_real_2d(c,j) = eff_porosity(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_PARAMETER_CSOL)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = csol(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_PARAMETER_TKMG)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = tkmg(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_PARAMETER_TKDRY)
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, nlevgrnd
+                   cur_data%data_real_2d(c,j) = tkdry(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
