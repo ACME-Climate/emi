@@ -2360,7 +2360,6 @@ contains
     ! Save data from EM in ALM's soilstate_vars
     !
     ! !USES:
-    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
     use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
     use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
