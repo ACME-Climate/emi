@@ -139,10 +139,10 @@ contains
     select case(em_stage)
 
     case (EM_BETR_BEGIN_MASS_BALANCE_STAGE)
-       call EM_FATES_BeginMassBalance_Solve(dt, nstep, bounds, l2e_list, e2l_list)
+       call EM_BETR_BeginMassBalance_Solve(dt, nstep, bounds, l2e_list, e2l_list)
 
     case (EM_BETR_PRE_DIAG_WATER_FLUX_STAGE)
-       call EM_FATES_PreDiagSoilColWaterFlux_Solve(bounds, l2e_list, e2l_list)
+       call EM_BETR_PreDiagSoilColWaterFlux_Solve(bounds, l2e_list, e2l_list)
 
     case default
        write(iulog,*)'EM_BETR_Solve: Unknown em_stage.'
@@ -152,7 +152,7 @@ contains
   end subroutine EM_BETR_Solve
 
     !------------------------------------------------------------------------
-  subroutine EM_FATES_BeginMassBalance_Solve(dt, nstep, bounds_clump, l2e_list, e2l_list)
+  subroutine EM_BETR_BeginMassBalance_Solve(dt, nstep, bounds_clump, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     !
@@ -185,10 +185,10 @@ contains
 #endif
 
 
-  end subroutine EM_FATES_BeginMassBalance_Solve
+  end subroutine EM_BETR_BeginMassBalance_Solve
 
     !------------------------------------------------------------------------
-  subroutine EM_FATES_PreDiagSoilColWaterFlux_Solve(bounds, l2e_list, e2l_list)
+  subroutine EM_BETR_PreDiagSoilColWaterFlux_Solve(bounds, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     !
@@ -281,6 +281,6 @@ contains
     call endrun('BeTR is on but code was not compiled with -DBETR_VIA_EMI')
 #endif
 
-  end subroutine EM_FATES_PreDiagSoilColWaterFlux_Solve
+  end subroutine EM_BETR_PreDiagSoilColWaterFlux_Solve
 
 end module ExternalModelBETRMod
