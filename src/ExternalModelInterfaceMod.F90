@@ -29,8 +29,8 @@ module ExternalModelInterfaceMod
   integer :: index_em_vsfm
   integer :: index_em_ptm
 
-  class(emi_data_list), pointer :: l2e_list(:)
-  class(emi_data_list), pointer :: e2l_list(:)
+  class(emi_data_list), pointer :: l2e_driver_list(:)
+  class(emi_data_list), pointer :: e2l_driver_list(:)
 
   public :: EMI_Determine_Active_EMs
   public :: EMI_Init_EM
@@ -116,12 +116,12 @@ contains
 
     nclumps = get_proc_clumps()
 
-    allocate(l2e_list(num_em*nclumps))
-    allocate(e2l_list(num_em*nclumps))
+    allocate(l2e_driver_list(num_em*nclumps))
+    allocate(e2l_driver_list(num_em*nclumps))
 
     do iem = 1, num_em*nclumps
-       call l2e_list(iem)%Init()
-       call e2l_list(iem)%Init()
+       call l2e_driver_list(iem)%Init()
+       call e2l_driver_list(iem)%Init()
     enddo
 
   end subroutine EMI_Determine_Active_EMs
@@ -198,8 +198,8 @@ contains
        !       ALM and FATES
        do clump_rank = 1, nclumps
           iem = (index_em_betr-1)*nclumps + clump_rank
-          call EM_BETR_Populate_L2E_List(l2e_list(iem))
-          call EM_BETR_Populate_E2L_List(e2l_list(iem))
+          call EM_BETR_Populate_L2E_List(l2e_driver_list(iem))
+          call EM_BETR_Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
@@ -208,8 +208,8 @@ contains
           call get_clump_bounds(clump_rank, bounds_clump)
           iem = (index_em_betr-1)*nclumps + clump_rank
 
-          call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
-          call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(l2e_driver_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(e2l_driver_list(iem), bounds_clump)
        enddo
        !$OMP END PARALLEL DO
 
@@ -223,8 +223,8 @@ contains
        !       ALM and FATES
        do clump_rank = 1, nclumps
           iem = (index_em_fates-1)*nclumps + clump_rank
-          call EM_FATES_Populate_L2E_List(l2e_list(iem))
-          call EM_FATES_Populate_E2L_List(e2l_list(iem))
+          call EM_FATES_Populate_L2E_List(l2e_driver_list(iem))
+          call EM_FATES_Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
 
@@ -234,8 +234,8 @@ contains
           call get_clump_bounds(clump_rank, bounds_clump)
           iem = (index_em_fates-1)*nclumps + clump_rank
 
-          call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
-          call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(l2e_driver_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(e2l_driver_list(iem), bounds_clump)
        enddo
        !$OMP END PARALLEL DO
 
@@ -263,8 +263,8 @@ contains
           call EM_VSFM_Populate_E2L_Init_List(e2l_init_list(clump_rank))
 
           !  - Data need during timestepping
-          call EM_VSFM_Populate_L2E_List(l2e_list(iem))
-          call EM_VSFM_Populate_E2L_List(e2l_list(iem))
+          call EM_VSFM_Populate_L2E_List(l2e_driver_list(iem))
+          call EM_VSFM_Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
@@ -276,8 +276,8 @@ contains
           ! Allocate memory for data
           call EMI_Setup_Data_List(l2e_init_list(clump_rank), bounds_clump)
           call EMI_Setup_Data_List(e2l_init_list(clump_rank), bounds_clump)
-          call EMI_Setup_Data_List(l2e_list(iem)            , bounds_clump)
-          call EMI_Setup_Data_List(e2l_list(iem)            , bounds_clump)
+          call EMI_Setup_Data_List(l2e_driver_list(iem)     , bounds_clump)
+          call EMI_Setup_Data_List(e2l_driver_list(iem)     , bounds_clump)
 
           ! GB_FIX_ME: Create a temporary filter
           num_filter_col = bounds_clump%endc - bounds_clump%begc + 1
@@ -361,8 +361,8 @@ contains
           call EM_PTM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
 
           !  - Data need during timestepping
-          call EM_PTM_Populate_L2E_List(l2e_list(iem))
-          call EM_PTM_Populate_E2L_List(e2l_list(iem))
+          call EM_PTM_Populate_L2E_List(l2e_driver_list(iem))
+          call EM_PTM_Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
@@ -373,8 +373,8 @@ contains
 
           ! Allocate memory for data
           call EMI_Setup_Data_List(l2e_init_list(iem), bounds_clump)
-          call EMI_Setup_Data_List(l2e_list(iem), bounds_clump)
-          call EMI_Setup_Data_List(e2l_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(l2e_driver_list(iem), bounds_clump)
+          call EMI_Setup_Data_List(e2l_driver_list(iem), bounds_clump)
 
           ! Reset values in the data list
           call EMID_Reset_Data_for_EM(l2e_init_list(clump_rank), em_stage)
@@ -880,20 +880,20 @@ contains
        iem = (index_em-1)*nclumps + 1
     endif
 
-    call EMID_Reset_Data_for_EM(l2e_list(iem), em_stage)
-    call EMID_Reset_Data_for_EM(e2l_list(iem), em_stage)
+    call EMID_Reset_Data_for_EM(l2e_driver_list(iem), em_stage)
+    call EMID_Reset_Data_for_EM(e2l_driver_list(iem), em_stage)
 
     if ( present(temperature_vars) .and. &
          present(num_hydrologyc)   .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_Temperature_Vars_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Temperature_Vars_for_EM(l2e_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, temperature_vars)
 
        elseif (present(num_nolakec_and_nourbanc)  .and. &
                present(filter_nolakec_and_nourbanc)) then
 
-       call EMID_Pack_Temperature_Vars_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Temperature_Vars_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
 
@@ -901,13 +901,13 @@ contains
        if (present(num_hydrologyc)  .and. &
            present(filter_hydrologyc)) then
 
-          call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
+          call EMID_Pack_WaterState_Vars_for_EM(l2e_driver_list(iem), em_stage, &
                num_hydrologyc, filter_hydrologyc, waterstate_vars)
 
        elseif (present(num_nolakec_and_nourbanc)  .and. &
                present(filter_nolakec_and_nourbanc)) then
 
-          call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
+          call EMID_Pack_WaterState_Vars_for_EM(l2e_driver_list(iem), em_stage, &
                num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, waterstate_vars)
        else
           ! GB_FIX_ME: Create a temporary filter
@@ -922,7 +922,7 @@ contains
              filter_col(ii) = bounds_clump%begc + ii - 1
           enddo
 
-          call EMID_Pack_WaterState_Vars_for_EM(l2e_list(iem), em_stage, &
+          call EMID_Pack_WaterState_Vars_for_EM(l2e_driver_list(iem), em_stage, &
                num_filter_col, filter_col, waterstate_vars)
           deallocate(filter_col)
        endif
@@ -932,14 +932,14 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_WaterFlux_Vars_for_EM(l2e_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterflux_vars)
     endif
 
     if ( present(num_nolakec_and_nourbanc) .and. &
          present(filter_nolakec_and_nourbanc)) then
 
-       call EMID_Pack_EnergyFlux_Vars_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_EnergyFlux_Vars_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, energyflux_vars)
 
     endif
@@ -947,10 +947,10 @@ contains
     if ( present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Pack_Filter_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Filter_for_EM(l2e_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
-       call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Column_for_EM(l2e_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
     endif
@@ -958,10 +958,10 @@ contains
     if ( present(num_nolakec) .and. &
          present(filter_nolakec)) then
 
-       call EMID_Pack_Filter_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Filter_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec, filter_nolakec)
 
-       call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Column_for_EM(l2e_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc)
 
     endif
@@ -969,19 +969,19 @@ contains
     if ( present(num_nolakec_and_nourbanc) .and. &
          present(filter_nolakec_and_nourbanc)) then
 
-       call EMID_Pack_Filter_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Filter_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
 
-       call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Column_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
 
-       call EMID_Pack_Landunit_for_EM(l2e_list(iem), em_stage, &
+       call EMID_Pack_Landunit_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
 
     endif
 
     if (present(atm2lnd_vars)) then
-       call EMID_Pack_Atm2Land_Forcings_for_EM(l2e_list(iem), em_stage, atm2lnd_vars)
+       call EMID_Pack_Atm2Land_Forcings_for_EM(l2e_driver_list(iem), em_stage, atm2lnd_vars)
     endif
 
     ! GB_FIX_ME: Create a temporary filter
@@ -997,11 +997,11 @@ contains
     do ii = 1, num_filter_col
        filter_col(ii) = bounds_clump%begc + ii - 1
     enddo
-    call EMID_Pack_Column_for_EM(l2e_list(iem), em_stage, &
+    call EMID_Pack_Column_for_EM(l2e_driver_list(iem), em_stage, &
             num_filter_col, filter_col)
     deallocate(filter_col)
 
-    call EMID_Verify_All_Data_Is_Set(l2e_list(iem), em_stage)
+    call EMID_Verify_All_Data_Is_Set(l2e_driver_list(iem), em_stage)
 
     ! ------------------------------------------------------------------------
     ! Solve EM
@@ -1013,23 +1013,23 @@ contains
 
     select case (em_id)
     case (EM_ID_BETR)
-       call EM_BETR_Solve(em_stage, dtime, nstep, bounds_clump, l2e_list(iem), e2l_list(iem))
+       call EM_BETR_Solve(em_stage, dtime, nstep, bounds_clump, l2e_driver_list(iem), e2l_driver_list(iem))
 
     case (EM_ID_FATES)
-       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_list(iem), e2l_list(iem))
+       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
 
     case (EM_ID_PFLOTRAN)
 
     case (EM_ID_VSFM)
 #ifdef USE_PETSC_LIB
-       call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_list(iem), e2l_list(iem))
+       call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
 
     case (EM_ID_PTM)
 #ifdef VSFM_VIA_EMI
-       call EM_PTM_Solve(em_stage, dtime, nstep, l2e_list(iem), e2l_list(iem))
+       call EM_PTM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
 #endif
@@ -1045,7 +1045,7 @@ contains
          present(num_hydrologyc)  .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_WaterState_Vars_for_EM(e2l_list(iem), em_stage, &
+       call EMID_Unpack_WaterState_Vars_for_EM(e2l_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterstate_vars)
     endif
 
@@ -1053,7 +1053,7 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_list(iem), em_stage, &
+       call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, waterflux_vars)
     endif
 
@@ -1061,7 +1061,7 @@ contains
          present(num_hydrologyc) .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_SoilState_Vars_for_EM(e2l_list(iem), em_stage, &
+       call EMID_Unpack_SoilState_Vars_for_EM(e2l_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, soilstate_vars)
     endif
 
@@ -1069,23 +1069,23 @@ contains
          present(num_hydrologyc)     .and. &
          present(filter_hydrologyc)) then
 
-       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_list(iem), em_stage, &
+       call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_driver_list(iem), em_stage, &
             num_hydrologyc, filter_hydrologyc, soilhydrology_vars)
     endif
 
     if (present(canopystate_vars)) then
-       call EMID_Unpack_CanopyState_Vars_for_EM(e2l_list(iem), em_stage, canopystate_vars)
+       call EMID_Unpack_CanopyState_Vars_for_EM(e2l_driver_list(iem), em_stage, canopystate_vars)
     endif
 
     if ( present(temperature_vars) .and. &
          present(num_nolakec_and_nourbanc)     .and. &
          present(filter_nolakec_and_nourbanc)) then
 
-       call EMID_Unpack_Temperature_Vars_for_EM(e2l_list(iem), em_stage, &
+       call EMID_Unpack_Temperature_Vars_for_EM(e2l_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
 
-    call EMID_Verify_All_Data_Is_Set(e2l_list(iem), em_stage)
+    call EMID_Verify_All_Data_Is_Set(e2l_driver_list(iem), em_stage)
 
   end subroutine EMI_Driver
   
