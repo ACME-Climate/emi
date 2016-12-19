@@ -36,6 +36,15 @@ module ExternalModelInterfaceDataMod
      character (len=10) :: dim3_name
      character (len=10) :: dim4_name
 
+     character (len=24) :: dim1_beg_name
+     character (len=24) :: dim2_beg_name
+     character (len=24) :: dim3_beg_name
+     character (len=24) :: dim4_beg_name
+     character (len=24) :: dim1_end_name
+     character (len=24) :: dim2_end_name
+     character (len=24) :: dim3_end_name
+     character (len=24) :: dim4_end_name
+
      integer :: dim1_beg, dim1_end
      integer :: dim2_beg, dim2_end
      integer :: dim3_beg, dim3_end
@@ -54,21 +63,23 @@ module ExternalModelInterfaceDataMod
 
    contains
 
-     procedure, public :: Init             => EMIDInit
-     procedure, public :: Copy             => EMIDCopy
-     procedure, public :: Setup            => EMIDSetup
-     procedure, public :: SetDimensions    => EMIDSetDimensions
-     procedure, public :: SetType          => EMIDSetType
-     procedure, public :: SetID            => EMIDSetID
-     procedure, public :: SetName          => EMIDSetName
-     procedure, public :: SetUnits         => EMIDSetUnits
-     procedure, public :: SetAvgFlag       => EMIDSetAvgFlag
-     procedure, public :: SetLongName      => EMIDSetLongName
-     procedure, public :: SetEMStages      => EMIDSetEMStages
-     procedure, public :: AppendEMStages   => EMIDAppendEMStages
-     procedure, public :: AllocateMemory   => EMIDAllocateMemory
-     procedure, public :: Reset            => EMIDReset
-     procedure, public :: Destroy          => EMIDDestroy
+     procedure, public :: Init              => EMIDInit
+     procedure, public :: Copy              => EMIDCopy
+     procedure, public :: Setup             => EMIDSetup
+     procedure, public :: SetDimensions     => EMIDSetDimensions
+     procedure, public :: SetNDimension     => EMIDSetNDimension
+     procedure, public :: SetType           => EMIDSetType
+     procedure, public :: SetID             => EMIDSetID
+     procedure, public :: SetName           => EMIDSetName
+     procedure, public :: SetDimBegEndNames => EMIDSetDimBegEndNames
+     procedure, public :: SetUnits          => EMIDSetUnits
+     procedure, public :: SetAvgFlag        => EMIDSetAvgFlag
+     procedure, public :: SetLongName       => EMIDSetLongName
+     procedure, public :: SetEMStages       => EMIDSetEMStages
+     procedure, public :: AppendEMStages    => EMIDAppendEMStages
+     procedure, public :: AllocateMemory    => EMIDAllocateMemory
+     procedure, public :: Reset             => EMIDReset
+     procedure, public :: Destroy           => EMIDDestroy
 
   end type emi_data
 
@@ -313,6 +324,38 @@ contains
   end subroutine EMIDSetName
 
   !------------------------------------------------------------------------
+  subroutine EMIDSetDimBegEndNames(this, d1_beg_name, d1_end_name, &
+       d2_beg_name, d2_end_name, d3_beg_name, d3_end_name, &
+       d4_beg_name, d4_end_name)
+    !
+    ! !DESCRIPTION:
+    ! Sets beg/end dimension names
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data) , intent(inout) :: this
+    character(len=*), intent(in)    :: d1_beg_name
+    character(len=*), intent(in)    :: d2_beg_name
+    character(len=*), intent(in)    :: d3_beg_name
+    character(len=*), intent(in)    :: d4_beg_name
+    character(len=*), intent(in)    :: d1_end_name
+    character(len=*), intent(in)    :: d2_end_name
+    character(len=*), intent(in)    :: d3_end_name
+    character(len=*), intent(in)    :: d4_end_name
+
+    this%dim1_beg_name = trim(d1_beg_name)
+    this%dim1_end_name = trim(d1_end_name)
+    this%dim2_beg_name = trim(d2_beg_name)
+    this%dim2_end_name = trim(d2_end_name)
+    this%dim3_beg_name = trim(d3_beg_name)
+    this%dim3_end_name = trim(d3_end_name)
+    this%dim4_beg_name = trim(d4_beg_name)
+    this%dim4_end_name = trim(d4_end_name)
+
+  end subroutine EMIDSetDimBegEndNames
+
+  !------------------------------------------------------------------------
   subroutine EMIDSetLongName(this, long_name)
     !
     ! !DESCRIPTION:
@@ -452,8 +495,8 @@ contains
   end subroutine EMIDAppendEMStages
 
   !------------------------------------------------------------------------
-  subroutine EMIDSetDimensions(this, ndim, &
-    dim1_beg, dim1_end, dim2_beg, dim2_end,     &
+  subroutine EMIDSetDimensions(this,        &
+    dim1_beg, dim1_end, dim2_beg, dim2_end, &
     dim3_beg, dim3_end, dim4_beg, dim4_end)
     !
     ! !DESCRIPTION:
@@ -463,13 +506,10 @@ contains
     !
     ! !ARGUMENTS:
     class(emi_data)  , intent(inout) :: this
-    integer          , intent (in)   :: ndim
     integer          , intent (in)   :: dim1_beg, dim1_end
     integer          , intent (in)   :: dim2_beg, dim2_end
     integer          , intent (in)   :: dim3_beg, dim3_end
     integer          , intent (in)   :: dim4_beg, dim4_end
-
-    this%ndim = ndim
 
     this%dim1_beg = dim1_beg
     this%dim2_beg = dim2_beg
@@ -482,6 +522,22 @@ contains
     this%dim4_end = dim4_end
 
   end subroutine EMIDSetDimensions
+
+  !------------------------------------------------------------------------
+  subroutine EMIDSetNDimension(this, ndim)
+    !
+    ! !DESCRIPTION:
+    ! Sets the dimension of data
+    !
+    implicit none
+    !
+    ! !ARGUMENTS:
+    class(emi_data)  , intent(inout) :: this
+    integer          , intent (in)   :: ndim
+
+    this%ndim = ndim
+
+  end subroutine EMIDSetNDimension
 
   !------------------------------------------------------------------------
   subroutine EMIDSetType(this, is_int, is_real)
@@ -1066,6 +1122,23 @@ contains
     use ExternalModelConstants    , only : L2E_PARAMETER_CSOL
     use ExternalModelConstants    , only : L2E_PARAMETER_TKMG
     use ExternalModelConstants    , only : L2E_PARAMETER_TKDRY
+
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_begg
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_endg
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_begl
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_endl
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_begc
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_endc
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_begp
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_endp
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_nlevsno
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_nlevsno_plus_one
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_nlevsoi
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_nlevgrnd
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_zero
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_one
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_two
+
     !
     implicit none
     !
@@ -1078,9 +1151,18 @@ contains
     !
     class(emi_data) , pointer              :: data
     integer                                :: id_val
+    integer                                :: ndim
     character (len=32)                     :: name_val
     character (len=128)                    :: long_name_val
     character (len=24)                     :: units_val
+    character (len=24)                     :: dim1_beg_name
+    character (len=24)                     :: dim2_beg_name
+    character (len=24)                     :: dim3_beg_name
+    character (len=24)                     :: dim4_beg_name
+    character (len=24)                     :: dim1_end_name
+    character (len=24)                     :: dim2_end_name
+    character (len=24)                     :: dim3_end_name
+    character (len=24)                     :: dim4_end_name
     logical                                :: is_int_type
     logical                                :: is_real_type
     logical                                :: data_present
@@ -1094,6 +1176,14 @@ contains
 
     is_int_type    = .false.
     is_real_type   = .false.
+    dim1_beg_name  = ''
+    dim2_beg_name  = ''
+    dim3_beg_name  = ''
+    dim4_beg_name  = ''
+    dim1_end_name  = ''
+    dim2_end_name  = ''
+    dim3_end_name  = ''
+    dim4_end_name  = ''
 
     select case(data_id)
 
@@ -1106,6 +1196,11 @@ contains
        long_name_val = 'Soil temperature: ALM to External Model'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVGRND)
        id_val        = L2E_STATE_H2OSOI_LIQ_NLEVGRND
@@ -1113,6 +1208,11 @@ contains
        long_name_val = 'Soil liquid water: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_STATE_H2OSOI_ICE_NLEVGRND)
        id_val        = L2E_STATE_H2OSOI_ICE_NLEVGRND
@@ -1120,6 +1220,11 @@ contains
        long_name_val = 'Soil ice water: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_STATE_WTD)
        id_val        = L2E_STATE_WTD
@@ -1127,6 +1232,9 @@ contains
        long_name_val = 'Water table depth: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_VSFM_PROGNOSTIC_SOILP)
        id_val        = L2E_STATE_VSFM_PROGNOSTIC_SOILP
@@ -1134,6 +1242,11 @@ contains
        long_name_val = 'Soil liquid pressure: ALM to External Model'
        units_val     = '[Pa]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_STATE_FRAC_H2OSFC)
        id_val        = L2E_STATE_FRAC_H2OSFC
@@ -1141,6 +1254,9 @@ contains
        long_name_val = 'Fraction of standing water: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_FRAC_INUNDATED)
        id_val        = L2E_STATE_FRAC_INUNDATED
@@ -1148,6 +1264,9 @@ contains
        long_name_val = 'Fraction of inundated surface: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
@@ -1155,6 +1274,11 @@ contains
        long_name_val = 'Volumetric liquid content: ALM to External Model'
        units_val     = '[m3/m3]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
@@ -1162,6 +1286,11 @@ contains
        long_name_val = 'Volumetric ice content: ALM to External Model'
        units_val     = '[m3/m3]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_H2OSOI_VOL_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_VOL_NLEVSOI
@@ -1169,6 +1298,11 @@ contains
        long_name_val = 'Volumetric soil water: ALM to External Model'
        units_val     = '[m3/m3]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_AIR_VOL_NLEVSOI)
        id_val        = L2E_STATE_AIR_VOL_NLEVSOI
@@ -1176,6 +1310,11 @@ contains
        long_name_val = 'Air filled porosity: ALM to External Model'
        units_val     = '[m3/m3]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_RHO_VAP_NLEVSOI)
        id_val        = L2E_STATE_RHO_VAP_NLEVSOI
@@ -1183,6 +1322,11 @@ contains
        long_name_val = 'Water vapor pressure: ALM to External Model'
        units_val     = '[Pa]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_RHVAP_SOI_NLEVSOI)
        id_val        = L2E_STATE_RHVAP_SOI_NLEVSOI
@@ -1190,6 +1334,11 @@ contains
        long_name_val = 'Relative humidity: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI)
        id_val        = L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
@@ -1197,6 +1346,11 @@ contains
        long_name_val = 'Matric potential in soil & snow lyrs: ALM to External Model'
        units_val     = '[mm]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_LIQ_NLEVSOI
@@ -1204,6 +1358,11 @@ contains
        long_name_val = 'Soil liquid water: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_H2OSOI_ICE_NLEVSOI)
        id_val        = L2E_STATE_H2OSOI_ICE_NLEVSOI
@@ -1211,6 +1370,11 @@ contains
        long_name_val = 'Soil ice water: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevsoi
 
     case (L2E_STATE_TSNOW)
        id_val        = L2E_STATE_TSNOW
@@ -1218,6 +1382,11 @@ contains
        long_name_val = 'Temperature snow: ALM to External Model'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_zero
 
     case (L2E_STATE_TH2OSFC)
        id_val        = L2E_STATE_TH2OSFC
@@ -1225,6 +1394,9 @@ contains
        long_name_val = 'Temperature of standing water: ALM to External Model'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_H2OSOI_LIQ_NLEVSNOW)
        id_val        = L2E_STATE_H2OSOI_LIQ_NLEVSNOW
@@ -1232,6 +1404,11 @@ contains
        long_name_val = 'Liquid water in snow: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_zero
 
     case (L2E_STATE_H2OSOI_ICE_NLEVSNOW)
        id_val        = L2E_STATE_H2OSOI_ICE_NLEVSNOW
@@ -1239,6 +1416,11 @@ contains
        long_name_val = 'Ice water in snow: ALM to External Model'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_zero
 
     case (L2E_STATE_H2OSNOW)
        id_val        = L2E_STATE_H2OSNOW
@@ -1246,6 +1428,9 @@ contains
        long_name_val = 'Snow water: ALM to External Model'
        units_val     = '[mm H2O]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_H2OSFC)
        id_val        = L2E_STATE_H2OSFC
@@ -1253,6 +1438,9 @@ contains
        long_name_val = 'Standing water: ALM to External Model'
        units_val     = '[mm H2O]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_STATE_FRAC_SNOW_EFFECTIVE)
        id_val        = L2E_STATE_FRAC_SNOW_EFFECTIVE
@@ -1260,6 +1448,9 @@ contains
        long_name_val = 'Frac. of ground covered with snow: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: State variables
@@ -1270,6 +1461,11 @@ contains
        long_name_val = 'Soil liquid water: External Model to ALM'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_H2OSOI_ICE)
        id_val        = E2L_STATE_H2OSOI_ICE
@@ -1277,6 +1473,11 @@ contains
        long_name_val = 'Soil ice water: External Model to ALM'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_SOIL_MATRIC_POTENTIAL)
        id_val        = E2L_STATE_SOIL_MATRIC_POTENTIAL
@@ -1284,6 +1485,11 @@ contains
        long_name_val = 'Soil matric potential: External Model to ALM'
        units_val     = '[mm]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_WTD)
        id_val        = E2L_STATE_WTD
@@ -1291,6 +1497,9 @@ contains
        long_name_val = 'Water table depth: External Model to ALM'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (E2L_STATE_VSFM_PROGNOSTIC_SOILP)
        id_val        = E2L_STATE_VSFM_PROGNOSTIC_SOILP
@@ -1298,6 +1507,11 @@ contains
        long_name_val = 'Soil liquid pressure: External Model to ALM'
        units_val     = '[Pa]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_FSUN)
        id_val        = E2L_STATE_FSUN
@@ -1305,6 +1519,9 @@ contains
        long_name_val = ': External Model to ALM'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begp
+       dim1_end_name = dimname_endp
 
     case (E2L_STATE_LAISUN)
        id_val        = E2L_STATE_LAISUN
@@ -1312,6 +1529,9 @@ contains
        long_name_val = 'Sunlit leaf area: External Model to ALM'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begp
+       dim1_end_name = dimname_endp
 
     case (E2L_STATE_LAISHA)
        id_val        = E2L_STATE_LAISHA
@@ -1319,6 +1539,9 @@ contains
        long_name_val = 'Shaded leaf area: External Model to ALM'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begp
+       dim1_end_name = dimname_endp
 
     case (E2L_STATE_TSOIL_NLEVGRND)
        id_val        = E2L_STATE_TSOIL_NLEVGRND
@@ -1326,6 +1549,11 @@ contains
        long_name_val = 'Soil temperature: External Model to ALM'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_TSNOW_NLEVSNOW)
        id_val        = E2L_STATE_TSNOW_NLEVSNOW
@@ -1333,6 +1561,11 @@ contains
        long_name_val = 'Snow temperature: External Model to ALM'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_zero
 
     case (E2L_STATE_TH2OSFC)
        id_val        = E2L_STATE_TH2OSFC
@@ -1340,6 +1573,9 @@ contains
        long_name_val = 'Standing water temperature: External Model to ALM'
        units_val     = '[K]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
        ! --------------------------------------------------------------
        ! ALM-to-EM: Flux variables
@@ -1350,6 +1586,9 @@ contains
        long_name_val = 'Soil infiltration source: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_VERTICAL_ET_MASS_FLUX)
        id_val        = L2E_FLUX_VERTICAL_ET_MASS_FLUX
@@ -1357,6 +1596,11 @@ contains
        long_name_val = 'Evapotranspiration sink: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_FLUX_DEW_MASS_FLUX)
        id_val        = L2E_FLUX_DEW_MASS_FLUX
@@ -1364,6 +1608,9 @@ contains
        long_name_val = 'Dew sink: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX)
        id_val        = L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
@@ -1371,6 +1618,9 @@ contains
        long_name_val = 'Snow sublimation sink: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -1378,6 +1628,9 @@ contains
        long_name_val = 'Snow layer disappearance sink: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -1385,6 +1638,9 @@ contains
        long_name_val = 'Snow layer disappearance sink from restart: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_DRAINAGE_MASS_FLUX)
        id_val        = L2E_FLUX_DRAINAGE_MASS_FLUX
@@ -1392,6 +1648,11 @@ contains
        long_name_val = 'Drainage sink: ALM to External Model'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_FLUX_SOLAR_DIRECT_RADDIATION)
        id_val        = L2E_FLUX_SOLAR_DIRECT_RADDIATION
@@ -1399,6 +1660,11 @@ contains
        long_name_val = 'Direct beam solar radiation: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begg
+       dim1_end_name = dimname_endg
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_two
 
     case (L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
        id_val        = L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
@@ -1406,6 +1672,11 @@ contains
        long_name_val = 'Diffuse beam solar radiation: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begg
+       dim1_end_name = dimname_endg
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_two
 
     case (L2E_FLUX_ABSORBED_SOLAR_RADIATION)
        id_val        = L2E_FLUX_ABSORBED_SOLAR_RADIATION
@@ -1413,6 +1684,11 @@ contains
        long_name_val = 'Absorbed beam solar radiation: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_one
 
     case (L2E_FLUX_SOIL_HEAT_FLUX)
        id_val        = L2E_FLUX_SOIL_HEAT_FLUX
@@ -1420,6 +1696,9 @@ contains
        long_name_val = 'Net heat flux into soil: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_SNOW_HEAT_FLUX)
        id_val        = L2E_FLUX_SNOW_HEAT_FLUX
@@ -1427,6 +1706,9 @@ contains
        long_name_val = 'Net heat flux into snow: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_H2OSFC_HEAT_FLUX)
        id_val        = L2E_FLUX_H2OSFC_HEAT_FLUX
@@ -1434,6 +1716,9 @@ contains
        long_name_val = 'Net heat flux into standing water: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX)
        id_val        = L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
@@ -1441,6 +1726,9 @@ contains
        long_name_val = 'Derivative of heat flux w.r.t. temperature: ALM to External Model'
        units_val     = '[W/m2]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
        ! --------------------------------------------------------------
        ! EM-to-ALM: Flux variables
@@ -1451,6 +1739,9 @@ contains
        long_name_val = 'Aquifer recharge rate: External Model to ALM'
        units_val     = '[mm/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
        id_val        = E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
@@ -1458,6 +1749,9 @@ contains
        long_name_val = 'Snow layer disappearance sink initial value: External Model to ALM'
        units_val     = '[kg/s]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Filter variables
@@ -1468,6 +1762,9 @@ contains
        long_name_val = 'Hydrology filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FILTER_NUM_HYDROLOGYC)
        id_val        = L2E_FILTER_NUM_HYDROLOGYC
@@ -1475,6 +1772,9 @@ contains
        long_name_val = 'Number of hydrology filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_one
+       dim1_end_name = dimname_one
 
     case (L2E_FILTER_NOLAKEC)
        id_val        = L2E_FILTER_HYDROLOGYC
@@ -1482,6 +1782,9 @@ contains
        long_name_val = 'Non-lake filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FILTER_NUM_NOLAKEC)
        id_val        = L2E_FILTER_NUM_HYDROLOGYC
@@ -1489,6 +1792,9 @@ contains
        long_name_val = 'Number of non-lake filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_one
+       dim1_end_name = dimname_one
 
     case (L2E_FILTER_NOLAKEC_AND_NOURBANC)
        id_val        = L2E_FILTER_NOLAKEC_AND_NOURBANC
@@ -1496,6 +1802,9 @@ contains
        long_name_val = 'Non-lake & non-urban filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC)
        id_val        = L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
@@ -1503,6 +1812,9 @@ contains
        long_name_val = 'Number of non-lake & non-urban filter: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_one
+       dim1_end_name = dimname_one
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Column variables
@@ -1513,6 +1825,9 @@ contains
        long_name_val = 'Column active: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_TYPE)
        id_val        = L2E_COLUMN_TYPE
@@ -1520,6 +1835,9 @@ contains
        long_name_val = 'Column type: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_LANDUNIT_INDEX)
        id_val        = L2E_COLUMN_LANDUNIT_INDEX
@@ -1527,6 +1845,9 @@ contains
        long_name_val = 'Column landunit index: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_ZI)
        id_val        = L2E_COLUMN_ZI
@@ -1534,6 +1855,11 @@ contains
        long_name_val = 'Column layer interface depth: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_zero
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_COLUMN_DZ)
        id_val        = L2E_COLUMN_DZ
@@ -1541,6 +1867,11 @@ contains
        long_name_val = 'Column layer thickness: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_COLUMN_Z)
        id_val        = L2E_COLUMN_Z
@@ -1548,6 +1879,11 @@ contains
        long_name_val = 'Column layer centroid depth: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_COLUMN_AREA)
        id_val        = L2E_COLUMN_AREA
@@ -1555,6 +1891,9 @@ contains
        long_name_val = 'Column surface area: ALM to External Model'
        units_val     = '[m2]'
        is_real_type  = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_GRIDCELL_INDEX)
        id_val        = L2E_COLUMN_GRIDCELL_INDEX
@@ -1562,6 +1901,9 @@ contains
        long_name_val = 'Column to gridcell index: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_PATCH_INDEX)
        id_val        = L2E_COLUMN_PATCH_INDEX
@@ -1569,6 +1911,9 @@ contains
        long_name_val = 'Column to patch index: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_NUM_SNOW_LAYERS)
        id_val        = L2E_COLUMN_NUM_SNOW_LAYERS
@@ -1576,6 +1921,9 @@ contains
        long_name_val = 'Number of snow layers: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
 
     case (L2E_COLUMN_ZI_SNOW_AND_SOIL)
        id_val        = L2E_COLUMN_ZI_SNOW_AND_SOIL
@@ -1583,6 +1931,11 @@ contains
        long_name_val = 'Column layer interface depth: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_COLUMN_DZ_SNOW_AND_SOIL)
        id_val        = L2E_COLUMN_DZ_SNOW_AND_SOIL
@@ -1590,6 +1943,11 @@ contains
        long_name_val = 'Column layer thickness: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_COLUMN_Z_SNOW_AND_SOIL)
        id_val        = L2E_COLUMN_Z_SNOW_AND_SOIL
@@ -1597,6 +1955,11 @@ contains
        long_name_val = 'Column layer centroid depth: ALM to External Model'
        units_val     = '[m]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_nlevsno_plus_one
+       dim2_end_name = dimname_nlevgrnd
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Landunit variables
@@ -1607,6 +1970,9 @@ contains
        long_name_val = 'Landunit type: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begl
+       dim1_end_name = dimname_endl
 
     case (L2E_LANDUNIT_LAKEPOINT)
        id_val        = L2E_LANDUNIT_LAKEPOINT
@@ -1614,6 +1980,9 @@ contains
        long_name_val = 'Landunit lake point: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begl
+       dim1_end_name = dimname_endl
 
     case (L2E_LANDUNIT_URBANPOINT)
        id_val        = L2E_LANDUNIT_URBANPOINT
@@ -1621,6 +1990,9 @@ contains
        long_name_val = 'Landunit urban point: ALM to External Model'
        units_val     = '[-]'
        is_int_type   = .true.
+       ndim          = 1
+       dim1_beg_name = dimname_begl
+       dim1_end_name = dimname_endl
 
        ! --------------------------------------------------------------
        ! ALM-to-ELM: Parameters variables
@@ -1631,6 +2003,11 @@ contains
        long_name_val = 'Soil porosity: ALM to External Model'
        units_val     = '[m^3/m^3]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_HKSATC)
        id_val        = L2E_PARAMETER_HKSATC
@@ -1638,6 +2015,11 @@ contains
        long_name_val = 'Soil hydraulic conductivity at saturation: ALM to External Model'
        units_val     = '[mm/s]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_BSWC)
        id_val        = L2E_PARAMETER_BSWC
@@ -1645,6 +2027,11 @@ contains
        long_name_val = 'Clapp and Hornberger parameter: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_SUCSATC)
        id_val        = L2E_PARAMETER_SUCSATC
@@ -1652,6 +2039,11 @@ contains
        long_name_val = 'Minimum soil suction: ALM to External Model'
        units_val     = '[mm]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_EFFPOROSITYC)
        id_val        = L2E_PARAMETER_EFFPOROSITYC
@@ -1659,6 +2051,11 @@ contains
        long_name_val = 'Effective porosity: ALM to External Model'
        units_val     = '[-]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_CSOL)
        id_val        = L2E_PARAMETER_CSOL
@@ -1666,6 +2063,11 @@ contains
        long_name_val = 'Heat capacity: ALM to External Model'
        units_val     = '[W/m/K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_TKMG)
        id_val        = L2E_PARAMETER_TKMG
@@ -1673,6 +2075,11 @@ contains
        long_name_val = 'Thermal conductivity minerals: ALM to External Model'
        units_val     = '[W/m/K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (L2E_PARAMETER_TKDRY)
        id_val        = L2E_PARAMETER_TKDRY
@@ -1680,6 +2087,11 @@ contains
        long_name_val = 'Thermal conductivity dry soils: ALM to External Model'
        units_val     = '[W/m/K]'
        is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case default
        write(iulog,*)'Unknown EMID id = ',data_id
@@ -1696,6 +2108,12 @@ contains
          num_em_stages = num_em_stages_val, &
          em_stage_ids  = em_stage_ids_val)
     call data%SetType(is_int_type, is_real_type)
+    call data%SetNDimension(ndim)
+    call data%SetDimBegEndNames( &
+         dim1_beg_name, dim1_end_name, &
+         dim2_beg_name, dim2_end_name, &
+         dim3_beg_name, dim3_end_name, &
+         dim4_beg_name, dim4_end_name)
     call this%AddData(data)
     index_of_new_data = this%num_data
 

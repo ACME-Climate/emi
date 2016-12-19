@@ -4,13 +4,14 @@ module ExternalModelInterfaceMod
   ! !DESCRIPTION:
   ! This module provides an interface to couple ALM with external model
   !
-  use shr_kind_mod                  , only : r8 => shr_kind_r8
-  use spmdMod                       , only : masterproc, iam
-  use shr_log_mod                   , only : errMsg => shr_log_errMsg
-  use decompMod                     , only : bounds_type, get_proc_clumps
-  use abortutils                    , only : endrun
-  use clm_varctl                    , only : iulog
-  use ExternalModelInterfaceDataMod , only : emi_data_list, emi_data
+  use shr_kind_mod                         , only : r8 => shr_kind_r8
+  use spmdMod                              , only : masterproc, iam
+  use shr_log_mod                          , only : errMsg => shr_log_errMsg
+  use decompMod                            , only : bounds_type, get_proc_clumps
+  use abortutils                           , only : endrun
+  use clm_varctl                           , only : iulog
+  use ExternalModelInterfaceDataMod        , only : emi_data_list, emi_data
+  use ExternalModelIntefaceDataDimensionMod, only : emi_data_dimension_list_type
 #ifdef USE_PETSC_LIB
   use MultiPhysicsProbVSFM          , only : vsfm_mpp
 #endif
@@ -29,8 +30,9 @@ module ExternalModelInterfaceMod
   integer :: index_em_vsfm
   integer :: index_em_ptm
 
-  class(emi_data_list), pointer :: l2e_driver_list(:)
-  class(emi_data_list), pointer :: e2l_driver_list(:)
+  class(emi_data_list)               , pointer :: l2e_driver_list(:)
+  class(emi_data_list)               , pointer :: e2l_driver_list(:)
+  class(emi_data_dimension_list_type), pointer :: emid_dim_list
 
   public :: EMI_Determine_Active_EMs
   public :: EMI_Init_EM
@@ -123,6 +125,9 @@ contains
        call l2e_driver_list(iem)%Init()
        call e2l_driver_list(iem)%Init()
     enddo
+
+    allocate(emid_dim_list)
+    call emid_dim_list%Init()
 
   end subroutine EMI_Determine_Active_EMs
   
@@ -476,99 +481,6 @@ contains
     ! !DESCRIPTION:
     ! Setup a EMI data
     !
-    ! !USES:
-    use ExternalModelConstants    , only : L2E_STATE_TSOIL_NLEVGRND
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVGRND
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVGRND
-    use ExternalModelConstants    , only : L2E_STATE_WTD
-    use ExternalModelConstants    , only : L2E_STATE_VSFM_PROGNOSTIC_SOILP
-    use ExternalModelConstants    , only : L2E_STATE_FRAC_H2OSFC
-    use ExternalModelConstants    , only : L2E_STATE_FRAC_INUNDATED
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_VOL_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_AIR_VOL_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_RHO_VAP_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_RHVAP_SOI_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSOI
-    use ExternalModelConstants    , only : L2E_STATE_TSNOW
-    use ExternalModelConstants    , only : L2E_STATE_TH2OSFC
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_LIQ_NLEVSNOW
-    use ExternalModelConstants    , only : L2E_STATE_H2OSOI_ICE_NLEVSNOW
-    use ExternalModelConstants    , only : L2E_STATE_H2OSNOW
-    use ExternalModelConstants    , only : L2E_STATE_H2OSFC
-    use ExternalModelConstants    , only : L2E_STATE_FRAC_SNOW_EFFECTIVE
-
-    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
-    use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
-    use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
-    use ExternalModelConstants    , only : E2L_STATE_WTD
-    use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
-    use ExternalModelConstants    , only : E2L_STATE_FSUN
-    use ExternalModelConstants    , only : E2L_STATE_LAISUN
-    use ExternalModelConstants    , only : E2L_STATE_LAISHA
-    use ExternalModelConstants    , only : E2L_STATE_TSOIL_NLEVGRND
-    use ExternalModelConstants    , only : E2L_STATE_TSNOW_NLEVSNOW
-    use ExternalModelConstants    , only : E2L_STATE_TH2OSFC
-
-    use ExternalModelConstants    , only : L2E_FLUX_INFIL_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_VERTICAL_ET_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_DEW_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_DRAINAGE_MASS_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIRECT_RADDIATION
-    use ExternalModelConstants    , only : L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
-    use ExternalModelConstants    , only : L2E_FLUX_ABSORBED_SOLAR_RADIATION
-    use ExternalModelConstants    , only : L2E_FLUX_SOIL_HEAT_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_SNOW_HEAT_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_H2OSFC_HEAT_FLUX
-    use ExternalModelConstants    , only : L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX
-
-    use ExternalModelConstants    , only : E2L_FLUX_AQUIFER_RECHARGE
-    use ExternalModelConstants    , only : E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
-
-    use ExternalModelConstants    , only : L2E_FILTER_HYDROLOGYC
-    use ExternalModelConstants    , only : L2E_FILTER_NUM_HYDROLOGYC
-    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC
-    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC
-    use ExternalModelConstants    , only : L2E_FILTER_NOLAKEC_AND_NOURBANC
-    use ExternalModelConstants    , only : L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC
-
-    use ExternalModelConstants    , only : L2E_COLUMN_ACTIVE
-    use ExternalModelConstants    , only : L2E_COLUMN_TYPE
-    use ExternalModelConstants    , only : L2E_COLUMN_LANDUNIT_INDEX
-    use ExternalModelConstants    , only : L2E_COLUMN_ZI
-    use ExternalModelConstants    , only : L2E_COLUMN_DZ
-    use ExternalModelConstants    , only : L2E_COLUMN_Z
-    use ExternalModelConstants    , only : L2E_COLUMN_AREA
-    use ExternalModelConstants    , only : L2E_COLUMN_GRIDCELL_INDEX
-    use ExternalModelConstants    , only : L2E_COLUMN_PATCH_INDEX
-    use ExternalModelConstants    , only : L2E_COLUMN_NUM_SNOW_LAYERS
-    use ExternalModelConstants    , only : L2E_COLUMN_ZI_SNOW_AND_SOIL
-    use ExternalModelConstants    , only : L2E_COLUMN_DZ_SNOW_AND_SOIL
-    use ExternalModelConstants    , only : L2E_COLUMN_Z_SNOW_AND_SOIL
-
-    use ExternalModelConstants    , only : L2E_LANDUNIT_TYPE
-    use ExternalModelConstants    , only : L2E_LANDUNIT_LAKEPOINT
-    use ExternalModelConstants    , only : L2E_LANDUNIT_URBANPOINT
-
-    use ExternalModelConstants    , only : L2E_PARAMETER_WATSATC
-    use ExternalModelConstants    , only : L2E_PARAMETER_HKSATC
-    use ExternalModelConstants    , only : L2E_PARAMETER_BSWC
-    use ExternalModelConstants    , only : L2E_PARAMETER_SUCSATC
-    use ExternalModelConstants    , only : L2E_PARAMETER_EFFPOROSITYC
-    use ExternalModelConstants    , only : L2E_PARAMETER_CSOL
-    use ExternalModelConstants    , only : L2E_PARAMETER_TKMG
-    use ExternalModelConstants    , only : L2E_PARAMETER_TKDRY
-
-    use clm_varpar                , only : nlevgrnd
-    use clm_varpar                , only : nlevsoi
-    use clm_varpar                , only : nlevsno
-    !
     implicit none
     !
     class(emi_data), pointer, intent(inout) :: data
@@ -583,7 +495,6 @@ contains
     integer                                 :: dim3_beg, dim3_end
     integer                                 :: dim4_beg, dim4_end
 
-    ndim      = 0
     dim1_beg  = 0
     dim2_beg  = 0
     dim3_beg  = 0
@@ -593,200 +504,41 @@ contains
     dim3_end  = 0
     dim4_end  = 0
 
-    ! Determine the size of data
-    select case (data%id)
+    ! Determine the dimension values
+    select case (data%ndim)
+    case (1)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_beg_name, dim1_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_end_name, dim1_end)
 
-    case (L2E_STATE_TSOIL_NLEVGRND,        &
-          L2E_STATE_H2OSOI_LIQ_NLEVGRND,   &
-          L2E_STATE_H2OSOI_ICE_NLEVGRND,   &
-          L2E_STATE_VSFM_PROGNOSTIC_SOILP, &
-          E2L_STATE_H2OSOI_LIQ,            &
-          E2L_STATE_H2OSOI_ICE,            &
-          E2L_STATE_SOIL_MATRIC_POTENTIAL, &
-          E2L_STATE_VSFM_PROGNOSTIC_SOILP, &
-          E2L_STATE_TSOIL_NLEVGRND,        &
-          L2E_FLUX_VERTICAL_ET_MASS_FLUX,  &
-          L2E_FLUX_DRAINAGE_MASS_FLUX,     &
-          L2E_COLUMN_DZ,                   &
-          L2E_COLUMN_Z,                    &
-          L2E_PARAMETER_WATSATC,           &
-          L2E_PARAMETER_HKSATC,            &
-          L2E_PARAMETER_BSWC,              &
-          L2E_PARAMETER_SUCSATC,           &
-          L2E_PARAMETER_EFFPOROSITYC,      &
-          L2E_PARAMETER_CSOL,              &
-          L2E_PARAMETER_TKMG,              &
-          L2E_PARAMETER_TKDRY              )
+    case (2)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_beg_name, dim1_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_beg_name, dim2_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_end_name, dim1_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_end_name, dim2_end)
 
-       ! Dim: Column x nlevgrnd
+    case (3)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_beg_name, dim1_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_beg_name, dim2_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim3_beg_name, dim3_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_end_name, dim1_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_end_name, dim2_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim3_end_name, dim3_end)
 
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = 1
-       dim2_end = nlevgrnd
+    case (4)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_beg_name, dim1_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_beg_name, dim2_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim3_beg_name, dim3_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim4_beg_name, dim4_beg)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim1_end_name, dim1_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim2_end_name, dim2_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim3_end_name, dim3_end)
+       call emid_dim_list%GetDimValue( bounds_clump, data%dim4_end_name, dim4_end)
 
-    case (L2E_COLUMN_DZ_SNOW_AND_SOIL, &
-          L2E_COLUMN_Z_SNOW_AND_SOIL   )
-
-       ! Dim: Column x -nlevsno+1:nlevgrnd
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = -nlevsno+1
-       dim2_end = nlevgrnd
-
-    case (L2E_STATE_H2OSOI_LIQ_NLEVSOI,           &
-          L2E_STATE_H2OSOI_ICE_NLEVSOI,           &
-          L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI,       &
-          L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI,       &
-          L2E_STATE_H2OSOI_VOL_NLEVSOI,           &
-          L2E_STATE_AIR_VOL_NLEVSOI,              &
-          L2E_STATE_RHO_VAP_NLEVSOI,              &
-          L2E_STATE_RHVAP_SOI_NLEVSOI,            &
-          L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI )
-
-       ! Dim: Column x 1:nlevsoi
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = 1
-       dim2_end = nlevsoi
-
-    case (L2E_STATE_TSNOW,               &
-          L2E_STATE_H2OSOI_LIQ_NLEVSNOW, &
-          L2E_STATE_H2OSOI_ICE_NLEVSNOW, &
-          E2L_STATE_TSNOW_NLEVSNOW  )
-
-       ! Dim: Column x -nlevsno+1:0
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = -nlevsno + 1
-       dim2_end = 0
-
-    case (L2E_FLUX_ABSORBED_SOLAR_RADIATION)
-
-       ! Dim: Column x -nlevsno+1:1
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = -nlevsno + 1
-       dim2_end = 1
-
-    case (L2E_STATE_FRAC_H2OSFC,                            &
-          L2E_STATE_FRAC_INUNDATED,                         &
-          L2E_STATE_TH2OSFC,                                &
-          L2E_STATE_H2OSNOW,                                &
-          L2E_STATE_H2OSFC,                                 &
-          L2E_STATE_FRAC_SNOW_EFFECTIVE,                    &
-          L2E_FLUX_INFIL_MASS_FLUX,                         &
-          L2E_STATE_WTD,                                    &
-          E2L_STATE_WTD,                                    &
-          E2L_STATE_TH2OSFC,                                &
-          L2E_FILTER_HYDROLOGYC,                            &
-          L2E_FILTER_NOLAKEC,                               &
-          L2E_FILTER_NOLAKEC_AND_NOURBANC,                  &
-          L2E_FLUX_DEW_MASS_FLUX,                           &
-          L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX,              &
-          L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
-          L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX, &
-          L2E_FLUX_SOIL_HEAT_FLUX,                          &
-          L2E_FLUX_SNOW_HEAT_FLUX,                          &
-          L2E_FLUX_H2OSFC_HEAT_FLUX,                        &
-          L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX,                 &
-          E2L_FLUX_AQUIFER_RECHARGE,                        &
-          E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX,         &
-          L2E_COLUMN_ACTIVE,                                &
-          L2E_COLUMN_TYPE,                                  &
-          L2E_COLUMN_LANDUNIT_INDEX,                        &
-          L2E_COLUMN_GRIDCELL_INDEX,                        &
-          L2E_COLUMN_PATCH_INDEX,                           &
-          L2E_COLUMN_NUM_SNOW_LAYERS,                       &
-          L2E_COLUMN_AREA)
-
-       ! Dim: Column
-
-       ndim     = 1
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-
-    case (L2E_FILTER_NUM_HYDROLOGYC, &
-          L2E_FILTER_NUM_NOLAKEC,    &
-          L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC)
-
-       ! Dim: 1
-
-       ndim     = 1
-       dim1_beg = 1
-       dim1_end = 1
-
-    case (L2E_COLUMN_ZI)
-
-       ! Dim: Column x (0:nlevgrnd)
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = 0
-       dim2_end = nlevgrnd
-
-    case (L2E_COLUMN_ZI_SNOW_AND_SOIL)
-
-       ! Dim: Column x (-nlevsno:nlevgrnd)
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begc
-       dim1_end = bounds_clump%endc
-       dim2_beg = -nlevsno
-       dim2_end = nlevgrnd
-
-    case (L2E_LANDUNIT_TYPE,       &
-          L2E_LANDUNIT_LAKEPOINT,  &
-          L2E_LANDUNIT_URBANPOINT  &
-         )
-
-       ! Dim: Landunit
-
-       ndim     = 1
-       dim1_beg = bounds_clump%begl
-       dim1_end = bounds_clump%endl
-
-    case (L2E_FLUX_SOLAR_DIRECT_RADDIATION, &
-          L2E_FLUX_SOLAR_DIFFUSE_RADDIATION)
-
-       ! Dim: Grid x 2 (=radiation_bands)
-
-       ndim     = 2
-       dim1_beg = bounds_clump%begg
-       dim1_end = bounds_clump%endg
-       dim2_beg = 1
-       dim2_end = 2
-
-    case (E2L_STATE_FSUN,   &
-          E2L_STATE_LAISUN, &
-          E2L_STATE_LAISHA  &
-         )
-
-       ! Dim: Patch
-
-       ndim     = 1
-       dim1_beg = bounds_clump%begp
-       dim1_end = bounds_clump%endp
-
-    case default
-       write(iulog,*)'Unknown data%id = ',data%id
-       write(iulog,*)'Unknown data%name = ',trim(data%name)
-       call endrun(msg='Unknown data%id while trying to set dimensions.')
     end select
 
-    call data%SetDimensions(ndim,                               &
-         dim1_beg, dim1_end, dim2_beg, dim2_end,     &
-         dim3_beg, dim3_end, dim4_beg, dim4_end)
+    call data%SetDimensions(                     &
+         dim1_beg, dim1_end, dim2_beg, dim2_end, &
+         dim3_beg, dim3_end, dim4_beg, dim4_end  )
 
   end subroutine EMI_Setup_Data
 
