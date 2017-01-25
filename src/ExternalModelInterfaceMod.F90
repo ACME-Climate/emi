@@ -1452,6 +1452,7 @@ contains
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     use clm_varpar                , only : nlevsoi
+    use clm_varpar                , only : nlevsno
     !
     implicit none
     !
@@ -1661,7 +1662,7 @@ contains
           case (L2E_STATE_H2OSOI_LIQ_NLEVSNOW)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
-                do j = -nlevsoi+1,0
+                do j = -nlevsno+1,0
                    cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
                 enddo
              enddo
@@ -1670,7 +1671,7 @@ contains
           case (L2E_STATE_H2OSOI_ICE_NLEVSNOW)
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
-                do j = -nlevsoi+1,0
+                do j = -nlevsno+1,0
                    cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
                 enddo
              enddo
