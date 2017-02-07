@@ -543,12 +543,13 @@ contains
   end subroutine EMI_Setup_Data
 
 !-----------------------------------------------------------------------
-  subroutine EMI_Driver(em_id, em_stage, dt, number_step,  &
-       clump_rank, num_hydrologyc, filter_hydrologyc,      &
-       num_nolakec, filter_nolakec,                        &
+  subroutine EMI_Driver(em_id, em_stage, dt, number_step,     &
+       clump_rank, num_hydrologyc, filter_hydrologyc,         &
+       num_nolakec, filter_nolakec,                           &
        num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, &
-       soilhydrology_vars, soilstate_vars, waterflux_vars, &
-       waterstate_vars, temperature_vars,  atm2lnd_vars,   &
+       num_filter_lun, filter_lun,                            &
+       soilhydrology_vars, soilstate_vars, waterflux_vars,    &
+       waterstate_vars, temperature_vars,  atm2lnd_vars,      &
        canopystate_vars, energyflux_vars)
     !
     ! !DESCRIPTION:
@@ -588,6 +589,8 @@ contains
     integer                  , optional , intent(in)    :: filter_nolakec(:)
     integer                  , optional , intent(in)    :: num_nolakec_and_nourbanc
     integer                  , optional , intent(in)    :: filter_nolakec_and_nourbanc(:)
+    integer                  , optional , intent(in)    :: num_filter_lun
+    integer                  , optional , intent(in)    :: filter_lun(:)
     type(soilhydrology_type) , optional , intent(inout) :: soilhydrology_vars
     type(soilstate_type)     , optional , intent(inout) :: soilstate_vars
     type(waterflux_type)     , optional , intent(inout) :: waterflux_vars
@@ -727,8 +730,13 @@ contains
        call EMID_Pack_Column_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
 
+    endif
+
+    if ( present(num_filter_lun) .and. &
+         present(filter_lun)) then
+
        call EMID_Pack_Landunit_for_EM(l2e_driver_list(iem), em_stage, &
-            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc)
+            num_filter_lun, filter_lun)
 
     endif
 
