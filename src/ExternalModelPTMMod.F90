@@ -1084,7 +1084,7 @@ contains
   end subroutine add_material_properties
 
     !------------------------------------------------------------------------
-  subroutine EM_PTM_Solve(this, em_stage, dt, nstep, l2e_list, e2l_list)
+  subroutine EM_PTM_Solve(this, em_stage, dt, nstep, clump_rank, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! The PTM dirver subroutine
@@ -1099,6 +1099,7 @@ contains
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
+    integer              , intent(in)    :: clump_rank
     class(emi_data_list) , intent(in)    :: l2e_list
     class(emi_data_list) , intent(inout) :: e2l_list
     !

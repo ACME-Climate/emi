@@ -17,6 +17,7 @@ module ExternalModelInterfaceMod
   use ExternalModelVSFMMod                 , only : em_vsfm_type
   use ExternalModelPTMMod                  , only : em_ptm_type
 #endif
+  use ExternalModelFATESMod                , only : em_fates_type
   !
   implicit none
   !
@@ -39,6 +40,7 @@ module ExternalModelInterfaceMod
   class(em_vsfm_type)                , pointer :: em_vsfm
   class(em_ptm_type)                 , pointer :: em_ptm
 #endif
+  class(em_fates_type)               , pointer :: em_fates
 
   public :: EMI_Determine_Active_EMs
   public :: EMI_Init_EM
@@ -79,6 +81,7 @@ contains
     if (use_ed) then
        num_em            = num_em + 1
        index_em_fates    = num_em
+       allocate(em_fates)
     endif
 
 #ifndef FATES_VIA_EMI
@@ -163,8 +166,6 @@ contains
     use clm_instMod           , only : waterflux_inst
     use clm_instMod           , only : waterstate_inst
 #endif
-    use ExternalModelFATESMod , only : EM_FATES_Populate_L2E_List
-    use ExternalModelFATESMod , only : EM_FATES_Populate_E2L_List
     use ExternalModelBETRMod  , only : EM_BETR_Populate_L2E_List
     use ExternalModelBETRMod  , only : EM_BETR_Populate_E2L_List
     use decompMod             , only : get_clump_bounds
@@ -225,8 +226,8 @@ contains
        !       ALM and FATES
        do clump_rank = 1, nclumps
           iem = (index_em_fates-1)*nclumps + clump_rank
-          call EM_FATES_Populate_L2E_List(l2e_driver_list(iem))
-          call EM_FATES_Populate_E2L_List(e2l_driver_list(iem))
+          call em_fates%Populate_L2E_List(l2e_driver_list(iem))
+          call em_fates%Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
 
@@ -570,7 +571,6 @@ contains
     use atm2lndType            , only : atm2lnd_type
     use CanopyStateType        , only : canopystate_type
     use EnergyFluxType         , only : energyflux_type
-    use ExternalModelFATESMod  , only : EM_FATES_Solve
     use ExternalModelBETRMod   , only : EM_BETR_Solve
     use decompMod              , only : get_clump_bounds
     !
@@ -774,21 +774,20 @@ contains
        call EM_BETR_Solve(em_stage, dtime, nstep, bounds_clump, l2e_driver_list(iem), e2l_driver_list(iem))
 
     case (EM_ID_FATES)
-       call EM_FATES_Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
+       call em_fates%Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
 
     case (EM_ID_PFLOTRAN)
 
     case (EM_ID_VSFM)
 #ifdef USE_PETSC_LIB
-       !call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
-       call em_vsfm%Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
+       call em_vsfm%Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
 
     case (EM_ID_PTM)
 #ifdef VSFM_VIA_EMI
-       call em_ptm%Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
+       call em_ptm%Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
 #endif

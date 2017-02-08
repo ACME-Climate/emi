@@ -1668,7 +1668,7 @@ end subroutine EM_VSFM_Populate_E2L_List
    end subroutine extract_data_for_alm
 
     !------------------------------------------------------------------------
-  subroutine EM_VSFM_Solve(this, em_stage, dt, nstep, l2e_list, e2l_list)
+  subroutine EM_VSFM_Solve(this, em_stage, dt, nstep, clump_rank, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! The VSFM dirver subroutine
@@ -1683,6 +1683,7 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
+    integer              , intent(in)    :: clump_rank
     class(emi_data_list) , intent(in)    :: l2e_list
     class(emi_data_list) , intent(inout) :: e2l_list
 
