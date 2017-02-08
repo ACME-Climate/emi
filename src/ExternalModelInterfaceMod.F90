@@ -15,6 +15,7 @@ module ExternalModelInterfaceMod
 #ifdef USE_PETSC_LIB
   use MultiPhysicsProbVSFM          , only : vsfm_mpp
   use ExternalModelVSFMMod                 , only : em_vsfm_type
+  use ExternalModelPTMMod                  , only : em_ptm_type
 #endif
   !
   implicit none
@@ -36,6 +37,7 @@ module ExternalModelInterfaceMod
   class(emi_data_dimension_list_type), pointer :: emid_dim_list
 #ifdef USE_PETSC_LIB
   class(em_vsfm_type)                , pointer :: em_vsfm
+  class(em_ptm_type)                 , pointer :: em_ptm
 #endif
 
   public :: EMI_Determine_Active_EMs
@@ -104,6 +106,7 @@ contains
     if (use_petsc_thermal_model) then
        num_em            = num_em + 1
        index_em_ptm      = num_em
+       allocate(em_ptm)
     endif
 #endif
 
@@ -149,17 +152,6 @@ contains
     use ExternalModelConstants, only : EM_ID_PFLOTRAN
     use ExternalModelConstants, only : EM_ID_VSFM
     use ExternalModelConstants, only : EM_ID_PTM
-#ifdef USE_PETSC_LIB
-    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
-    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
-    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
-    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
-    !use ExternalModelVSFMMod  , only : EM_VSFM_Init
-    use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_Init_List
-    use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_List
-    use ExternalModelPTMMod   , only : EM_PTM_Populate_E2L_List
-    use ExternalModelPTMMod   , only : EM_PTM_Init
-#endif
 #ifndef FATES_VIA_EMI
     use clm_instMod           , only : soilstate_vars
     use clm_instMod           , only : soilhydrology_vars
@@ -373,11 +365,11 @@ contains
 
           ! Fill the data list:
           !  - Data need during the initialization
-          call EM_PTM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
+          call em_ptm%Populate_L2E_Init_List(l2e_init_list(clump_rank))
 
           !  - Data need during timestepping
-          call EM_PTM_Populate_L2E_List(l2e_driver_list(iem))
-          call EM_PTM_Populate_E2L_List(e2l_driver_list(iem))
+          call em_ptm%Populate_L2E_List(l2e_driver_list(iem))
+          call em_ptm%Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
@@ -424,7 +416,7 @@ contains
           call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage)
 
           ! Initialize the external model
-          call EM_PTM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
+          call em_ptm%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
 
           ! Clean up memory
           call l2e_init_list(clump_rank)%Destroy()
@@ -578,10 +570,6 @@ contains
     use atm2lndType            , only : atm2lnd_type
     use CanopyStateType        , only : canopystate_type
     use EnergyFluxType         , only : energyflux_type
-#ifdef USE_PETSC_LIB
-!    use ExternalModelVSFMMod   , only : EM_VSFM_Solve
-    use ExternalModelPTMMod    , only : EM_PTM_Solve
-#endif
     use ExternalModelFATESMod  , only : EM_FATES_Solve
     use ExternalModelBETRMod   , only : EM_BETR_Solve
     use decompMod              , only : get_clump_bounds
@@ -800,7 +788,7 @@ contains
 
     case (EM_ID_PTM)
 #ifdef VSFM_VIA_EMI
-       call EM_PTM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
+       call em_ptm%Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
 #endif

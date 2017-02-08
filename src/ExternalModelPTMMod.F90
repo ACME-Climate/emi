@@ -12,77 +12,80 @@ module ExternalModelPTMMod
   use ExternalModelInterfaceDataMod, only : emi_data_list, emi_data
   use mpp_varctl                   , only : iulog
   use MultiPhysicsProbThermal      , only : thermal_mpp
+  use ExternalModelBaseType        , only : em_base_type
   !
   implicit none
   !
 
-  ! ----------------------------------------------------------------------
-  ! Indicies required during the initialization
-  ! ----------------------------------------------------------------------
-  integer :: index_l2e_init_col_active
-  integer :: index_l2e_init_col_landunit_index
-  integer :: index_l2e_init_col_zi
-  integer :: index_l2e_init_col_dz
-  integer :: index_l2e_init_col_z
+  type, public, extends(em_base_type) :: em_ptm_type
+     ! ----------------------------------------------------------------------
+     ! Indicies required during the initialization
+     ! ----------------------------------------------------------------------
+     integer :: index_l2e_init_col_active
+     integer :: index_l2e_init_col_landunit_index
+     integer :: index_l2e_init_col_zi
+     integer :: index_l2e_init_col_dz
+     integer :: index_l2e_init_col_z
 
-  integer :: index_l2e_init_landunit_type
-  integer :: index_l2e_init_landunit_lakepoint
-  integer :: index_l2e_init_landunit_urbanpoint
+     integer :: index_l2e_init_landunit_type
+     integer :: index_l2e_init_landunit_lakepoint
+     integer :: index_l2e_init_landunit_urbanpoint
 
-  integer :: index_l2e_init_parameter_watsat
-  integer :: index_l2e_init_parameter_csol
-  integer :: index_l2e_init_parameter_tkmg
-  integer :: index_l2e_init_parameter_tkdry
+     integer :: index_l2e_init_parameter_watsat
+     integer :: index_l2e_init_parameter_csol
+     integer :: index_l2e_init_parameter_tkmg
+     integer :: index_l2e_init_parameter_tkdry
 
-  ! ----------------------------------------------------------------------
-  ! Indicies required during timestepping
-  ! ----------------------------------------------------------------------
-  integer :: index_l2e_col_num_snow_lyrs
-  integer :: index_l2e_col_zi
-  integer :: index_l2e_col_dz
-  integer :: index_l2e_col_z
-  integer :: index_l2e_col_active
-  integer :: index_l2e_col_landunit_index
+     ! ----------------------------------------------------------------------
+     ! Indicies required during timestepping
+     ! ----------------------------------------------------------------------
+     integer :: index_l2e_col_num_snow_lyrs
+     integer :: index_l2e_col_zi
+     integer :: index_l2e_col_dz
+     integer :: index_l2e_col_z
+     integer :: index_l2e_col_active
+     integer :: index_l2e_col_landunit_index
 
-  integer :: index_l2e_landunit_lakepoint
-  integer :: index_l2e_landunit_urbanpoint
+     integer :: index_l2e_landunit_lakepoint
+     integer :: index_l2e_landunit_urbanpoint
 
-  integer :: index_l2e_filter_nolakec_and_nourbanc
-  integer :: index_l2e_filter_num_nolakec_and_nourbanc
+     integer :: index_l2e_filter_nolakec_and_nourbanc
+     integer :: index_l2e_filter_num_nolakec_and_nourbanc
 
-  integer :: index_l2e_state_frac_snow_eff
-  integer :: index_l2e_state_frac_h2osfc
-  integer :: index_l2e_state_h2osno
-  integer :: index_l2e_state_h2osfc
-  integer :: index_l2e_state_h2osoi_liq_nlevgrnd
-  integer :: index_l2e_state_h2osoi_ice_nlevgrnd
-  integer :: index_l2e_state_h2osoi_liq_nlevsnow
-  integer :: index_l2e_state_h2osoi_ice_nlevsnow
+     integer :: index_l2e_state_frac_snow_eff
+     integer :: index_l2e_state_frac_h2osfc
+     integer :: index_l2e_state_h2osno
+     integer :: index_l2e_state_h2osfc
+     integer :: index_l2e_state_h2osoi_liq_nlevgrnd
+     integer :: index_l2e_state_h2osoi_ice_nlevgrnd
+     integer :: index_l2e_state_h2osoi_liq_nlevsnow
+     integer :: index_l2e_state_h2osoi_ice_nlevsnow
 
-  integer :: index_l2e_state_temperature_soil_nlevgrnd
-  integer :: index_l2e_state_temperature_snow
-  integer :: index_l2e_state_temperature_h2osfc
+     integer :: index_l2e_state_temperature_soil_nlevgrnd
+     integer :: index_l2e_state_temperature_snow
+     integer :: index_l2e_state_temperature_h2osfc
 
-  integer :: index_l2e_flux_hs_soil
-  integer :: index_l2e_flux_hs_top_snow
-  integer :: index_l2e_flux_hs_h2osfc
-  integer :: index_l2e_flux_dhsdT
-  integer :: index_l2e_flux_sabg_lyr
+     integer :: index_l2e_flux_hs_soil
+     integer :: index_l2e_flux_hs_top_snow
+     integer :: index_l2e_flux_hs_h2osfc
+     integer :: index_l2e_flux_dhsdT
+     integer :: index_l2e_flux_sabg_lyr
 
-  integer :: index_e2l_state_temperature_soil_nlevgrnd
-  integer :: index_e2l_state_temperature_snow
-  integer :: index_e2l_state_temperature_h2osfc
-
-  public :: EM_PTM_Populate_L2E_Init_List, &
-            EM_PTM_Populate_L2E_List,      &
-            EM_PTM_Populate_E2L_List,      &
-            EM_PTM_Init,                   &
-            EM_PTM_Solve
+     integer :: index_e2l_state_temperature_soil_nlevgrnd
+     integer :: index_e2l_state_temperature_snow
+     integer :: index_e2l_state_temperature_h2osfc
+   contains
+     procedure, public :: Populate_L2E_Init_List  => EM_PTM_Populate_L2E_Init_List
+     procedure, public :: Populate_L2E_List       => EM_PTM_Populate_L2E_List
+     procedure, public :: Populate_E2L_List       => EM_PTM_Populate_E2L_List
+     procedure, public :: Init                    => EM_PTM_Init
+     procedure, public :: Solve                   => EM_PTM_Solve
+  end type em_ptm_type
 
 contains
 
   !------------------------------------------------------------------------
-  subroutine EM_PTM_Populate_L2E_Init_List(l2e_init_list)
+  subroutine EM_PTM_Populate_L2E_Init_List(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     ! Create a list of all variables needed by PTM from ALM
@@ -105,6 +108,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_ptm_type)                  :: this
     class(emi_data_list), intent(inout) :: l2e_init_list
     !
     class(emi_data), pointer :: data
@@ -115,27 +119,27 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE          , number_em_stages, em_stages, index_l2e_init_col_active          )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX  , number_em_stages, em_stages, index_l2e_init_col_landunit_index  )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI_SNOW_AND_SOIL, number_em_stages, em_stages, index_l2e_init_col_zi              )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ_SNOW_AND_SOIL, number_em_stages, em_stages, index_l2e_init_col_dz              )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_Z_SNOW_AND_SOIL , number_em_stages, em_stages, index_l2e_init_col_z               )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE          , number_em_stages, em_stages, this%index_l2e_init_col_active          )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX  , number_em_stages, em_stages, this%index_l2e_init_col_landunit_index  )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI_SNOW_AND_SOIL, number_em_stages, em_stages, this%index_l2e_init_col_zi              )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ_SNOW_AND_SOIL, number_em_stages, em_stages, this%index_l2e_init_col_dz              )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_Z_SNOW_AND_SOIL , number_em_stages, em_stages, this%index_l2e_init_col_z               )
 
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE          , number_em_stages, em_stages, index_l2e_init_landunit_type       )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT     , number_em_stages, em_stages, index_l2e_init_landunit_lakepoint  )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT    , number_em_stages, em_stages, index_l2e_init_landunit_urbanpoint )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE          , number_em_stages, em_stages, this%index_l2e_init_landunit_type       )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT     , number_em_stages, em_stages, this%index_l2e_init_landunit_lakepoint  )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT    , number_em_stages, em_stages, this%index_l2e_init_landunit_urbanpoint )
 
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC      , number_em_stages, em_stages, index_l2e_init_parameter_watsat    )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_CSOL         , number_em_stages, em_stages, index_l2e_init_parameter_csol      )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_TKMG         , number_em_stages, em_stages, index_l2e_init_parameter_tkmg      )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_TKDRY        , number_em_stages, em_stages, index_l2e_init_parameter_tkdry     )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC      , number_em_stages, em_stages, this%index_l2e_init_parameter_watsat    )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_CSOL         , number_em_stages, em_stages, this%index_l2e_init_parameter_csol      )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_TKMG         , number_em_stages, em_stages, this%index_l2e_init_parameter_tkmg      )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_TKDRY        , number_em_stages, em_stages, this%index_l2e_init_parameter_tkdry     )
 
     deallocate(em_stages)
 
   end subroutine EM_PTM_Populate_L2E_Init_List
 
   !------------------------------------------------------------------------
-  subroutine EM_PTM_Populate_L2E_List(l2e_list)
+  subroutine EM_PTM_Populate_L2E_List(this, l2e_list)
     !
     ! !DESCRIPTION:
     ! Create a list of all variables needed by PETSc-based Thermal Model (PTM) from ALM
@@ -172,6 +176,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_ptm_type)                  :: this
     class(emi_data_list), intent(inout) :: l2e_list
     !
     ! !LOCAL VARIABLES:
@@ -185,44 +190,44 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_PTM_TBASED_SOLVE_STAGE
 
-    call l2e_list%AddDataByID(L2E_COLUMN_NUM_SNOW_LAYERS          , number_em_stages, em_stages, index_l2e_col_num_snow_lyrs               )
-    call l2e_list%AddDataByID(L2E_COLUMN_ZI                       , number_em_stages, em_stages, index_l2e_col_zi                          )
-    call l2e_list%AddDataByID(L2E_COLUMN_DZ                       , number_em_stages, em_stages, index_l2e_col_dz                          )
-    call l2e_list%AddDataByID(L2E_COLUMN_Z                        , number_em_stages, em_stages, index_l2e_col_z                           )
-    call l2e_list%AddDataByID(L2E_COLUMN_ACTIVE                   , number_em_stages, em_stages, index_l2e_col_active                      )
-    call l2e_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX           , number_em_stages, em_stages, index_l2e_col_landunit_index              )
+    call l2e_list%AddDataByID(L2E_COLUMN_NUM_SNOW_LAYERS          , number_em_stages, em_stages, this%index_l2e_col_num_snow_lyrs               )
+    call l2e_list%AddDataByID(L2E_COLUMN_ZI                       , number_em_stages, em_stages, this%index_l2e_col_zi                          )
+    call l2e_list%AddDataByID(L2E_COLUMN_DZ                       , number_em_stages, em_stages, this%index_l2e_col_dz                          )
+    call l2e_list%AddDataByID(L2E_COLUMN_Z                        , number_em_stages, em_stages, this%index_l2e_col_z                           )
+    call l2e_list%AddDataByID(L2E_COLUMN_ACTIVE                   , number_em_stages, em_stages, this%index_l2e_col_active                      )
+    call l2e_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX           , number_em_stages, em_stages, this%index_l2e_col_landunit_index              )
 
-    call l2e_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT              , number_em_stages, em_stages, index_l2e_landunit_lakepoint              )
-    call l2e_list%AddDataByID(L2E_LANDUNIT_URBANPOINT             , number_em_stages, em_stages, index_l2e_landunit_urbanpoint             )
+    call l2e_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT              , number_em_stages, em_stages, this%index_l2e_landunit_lakepoint              )
+    call l2e_list%AddDataByID(L2E_LANDUNIT_URBANPOINT             , number_em_stages, em_stages, this%index_l2e_landunit_urbanpoint             )
 
-    call l2e_list%AddDataByID(L2E_FILTER_NOLAKEC_AND_NOURBANC     , number_em_stages, em_stages, index_l2e_filter_nolakec_and_nourbanc     )
-    call l2e_list%AddDataByID(L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC , number_em_stages, em_stages, index_l2e_filter_num_nolakec_and_nourbanc )
+    call l2e_list%AddDataByID(L2E_FILTER_NOLAKEC_AND_NOURBANC     , number_em_stages, em_stages, this%index_l2e_filter_nolakec_and_nourbanc     )
+    call l2e_list%AddDataByID(L2E_FILTER_NUM_NOLAKEC_AND_NOURBANC , number_em_stages, em_stages, this%index_l2e_filter_num_nolakec_and_nourbanc )
 
-    call l2e_list%AddDataByID(L2E_STATE_FRAC_SNOW_EFFECTIVE       , number_em_stages, em_stages, index_l2e_state_frac_snow_eff             )
-    call l2e_list%AddDataByID(L2E_STATE_FRAC_H2OSFC               , number_em_stages, em_stages, index_l2e_state_frac_h2osfc               )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSNOW                   , number_em_stages, em_stages, index_l2e_state_h2osno                    )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSFC                    , number_em_stages, em_stages, index_l2e_state_h2osfc                    )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND       , number_em_stages, em_stages, index_l2e_state_h2osoi_liq_nlevgrnd       )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND       , number_em_stages, em_stages, index_l2e_state_h2osoi_ice_nlevgrnd       )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVSNOW       , number_em_stages, em_stages, index_l2e_state_h2osoi_liq_nlevsnow       )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVSNOW       , number_em_stages, em_stages, index_l2e_state_h2osoi_ice_nlevsnow       )
+    call l2e_list%AddDataByID(L2E_STATE_FRAC_SNOW_EFFECTIVE       , number_em_stages, em_stages, this%index_l2e_state_frac_snow_eff             )
+    call l2e_list%AddDataByID(L2E_STATE_FRAC_H2OSFC               , number_em_stages, em_stages, this%index_l2e_state_frac_h2osfc               )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSNOW                   , number_em_stages, em_stages, this%index_l2e_state_h2osno                    )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSFC                    , number_em_stages, em_stages, this%index_l2e_state_h2osfc                    )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND       , number_em_stages, em_stages, this%index_l2e_state_h2osoi_liq_nlevgrnd       )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND       , number_em_stages, em_stages, this%index_l2e_state_h2osoi_ice_nlevgrnd       )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVSNOW       , number_em_stages, em_stages, this%index_l2e_state_h2osoi_liq_nlevsnow       )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVSNOW       , number_em_stages, em_stages, this%index_l2e_state_h2osoi_ice_nlevsnow       )
 
-    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND            , number_em_stages, em_stages, index_l2e_state_temperature_soil_nlevgrnd )
-    call l2e_list%AddDataByID(L2E_STATE_TSNOW                     , number_em_stages, em_stages, index_l2e_state_temperature_snow          )
-    call l2e_list%AddDataByID(L2E_STATE_TH2OSFC                   , number_em_stages, em_stages, index_l2e_state_temperature_h2osfc        )
+    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND            , number_em_stages, em_stages, this%index_l2e_state_temperature_soil_nlevgrnd )
+    call l2e_list%AddDataByID(L2E_STATE_TSNOW                     , number_em_stages, em_stages, this%index_l2e_state_temperature_snow          )
+    call l2e_list%AddDataByID(L2E_STATE_TH2OSFC                   , number_em_stages, em_stages, this%index_l2e_state_temperature_h2osfc        )
 
-    call l2e_list%AddDataByID(L2E_FLUX_ABSORBED_SOLAR_RADIATION   , number_em_stages, em_stages, index_l2e_flux_sabg_lyr                   )
-    call l2e_list%AddDataByID(L2E_FLUX_SOIL_HEAT_FLUX             , number_em_stages, em_stages, index_l2e_flux_hs_soil                    )
-    call l2e_list%AddDataByID(L2E_FLUX_SNOW_HEAT_FLUX             , number_em_stages, em_stages, index_l2e_flux_hs_top_snow                )
-    call l2e_list%AddDataByID(L2E_FLUX_H2OSFC_HEAT_FLUX           , number_em_stages, em_stages, index_l2e_flux_hs_h2osfc                  )
-    call l2e_list%AddDataByID(L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX    , number_em_stages, em_stages, index_l2e_flux_dhsdT                      )
+    call l2e_list%AddDataByID(L2E_FLUX_ABSORBED_SOLAR_RADIATION   , number_em_stages, em_stages, this%index_l2e_flux_sabg_lyr                   )
+    call l2e_list%AddDataByID(L2E_FLUX_SOIL_HEAT_FLUX             , number_em_stages, em_stages, this%index_l2e_flux_hs_soil                    )
+    call l2e_list%AddDataByID(L2E_FLUX_SNOW_HEAT_FLUX             , number_em_stages, em_stages, this%index_l2e_flux_hs_top_snow                )
+    call l2e_list%AddDataByID(L2E_FLUX_H2OSFC_HEAT_FLUX           , number_em_stages, em_stages, this%index_l2e_flux_hs_h2osfc                  )
+    call l2e_list%AddDataByID(L2E_FLUX_DERIVATIVE_OF_HEAT_FLUX    , number_em_stages, em_stages, this%index_l2e_flux_dhsdT                      )
 
     deallocate(em_stages)
 
   end subroutine EM_PTM_Populate_L2E_List
 
   !------------------------------------------------------------------------
-  subroutine EM_PTM_Populate_E2L_List(e2l_list)
+  subroutine EM_PTM_Populate_E2L_List(this, e2l_list)
     !
     !
     ! !DESCRIPTION:
@@ -237,6 +242,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(inout) :: e2l_list
     !
     ! !LOCAL VARIABLES:
@@ -247,16 +253,16 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_PTM_TBASED_SOLVE_STAGE
 
-    call e2l_list%AddDataByID(E2L_STATE_TSOIL_NLEVGRND , number_em_stages, em_stages, index_e2l_state_temperature_soil_nlevgrnd )
-    call e2l_list%AddDataByID(E2L_STATE_TSNOW_NLEVSNOW , number_em_stages, em_stages, index_e2l_state_temperature_snow          )
-    call e2l_list%AddDataByID(E2L_STATE_TH2OSFC        , number_em_stages, em_stages, index_e2l_state_temperature_h2osfc        )
+    call e2l_list%AddDataByID(E2L_STATE_TSOIL_NLEVGRND , number_em_stages, em_stages, this%index_e2l_state_temperature_soil_nlevgrnd )
+    call e2l_list%AddDataByID(E2L_STATE_TSNOW_NLEVSNOW , number_em_stages, em_stages, this%index_e2l_state_temperature_snow          )
+    call e2l_list%AddDataByID(E2L_STATE_TH2OSFC        , number_em_stages, em_stages, this%index_e2l_state_temperature_h2osfc        )
 
     deallocate(em_stages)
 
   end subroutine EM_PTM_Populate_E2L_List
 
   !------------------------------------------------------------------------
-  subroutine EM_PTM_Init(l2e_init_list, e2l_init_list, iam)
+  subroutine EM_PTM_Init(this, l2e_init_list, e2l_init_list, iam)
     !
     ! !DESCRIPTION:
     ! Initialization PETSc-based thermal model
@@ -267,6 +273,7 @@ contains
     !
     implicit none
     ! !ARGUMENTS
+    class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     class(emi_data_list) , intent(inout) :: e2l_init_list
     integer              , intent(in)    :: iam
@@ -277,13 +284,13 @@ contains
     call initialize_mpp(iam)
 
     ! 2. Add all meshes needed for the MPP
-    call add_meshes(l2e_init_list)
+    call add_meshes(this, l2e_init_list)
 
     ! 3. Add all governing equations
     call add_goveqns()
 
     ! 4. Add boundary and source-sink conditions to all governing equations
-    call add_conditions_to_goveqns(l2e_init_list)
+    call add_conditions_to_goveqns(this, l2e_init_list)
 
     ! 5. Allocate memory to hold auxvars
     call allocate_auxvars()
@@ -292,7 +299,7 @@ contains
     call thermal_mpp%SetupProblem()
 
     ! 7. Add material properities associated with all governing equations
-    call add_material_properties(l2e_init_list)
+    call add_material_properties(this, l2e_init_list)
 
   end subroutine EM_PTM_Init
 
@@ -321,7 +328,7 @@ contains
   end subroutine initialize_mpp
 
   !------------------------------------------------------------------------
-  subroutine add_meshes(l2e_init_list)
+  subroutine add_meshes(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     ! Add meshes to the thermal MPP problem
@@ -373,6 +380,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS
+    class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     !
 #include "finclude/petscsys.h"
@@ -448,14 +456,14 @@ contains
 
     !----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi             , zi           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_dz             , dz           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_z              , z            )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_zi             , zi           )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_dz             , dz           )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_z              , z            )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active          , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index  , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active          , col_active   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_landunit_index  , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
 
     if (nclumps /= 1) then
        call endrun(msg='ERROR clm_initializeMod: '//&
@@ -782,7 +790,7 @@ contains
   end subroutine add_goveqns
 
   !------------------------------------------------------------------------
-  subroutine add_conditions_to_goveqns(l2e_init_list)
+  subroutine add_conditions_to_goveqns(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     !
@@ -805,6 +813,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS
+    class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     !
     integer           :: c                        ! do loop indices
@@ -819,8 +828,8 @@ contains
     integer  , pointer :: lun_lakpoi(:)
     integer  , pointer :: lun_urbpoi(:)
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi, zi)
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_z , z )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_zi, zi)
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_z , z )
 
     allocate (soil_top_conn_dist_dn(bounds_proc_endc_all-bounds_proc_begc_all+1))
 
@@ -980,7 +989,7 @@ contains
   end subroutine allocate_auxvars
 
   !------------------------------------------------------------------------
-  subroutine add_material_properties(l2e_init_list)
+  subroutine add_material_properties(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     ! Initialization PETSc-based thermal model
@@ -996,6 +1005,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS
+    class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     !
     integer           :: c,g,fc,j,l               ! do loop indices
@@ -1017,16 +1027,16 @@ contains
     integer  , pointer :: lun_lakpoi(:)
     integer  , pointer :: lun_urbpoi(:)
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active          , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index  , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type       , lun_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active          , col_active   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_landunit_index  , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_type       , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_watsat, clm_watsat)
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_csol  , clm_csol  )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_tkmg  , clm_tkmg  )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_tkdry , clm_tkdry )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_watsat, clm_watsat)
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_csol  , clm_csol  )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_tkmg  , clm_tkmg  )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_tkdry , clm_tkdry )
 
     ! Allocate memory and setup data structure for VSFM-MPP
 
@@ -1074,7 +1084,7 @@ contains
   end subroutine add_material_properties
 
     !------------------------------------------------------------------------
-  subroutine EM_PTM_Solve(em_stage, dt, nstep, l2e_list, e2l_list)
+  subroutine EM_PTM_Solve(this, em_stage, dt, nstep, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! The PTM dirver subroutine
@@ -1085,6 +1095,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_ptm_type)                   :: this
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
@@ -1094,7 +1105,7 @@ contains
 
     select case (em_stage)
     case (EM_PTM_TBASED_SOLVE_STAGE)
-       call EM_PTM_TBased_Solve(dt, nstep, l2e_list, e2l_list)
+       call EM_PTM_TBased_Solve(this, dt, nstep, l2e_list, e2l_list)
     case default
        write(iulog,*)'EM_PTM_Solve: Unknown em_stage.'
        call endrun(msg=errMsg(__FILE__, __LINE__))
@@ -1103,7 +1114,7 @@ contains
   end subroutine EM_PTM_Solve
 
     !------------------------------------------------------------------------
-  subroutine EM_PTM_TBased_Solve(dt, nstep, l2e_list, e2l_list)
+  subroutine EM_PTM_TBased_Solve(this, dt, nstep, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! The PETSc-based Thermal Model dirver
@@ -1136,6 +1147,7 @@ contains
 #include "finclude/petscsys.h"
     !
     ! !ARGUMENTS:
+    class(em_ptm_type)                   :: this
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
     class(emi_data_list) , intent(in)    :: l2e_list
@@ -1243,40 +1255,40 @@ contains
 
     allocate(tsurf_tuning_factor_1d ((endc-begc+1)*(nlevgrnd+nlevsno+1 )))
 
-    call l2e_list%GetPointerToReal1D(index_l2e_state_frac_snow_eff            , l2e_frac_snow_eff)
-    call l2e_list%GetPointerToReal1D(index_l2e_state_frac_h2osfc              , l2e_frac_h2osfc)
-    call l2e_list%GetPointerToReal1D(index_l2e_state_h2osno                   , l2e_h2osno)
-    call l2e_list%GetPointerToReal1D(index_l2e_state_h2osfc                   , l2e_h2osfc)
-    call l2e_list%GetPointerToReal1D(index_l2e_state_temperature_h2osfc       , l2e_th2osfc)
-    call l2e_list%GetPointerToReal1D(index_l2e_flux_hs_soil                   , l2e_hs_soil)
-    call l2e_list%GetPointerToReal1D(index_l2e_flux_hs_top_snow               , l2e_hs_top_snow)
-    call l2e_list%GetPointerToReal1D(index_l2e_flux_hs_h2osfc                 , l2e_hs_h2osfc)
-    call l2e_list%GetPointerToReal1D(index_l2e_flux_dhsdT                     , l2e_dhsdT)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_state_frac_snow_eff            , l2e_frac_snow_eff)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_state_frac_h2osfc              , l2e_frac_h2osfc)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_state_h2osno                   , l2e_h2osno)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_state_h2osfc                   , l2e_h2osfc)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_state_temperature_h2osfc       , l2e_th2osfc)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_flux_hs_soil                   , l2e_hs_soil)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_flux_hs_top_snow               , l2e_hs_top_snow)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_flux_hs_h2osfc                 , l2e_hs_h2osfc)
+    call l2e_list%GetPointerToReal1D(this%index_l2e_flux_dhsdT                     , l2e_dhsdT)
 
-    call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_liq_nlevgrnd      , l2e_h2osoi_liq_nlevgrnd)
-    call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_ice_nlevgrnd      , l2e_h2osoi_ice_nlevgrnd)
-    call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_liq_nlevsnow      , l2e_h2osoi_liq_nlevsnow)
-    call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_ice_nlevsnow      , l2e_h2osoi_ice_nlevsnow)
-    call l2e_list%GetPointerToReal2D(index_l2e_state_temperature_soil_nlevgrnd, l2e_tsoil)
-    call l2e_list%GetPointerToReal2D(index_l2e_state_temperature_snow         , l2e_tsnow)
-    call l2e_list%GetPointerToReal2D(index_l2e_flux_sabg_lyr                  , l2e_sabg_lyr)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_liq_nlevgrnd      , l2e_h2osoi_liq_nlevgrnd)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_ice_nlevgrnd      , l2e_h2osoi_ice_nlevgrnd)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_liq_nlevsnow      , l2e_h2osoi_liq_nlevsnow)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_ice_nlevsnow      , l2e_h2osoi_ice_nlevsnow)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_temperature_soil_nlevgrnd, l2e_tsoil)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_state_temperature_snow         , l2e_tsnow)
+    call l2e_list%GetPointerToReal2D(this%index_l2e_flux_sabg_lyr                  , l2e_sabg_lyr)
 
-    call l2e_list%GetPointerToReal2D(index_l2e_col_zi             , col_zi           )
-    call l2e_list%GetPointerToReal2D(index_l2e_col_dz             , col_dz           )
-    call l2e_list%GetPointerToReal2D(index_l2e_col_z              , col_z            )
+    call l2e_list%GetPointerToReal2D(this%index_l2e_col_zi             , col_zi           )
+    call l2e_list%GetPointerToReal2D(this%index_l2e_col_dz             , col_dz           )
+    call l2e_list%GetPointerToReal2D(this%index_l2e_col_z              , col_z            )
 
-    call l2e_list%GetPointerToInt1D(index_l2e_col_num_snow_lyrs    , col_snl   )
-    call l2e_list%GetPointerToInt1D(index_l2e_col_active          , col_active   )
-    call l2e_list%GetPointerToInt1D(index_l2e_col_landunit_index  , col_landunit )
-    call l2e_list%GetPointerToInt1D(index_l2e_landunit_lakepoint  , lun_lakpoi   )
-    call l2e_list%GetPointerToInt1D(index_l2e_landunit_urbanpoint , lun_urbpoi   )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_col_num_snow_lyrs    , col_snl   )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_col_active          , col_active   )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_col_landunit_index  , col_landunit )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_landunit_urbanpoint , lun_urbpoi   )
 
-    call l2e_list%GetPointerToInt1D(index_l2e_filter_nolakec_and_nourbanc , l2e_filter )
-    call l2e_list%GetIntValue(index_l2e_filter_num_nolakec_and_nourbanc   , l2e_num_filter    )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_filter_nolakec_and_nourbanc , l2e_filter )
+    call l2e_list%GetIntValue(this%index_l2e_filter_num_nolakec_and_nourbanc   , l2e_num_filter    )
 
-    call e2l_list%GetPointerToReal2D(index_e2l_state_temperature_soil_nlevgrnd, e2l_tsoil)
-    call e2l_list%GetPointerToReal2D(index_e2l_state_temperature_snow         , e2l_tsnow)
-    call e2l_list%GetPointerToReal1D(index_e2l_state_temperature_h2osfc       , e2l_th2osfc)
+    call e2l_list%GetPointerToReal2D(this%index_e2l_state_temperature_soil_nlevgrnd, e2l_tsoil)
+    call e2l_list%GetPointerToReal2D(this%index_e2l_state_temperature_snow         , e2l_tsnow)
+    call e2l_list%GetPointerToReal1D(this%index_e2l_state_temperature_h2osfc       , e2l_th2osfc)
 
     ! Initialize
     temperature_1d(:)         = 273.15_r8
