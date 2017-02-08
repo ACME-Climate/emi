@@ -14,6 +14,7 @@ module ExternalModelInterfaceMod
   use ExternalModelIntefaceDataDimensionMod, only : emi_data_dimension_list_type
 #ifdef USE_PETSC_LIB
   use MultiPhysicsProbVSFM          , only : vsfm_mpp
+  use ExternalModelVSFMMod                 , only : em_vsfm_type
 #endif
   !
   implicit none
@@ -33,6 +34,9 @@ module ExternalModelInterfaceMod
   class(emi_data_list)               , pointer :: l2e_driver_list(:)
   class(emi_data_list)               , pointer :: e2l_driver_list(:)
   class(emi_data_dimension_list_type), pointer :: emid_dim_list
+#ifdef USE_PETSC_LIB
+  class(em_vsfm_type)                , pointer :: em_vsfm
+#endif
 
   public :: EMI_Determine_Active_EMs
   public :: EMI_Init_EM
@@ -92,6 +96,7 @@ contains
     if (use_vsfm) then
        num_em            = num_em + 1
        index_em_vsfm     = num_em
+       allocate(em_vsfm)
     endif
 
 #ifdef VSFM_VIA_EMI
@@ -145,11 +150,11 @@ contains
     use ExternalModelConstants, only : EM_ID_VSFM
     use ExternalModelConstants, only : EM_ID_PTM
 #ifdef USE_PETSC_LIB
-    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
-    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
-    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
-    use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
-    use ExternalModelVSFMMod  , only : EM_VSFM_Init
+    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_Init_List
+    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_Init_List
+    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_L2E_List
+    !use ExternalModelVSFMMod  , only : EM_VSFM_Populate_E2L_List
+    !use ExternalModelVSFMMod  , only : EM_VSFM_Init
     use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_Init_List
     use ExternalModelPTMMod   , only : EM_PTM_Populate_L2E_List
     use ExternalModelPTMMod   , only : EM_PTM_Populate_E2L_List
@@ -264,12 +269,16 @@ contains
 
           ! Fill the data list:
           !  - Data need during the initialization
-          call EM_VSFM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
-          call EM_VSFM_Populate_E2L_Init_List(e2l_init_list(clump_rank))
+          !call EM_VSFM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
+          !call EM_VSFM_Populate_E2L_Init_List(e2l_init_list(clump_rank))
+          call em_vsfm%Populate_L2E_Init_List(l2e_init_list(clump_rank))
+          call em_vsfm%Populate_E2L_Init_List(e2l_init_list(clump_rank))
 
           !  - Data need during timestepping
-          call EM_VSFM_Populate_L2E_List(l2e_driver_list(iem))
-          call EM_VSFM_Populate_E2L_List(e2l_driver_list(iem))
+          !call EM_VSFM_Populate_L2E_List(l2e_driver_list(iem))
+          !call EM_VSFM_Populate_E2L_List(e2l_driver_list(iem))
+          call em_vsfm%Populate_L2E_List(l2e_driver_list(iem))
+          call em_vsfm%Populate_E2L_List(e2l_driver_list(iem))
        enddo
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
@@ -321,7 +330,8 @@ contains
           call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage)
 
           ! Initialize the external model
-          call EM_VSFM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
+          !call EM_VSFM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
+          call em_vsfm%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
 
           ! Unpack all data sent from the external model
           call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
@@ -569,7 +579,7 @@ contains
     use CanopyStateType        , only : canopystate_type
     use EnergyFluxType         , only : energyflux_type
 #ifdef USE_PETSC_LIB
-    use ExternalModelVSFMMod   , only : EM_VSFM_Solve
+!    use ExternalModelVSFMMod   , only : EM_VSFM_Solve
     use ExternalModelPTMMod    , only : EM_PTM_Solve
 #endif
     use ExternalModelFATESMod  , only : EM_FATES_Solve
@@ -782,7 +792,8 @@ contains
 
     case (EM_ID_VSFM)
 #ifdef USE_PETSC_LIB
-       call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
+       !call EM_VSFM_Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
+       call em_vsfm%Solve(em_stage, dtime, nstep, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
        call endrun('VSFM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif

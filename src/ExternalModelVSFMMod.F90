@@ -12,91 +12,93 @@ module ExternalModelVSFMMod
   use ExternalModelInterfaceDataMod, only : emi_data_list, emi_data
   use mpp_varctl                   , only : iulog
   use MultiPhysicsProbVSFM         , only : vsfm_mpp
+  use ExternalModelBaseType        , only : em_base_type
   !
   implicit none
   !
 
-  ! ----------------------------------------------------------------------
-  ! Indicies required during the initialization
-  ! ----------------------------------------------------------------------
-  integer :: index_l2e_init_col_active
-  integer :: index_l2e_init_col_type
-  integer :: index_l2e_init_col_landunit_index
-  integer :: index_l2e_init_col_zi
-  integer :: index_l2e_init_col_dz
-  integer :: index_l2e_init_col_z
-  integer :: index_l2e_init_col_area
+  type, public, extends(em_base_type) :: em_vsfm_type
+     ! ----------------------------------------------------------------------
+     ! Indicies required during the initialization
+     ! ----------------------------------------------------------------------
+     integer :: index_l2e_init_col_active
+     integer :: index_l2e_init_col_type
+     integer :: index_l2e_init_col_landunit_index
+     integer :: index_l2e_init_col_zi
+     integer :: index_l2e_init_col_dz
+     integer :: index_l2e_init_col_z
+     integer :: index_l2e_init_col_area
 
-  integer :: index_l2e_init_state_wtd
-  integer :: index_l2e_init_state_soilp
+     integer :: index_l2e_init_state_wtd
+     integer :: index_l2e_init_state_soilp
 
-  integer :: index_e2l_init_state_h2osoi_liq
-  integer :: index_e2l_init_state_h2osoi_ice
-  integer :: index_e2l_init_state_smp
-  integer :: index_e2l_init_state_wtd
+     integer :: index_e2l_init_state_h2osoi_liq
+     integer :: index_e2l_init_state_h2osoi_ice
+     integer :: index_e2l_init_state_smp
+     integer :: index_e2l_init_state_wtd
 
-  integer :: index_e2l_init_flux_mflx_snowlyr_col
-  integer :: index_l2e_init_flux_mflx_snowlyr_col
+     integer :: index_e2l_init_flux_mflx_snowlyr_col
+     integer :: index_l2e_init_flux_mflx_snowlyr_col
 
-  integer :: index_l2e_init_landunit_type
-  integer :: index_l2e_init_landunit_lakepoint
-  integer :: index_l2e_init_landunit_urbanpoint
+     integer :: index_l2e_init_landunit_type
+     integer :: index_l2e_init_landunit_lakepoint
+     integer :: index_l2e_init_landunit_urbanpoint
 
-  integer :: index_l2e_init_parameter_watsatc
-  integer :: index_l2e_init_parameter_hksatc
-  integer :: index_l2e_init_parameter_bswc
-  integer :: index_l2e_init_parameter_sucsatc
-  integer :: index_l2e_init_parameter_effporosityc
+     integer :: index_l2e_init_parameter_watsatc
+     integer :: index_l2e_init_parameter_hksatc
+     integer :: index_l2e_init_parameter_bswc
+     integer :: index_l2e_init_parameter_sucsatc
+     integer :: index_l2e_init_parameter_effporosityc
 
-  ! ----------------------------------------------------------------------
-  ! Indicies required during timestepping
-  ! ----------------------------------------------------------------------
+     ! ----------------------------------------------------------------------
+     ! Indicies required during timestepping
+     ! ----------------------------------------------------------------------
 
-  integer :: index_l2e_state_tsoil
-  integer :: index_l2e_state_h2osoi_liq
-  integer :: index_l2e_state_h2osoi_ice
+     integer :: index_l2e_state_tsoil
+     integer :: index_l2e_state_h2osoi_liq
+     integer :: index_l2e_state_h2osoi_ice
 
-  integer :: index_e2l_state_h2osoi_liq
-  integer :: index_e2l_state_h2osoi_ice
-  integer :: index_e2l_state_smp
-  integer :: index_e2l_state_wtd
-  integer :: index_e2l_state_soilp
+     integer :: index_e2l_state_h2osoi_liq
+     integer :: index_e2l_state_h2osoi_ice
+     integer :: index_e2l_state_smp
+     integer :: index_e2l_state_wtd
+     integer :: index_e2l_state_soilp
 
-  integer :: index_l2e_flux_infil
-  integer :: index_l2e_flux_et
-  integer :: index_l2e_flux_dew
-  integer :: index_l2e_flux_snow_sub
-  integer :: index_l2e_flux_snowlyr
-  integer :: index_l2e_flux_drainage
+     integer :: index_l2e_flux_infil
+     integer :: index_l2e_flux_et
+     integer :: index_l2e_flux_dew
+     integer :: index_l2e_flux_snow_sub
+     integer :: index_l2e_flux_snowlyr
+     integer :: index_l2e_flux_drainage
 
-  integer :: index_e2l_flux_qrecharge
+     integer :: index_e2l_flux_qrecharge
 
-  integer :: index_l2e_filter_hydrologyc
-  integer :: index_l2e_filter_num_hydrologyc
+     integer :: index_l2e_filter_hydrologyc
+     integer :: index_l2e_filter_num_hydrologyc
 
-  integer :: index_l2e_column_zi
+     integer :: index_l2e_column_zi
 
-  ! IDs to indentify the conditions for VSFM
-  integer :: vsfm_cond_id_for_infil
-  integer :: vsfm_cond_id_for_et
-  integer :: vsfm_cond_id_for_dew
-  integer :: vsfm_cond_id_for_drainage
-  integer :: vsfm_cond_id_for_snow
-  integer :: vsfm_cond_id_for_sublimation
-  integer :: vsfm_cond_id_for_lateral_flux
-
-  !
-  public :: EM_VSFM_Populate_L2E_Init_List, &
-            EM_VSFM_Populate_E2L_Init_List, &
-            EM_VSFM_Populate_L2E_List,      &
-            EM_VSFM_Populate_E2L_List,      &
-            EM_VSFM_Init,                   &
-            EM_VSFM_Solve
+     ! IDs to indentify the conditions for VSFM
+     integer :: vsfm_cond_id_for_infil
+     integer :: vsfm_cond_id_for_et
+     integer :: vsfm_cond_id_for_dew
+     integer :: vsfm_cond_id_for_drainage
+     integer :: vsfm_cond_id_for_snow
+     integer :: vsfm_cond_id_for_sublimation
+     integer :: vsfm_cond_id_for_lateral_flux
+   contains
+     procedure, public :: Populate_L2E_Init_List  => EM_VSFM_Populate_L2E_Init_List
+     procedure, public :: Populate_E2L_Init_List  => EM_VSFM_Populate_E2L_Init_List
+     procedure, public :: Populate_L2E_List       => EM_VSFM_Populate_L2E_List
+     procedure, public :: Populate_E2L_List       => EM_VSFM_Populate_E2L_List
+     procedure, public :: Init                    => EM_VSFM_Init
+     procedure, public :: Solve                   => EM_VSFM_Solve
+  end type em_vsfm_type
 
 contains
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Populate_L2E_Init_List(l2e_init_list)
+  subroutine EM_VSFM_Populate_L2E_Init_List(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     ! Create a list of all variables needed by VSFM from ALM
@@ -125,8 +127,10 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                 :: this
     class(emi_data_list), intent(inout) :: l2e_init_list
     !
+    ! !LOCAL VARIABLES:
     class(emi_data), pointer :: data
     integer        , pointer :: em_stages(:)
     integer                  :: number_em_stages
@@ -137,33 +141,33 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call l2e_init_list%AddDataByID(L2E_STATE_WTD                                    , number_em_stages, em_stages, index_l2e_init_state_wtd             )
-    call l2e_init_list%AddDataByID(L2E_STATE_VSFM_PROGNOSTIC_SOILP                  , number_em_stages, em_stages, index_l2e_init_state_soilp           )
+    call l2e_init_list%AddDataByID(L2E_STATE_WTD                                    , number_em_stages, em_stages, this%index_l2e_init_state_wtd             )
+    call l2e_init_list%AddDataByID(L2E_STATE_VSFM_PROGNOSTIC_SOILP                  , number_em_stages, em_stages, this%index_l2e_init_state_soilp           )
 
-    call l2e_init_list%AddDataByID(L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_l2e_init_flux_mflx_snowlyr_col )
+    call l2e_init_list%AddDataByID(L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_l2e_init_flux_mflx_snowlyr_col )
 
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE                                , number_em_stages, em_stages, index_l2e_init_col_active                 )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_TYPE                                  , number_em_stages, em_stages, index_l2e_init_col_type                   )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX                        , number_em_stages, em_stages, index_l2e_init_col_landunit_index         )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI                                    , number_em_stages, em_stages, index_l2e_init_col_zi                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ                                    , number_em_stages, em_stages, index_l2e_init_col_dz                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_Z                                     , number_em_stages, em_stages, index_l2e_init_col_z                      )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_AREA                                  , number_em_stages, em_stages, index_l2e_init_col_area                   )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE                                , number_em_stages, em_stages, this%index_l2e_init_col_active                 )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_TYPE                                  , number_em_stages, em_stages, this%index_l2e_init_col_type                   )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX                        , number_em_stages, em_stages, this%index_l2e_init_col_landunit_index         )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI                                    , number_em_stages, em_stages, this%index_l2e_init_col_zi                     )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ                                    , number_em_stages, em_stages, this%index_l2e_init_col_dz                     )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_Z                                     , number_em_stages, em_stages, this%index_l2e_init_col_z                      )
+    call l2e_init_list%AddDataByID(L2E_COLUMN_AREA                                  , number_em_stages, em_stages, this%index_l2e_init_col_area                   )
 
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE                                , number_em_stages, em_stages, index_l2e_init_landunit_type              )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT                           , number_em_stages, em_stages, index_l2e_init_landunit_lakepoint         )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT                          , number_em_stages, em_stages, index_l2e_init_landunit_urbanpoint        )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE                                , number_em_stages, em_stages, this%index_l2e_init_landunit_type              )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT                           , number_em_stages, em_stages, this%index_l2e_init_landunit_lakepoint         )
+    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT                          , number_em_stages, em_stages, this%index_l2e_init_landunit_urbanpoint        )
 
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC                            , number_em_stages, em_stages, index_l2e_init_parameter_watsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_HKSATC                             , number_em_stages, em_stages, index_l2e_init_parameter_hksatc           )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_BSWC                               , number_em_stages, em_stages, index_l2e_init_parameter_bswc             )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_SUCSATC                            , number_em_stages, em_stages, index_l2e_init_parameter_sucsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_EFFPOROSITYC                       , number_em_stages, em_stages, index_l2e_init_parameter_effporosityc     )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC                            , number_em_stages, em_stages, this%index_l2e_init_parameter_watsatc          )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_HKSATC                             , number_em_stages, em_stages, this%index_l2e_init_parameter_hksatc           )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_BSWC                               , number_em_stages, em_stages, this%index_l2e_init_parameter_bswc             )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_SUCSATC                            , number_em_stages, em_stages, this%index_l2e_init_parameter_sucsatc          )
+    call l2e_init_list%AddDataByID(L2E_PARAMETER_EFFPOROSITYC                       , number_em_stages, em_stages, this%index_l2e_init_parameter_effporosityc     )
 
   end subroutine EM_VSFM_Populate_L2E_Init_List
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Populate_E2L_Init_List(e2l_init_list)
+  subroutine EM_VSFM_Populate_E2L_Init_List(this, e2l_init_list)
     !
     !
     ! !DESCRIPTION:
@@ -180,6 +184,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                  :: this
     class(emi_data_list) , intent(inout) :: e2l_init_list
     !
     ! !LOCAL VARIABLES:
@@ -193,18 +198,18 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, index_e2l_init_state_h2osoi_liq      )
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, index_e2l_init_state_h2osoi_ice      )
-    call e2l_init_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL          , number_em_stages, em_stages, index_e2l_init_state_smp             )
-    call e2l_init_list%AddDataByID(E2L_STATE_WTD                            , number_em_stages, em_stages, index_e2l_init_state_wtd             )
-    call e2l_init_list%AddDataByID(E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_e2l_init_flux_mflx_snowlyr_col )
+    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, this%index_e2l_init_state_h2osoi_liq      )
+    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, this%index_e2l_init_state_h2osoi_ice      )
+    call e2l_init_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL          , number_em_stages, em_stages, this%index_e2l_init_state_smp             )
+    call e2l_init_list%AddDataByID(E2L_STATE_WTD                            , number_em_stages, em_stages, this%index_e2l_init_state_wtd             )
+    call e2l_init_list%AddDataByID(E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_e2l_init_flux_mflx_snowlyr_col )
 
     deallocate(em_stages)
 
   end subroutine EM_VSFM_Populate_E2L_Init_List
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Populate_L2E_List(l2e_list)
+  subroutine EM_VSFM_Populate_L2E_List(this, l2e_list)
     !
     ! !DESCRIPTION:
     ! Create a list of all variables needed by VSFM from ALM
@@ -227,6 +232,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                 :: this
     class(emi_data_list), intent(inout) :: l2e_list
     !
     ! !LOCAL VARIABLES:
@@ -240,25 +246,25 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_VSFM_SOIL_HYDRO_STAGE
 
-    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND                 , number_em_stages, em_stages, index_l2e_state_tsoil           )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND            , number_em_stages, em_stages, index_l2e_state_h2osoi_liq      )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND            , number_em_stages, em_stages, index_l2e_state_h2osoi_ice      )
-    call l2e_list%AddDataByID(L2E_FLUX_INFIL_MASS_FLUX                 , number_em_stages, em_stages, index_l2e_flux_infil            )
-    call l2e_list%AddDataByID(L2E_FLUX_VERTICAL_ET_MASS_FLUX           , number_em_stages, em_stages, index_l2e_flux_et               )
-    call l2e_list%AddDataByID(L2E_FLUX_DEW_MASS_FLUX                   , number_em_stages, em_stages, index_l2e_flux_dew              )
-    call l2e_list%AddDataByID(L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX      , number_em_stages, em_stages, index_l2e_flux_snow_sub         )
-    call l2e_list%AddDataByID(L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, index_l2e_flux_snowlyr          )
-    call l2e_list%AddDataByID(L2E_FLUX_DRAINAGE_MASS_FLUX              , number_em_stages, em_stages, index_l2e_flux_drainage         )
-    call l2e_list%AddDataByID(L2E_FILTER_HYDROLOGYC                    , number_em_stages, em_stages, index_l2e_filter_hydrologyc     )
-    call l2e_list%AddDataByID(L2E_FILTER_NUM_HYDROLOGYC                , number_em_stages, em_stages, index_l2e_filter_num_hydrologyc )
-    call l2e_list%AddDataByID(L2E_COLUMN_ZI                            , number_em_stages, em_stages, index_l2e_column_zi             )
+    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND                 , number_em_stages, em_stages, this%index_l2e_state_tsoil           )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND            , number_em_stages, em_stages, this%index_l2e_state_h2osoi_liq      )
+    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND            , number_em_stages, em_stages, this%index_l2e_state_h2osoi_ice      )
+    call l2e_list%AddDataByID(L2E_FLUX_INFIL_MASS_FLUX                 , number_em_stages, em_stages, this%index_l2e_flux_infil            )
+    call l2e_list%AddDataByID(L2E_FLUX_VERTICAL_ET_MASS_FLUX           , number_em_stages, em_stages, this%index_l2e_flux_et               )
+    call l2e_list%AddDataByID(L2E_FLUX_DEW_MASS_FLUX                   , number_em_stages, em_stages, this%index_l2e_flux_dew              )
+    call l2e_list%AddDataByID(L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX      , number_em_stages, em_stages, this%index_l2e_flux_snow_sub         )
+    call l2e_list%AddDataByID(L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_l2e_flux_snowlyr          )
+    call l2e_list%AddDataByID(L2E_FLUX_DRAINAGE_MASS_FLUX              , number_em_stages, em_stages, this%index_l2e_flux_drainage         )
+    call l2e_list%AddDataByID(L2E_FILTER_HYDROLOGYC                    , number_em_stages, em_stages, this%index_l2e_filter_hydrologyc     )
+    call l2e_list%AddDataByID(L2E_FILTER_NUM_HYDROLOGYC                , number_em_stages, em_stages, this%index_l2e_filter_num_hydrologyc )
+    call l2e_list%AddDataByID(L2E_COLUMN_ZI                            , number_em_stages, em_stages, this%index_l2e_column_zi             )
 
     deallocate(em_stages)
 
   end subroutine EM_VSFM_Populate_L2E_List
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Populate_E2L_List(e2l_list)
+  subroutine EM_VSFM_Populate_E2L_List(this, e2l_list)
     !
     !
     ! !DESCRIPTION:
@@ -276,6 +282,7 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                  :: this
     class(emi_data_list) , intent(inout) :: e2l_list
     !
     ! !LOCAL VARIABLES:
@@ -286,19 +293,19 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_VSFM_SOIL_HYDRO_STAGE
 
-    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_LIQ            , number_em_stages, em_stages, index_e2l_state_h2osoi_liq )
-    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_ICE            , number_em_stages, em_stages, index_e2l_state_h2osoi_ice )
-    call e2l_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL , number_em_stages, em_stages, index_e2l_state_smp        )
-    call e2l_list%AddDataByID(E2L_STATE_WTD                   , number_em_stages, em_stages, index_e2l_state_wtd        )
-    call e2l_list%AddDataByID(E2L_STATE_VSFM_PROGNOSTIC_SOILP , number_em_stages, em_stages, index_e2l_state_soilp      )
-    call e2l_list%AddDataByID(E2L_FLUX_AQUIFER_RECHARGE       , number_em_stages, em_stages, index_e2l_flux_qrecharge   )
+    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_LIQ            , number_em_stages, em_stages, this%index_e2l_state_h2osoi_liq )
+    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_ICE            , number_em_stages, em_stages, this%index_e2l_state_h2osoi_ice )
+    call e2l_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL , number_em_stages, em_stages, this%index_e2l_state_smp        )
+    call e2l_list%AddDataByID(E2L_STATE_WTD                   , number_em_stages, em_stages, this%index_e2l_state_wtd        )
+    call e2l_list%AddDataByID(E2L_STATE_VSFM_PROGNOSTIC_SOILP , number_em_stages, em_stages, this%index_e2l_state_soilp      )
+    call e2l_list%AddDataByID(E2L_FLUX_AQUIFER_RECHARGE       , number_em_stages, em_stages, this%index_e2l_flux_qrecharge   )
 
     deallocate(em_stages)
 
 end subroutine EM_VSFM_Populate_E2L_List
 
   !------------------------------------------------------------------------
-  subroutine EM_VSFM_Init(l2e_init_list, e2l_init_list, iam)
+  subroutine EM_VSFM_Init(this, l2e_init_list, e2l_init_list, iam)
 
     !
     ! !DESCRIPTION:
@@ -314,16 +321,17 @@ end subroutine EM_VSFM_Populate_E2L_List
 #include "finclude/petscsnes.h90"
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                  :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     class(emi_data_list) , intent(inout) :: e2l_init_list
-    integer              , intent(in) :: iam
+    integer              , intent(in)    :: iam
 
     !
     ! 1. Initialize the multi-physics-problem (MPP)
     call initialize_mpp(iam)
 
     ! 2. Add all meshes needed for the MPP
-    call add_meshes(l2e_init_list)
+    call add_meshes(this, l2e_init_list)
 
     ! 3. Add all governing equations
     call add_goveqns()
@@ -338,16 +346,16 @@ end subroutine EM_VSFM_Populate_E2L_List
     call vsfm_mpp%SetupProblem(vsfm_use_dynamic_linesearch)
 
     ! 7. Add material properities associated with all governing equations
-    call set_material_properties(l2e_init_list)
+    call set_material_properties(this, l2e_init_list)
 
     ! 8. Set initial conditions
-    call set_initial_conditions(l2e_init_list)
+    call set_initial_conditions(this, l2e_init_list)
 
     ! 9. Determine IDs for various source-sink condition
-    call determine_condition_ids()
+    call determine_condition_ids(this)
 
     !10.
-    call extract_data_for_alm(l2e_init_list, e2l_init_list)
+    call extract_data_for_alm(this, l2e_init_list, e2l_init_list)
 
   end subroutine EM_VSFM_Init
 
@@ -376,7 +384,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine initialize_mpp
 
   !------------------------------------------------------------------------
-  subroutine add_meshes(l2e_init_list)
+  subroutine add_meshes(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     ! Add meshes used in the VSFM MPP
@@ -424,6 +432,7 @@ end subroutine EM_VSFM_Populate_E2L_List
     !
     implicit none
     !
+    class(em_vsfm_type)                  :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     !
     ! !LOCAL VARIABLES:
@@ -502,16 +511,16 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi             , zi           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_dz             , dz           )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_z              , z            )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_zi             , zi           )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_dz             , dz           )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_z              , z            )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active          , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type            , col_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index  , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type       , lun_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active          , col_active   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_type            , col_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_landunit_index  , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_type       , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_lakepoint  , lun_lakpoi   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_urbanpoint , lun_urbpoi   )
 
     if (nclumps /= 1) then
        call endrun(msg='ERROR VSFM only supported for clumps = 1')
@@ -1193,7 +1202,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine allocate_auxvars
 
   !------------------------------------------------------------------------
-  subroutine set_material_properties(l2e_init_list)
+  subroutine set_material_properties(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     !
@@ -1211,8 +1220,11 @@ end subroutine EM_VSFM_Populate_E2L_List
     !
     implicit none
     !
+    ! !ARGUMENTS
+    class(em_vsfm_type)              :: this
     class(emi_data_list), intent(in) :: l2e_init_list
     !
+    ! !LOCAL VARIABLES:
     real(r8), pointer    :: clm_watsat(:,:)
     real(r8), pointer    :: clm_hksat(:,:)
     real(r8), pointer    :: clm_bsw(:,:)
@@ -1239,17 +1251,17 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_watsatc      , clm_watsat       )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_hksatc       , clm_hksat        )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_bswc         , clm_bsw          )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_sucsatc      , clm_sucsat       )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_parameter_effporosityc , clm_eff_porosity )
-    call l2e_init_list%GetPointerToReal1D(index_l2e_init_state_wtd         , clm_zwt          )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_watsatc      , clm_watsat       )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_hksatc       , clm_hksat        )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_bswc         , clm_bsw          )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_sucsatc      , clm_sucsat       )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_parameter_effporosityc , clm_eff_porosity )
+    call l2e_init_list%GetPointerToReal1D(this%index_l2e_init_state_wtd         , clm_zwt          )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active              , col_active       )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type                , col_type         )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index      , col_landunit     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type           , lun_type         )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active              , col_active       )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_type                , col_type         )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_landunit_index      , col_landunit     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_type           , lun_type         )
 
     ! Allocate memory
     allocate(vsfm_filter       (bounds_proc_begc_all:bounds_proc_endc_all           ))
@@ -1308,7 +1320,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine set_material_properties
 
   !------------------------------------------------------------------------
-  subroutine set_initial_conditions(l2e_init_list)
+  subroutine set_initial_conditions(this, l2e_init_list)
     !
     ! !DESCRIPTION:
     !
@@ -1327,11 +1339,13 @@ end subroutine EM_VSFM_Populate_E2L_List
     !
     implicit none
     !
+    ! !ARGUMENTS
+    class(em_vsfm_type)              :: this
     class(emi_data_list), intent(in) :: l2e_init_list
     !
+    ! !LOCAL VARIABLES:
     real(r8), pointer    :: clm_zi(:,:)           ! interface level below a "z" level (m)
     real(r8), pointer    :: clm_zwt(:)            !
-    !
     integer              :: c,g,fc,j,l            ! do loop indices
     integer              :: ncells_ghost          ! total number of ghost gridcells on the processor
     integer              :: nlunits_ghost         ! total number of ghost landunits on the processor
@@ -1346,13 +1360,13 @@ end subroutine EM_VSFM_Populate_E2L_List
     integer  , pointer                   :: lun_type(:)
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal1D(index_l2e_init_state_wtd    , clm_zwt      )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi            , clm_zi       )
+    call l2e_init_list%GetPointerToReal1D(this%index_l2e_init_state_wtd    , clm_zwt      )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_zi            , clm_zi       )
 
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_active         , col_active   )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_type           , col_type     )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_col_landunit_index , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(index_l2e_init_landunit_type      , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active         , col_active   )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_type           , col_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_landunit_index , col_landunit )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_landunit_type      , lun_type     )
 
     ! Allocate memory
     allocate(press_ic_1d ((bounds_proc_endc_all - bounds_proc_begc_all + 1)*nlevgrnd))
@@ -1387,7 +1401,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine set_initial_conditions
 
   !-----------------------------------------------------------------------
-  subroutine determine_condition_ids()
+  subroutine determine_condition_ids(this)
     !
     !DESCRIPTION
     !  Determines the IDs of various source-sink conditions in VSFM
@@ -1401,7 +1415,12 @@ end subroutine EM_VSFM_Populate_E2L_List
     use shr_log_mod                      , only : errMsg => shr_log_errMsg
     ! !ARGUMENTS:
     implicit none
-    integer :: ier ! error status
+    !
+    ! !ARGUMENTS
+    class(em_vsfm_type)          :: this
+    integer                      :: ier ! error status
+    !
+    ! !LOCAL VARIABLES:
     character (len=256), pointer :: cond_names(:)
     integer                      :: num_conds
     integer                      :: num_conds_expected
@@ -1410,13 +1429,13 @@ end subroutine EM_VSFM_Populate_E2L_List
     character (len=256)          :: cond_name
     !------------------------------------------------------------------------------
 
-    vsfm_cond_id_for_infil        = -1
-    vsfm_cond_id_for_et           = -1
-    vsfm_cond_id_for_dew          = -1
-    vsfm_cond_id_for_drainage     = -1
-    vsfm_cond_id_for_snow         = -1
-    vsfm_cond_id_for_sublimation  = -1
-    vsfm_cond_id_for_lateral_flux = -1
+    this%vsfm_cond_id_for_infil        = -1
+    this%vsfm_cond_id_for_et           = -1
+    this%vsfm_cond_id_for_dew          = -1
+    this%vsfm_cond_id_for_drainage     = -1
+    this%vsfm_cond_id_for_snow         = -1
+    this%vsfm_cond_id_for_sublimation  = -1
+    this%vsfm_cond_id_for_lateral_flux = -1
 
     num_conds_expected = 6
 
@@ -1436,25 +1455,25 @@ end subroutine EM_VSFM_Populate_E2L_List
        select case(trim(cond_names(nn)))
 
        case ("Infiltration_Flux")
-          vsfm_cond_id_for_infil        = nn
+          this%vsfm_cond_id_for_infil        = nn
 
        case ("Evapotranspiration_Flux")
-          vsfm_cond_id_for_et           = nn
+          this%vsfm_cond_id_for_et           = nn
 
        case ("Dew_Flux")
-          vsfm_cond_id_for_dew          = nn
+          this%vsfm_cond_id_for_dew          = nn
 
        case ("Drainage_Flux")
-          vsfm_cond_id_for_drainage     = nn
+          this%vsfm_cond_id_for_drainage     = nn
 
        case ("Snow_Disappearance_Flux")
-          vsfm_cond_id_for_snow         = nn
+          this%vsfm_cond_id_for_snow         = nn
 
        case ("Sublimation_Flux")
-          vsfm_cond_id_for_sublimation  = nn
+          this%vsfm_cond_id_for_sublimation  = nn
 
        case ("Lateral_flux")
-          vsfm_cond_id_for_lateral_flux = nn
+          this%vsfm_cond_id_for_lateral_flux = nn
 
        case default
           write(iulog,*) trim(cond_names(nn))
@@ -1463,38 +1482,38 @@ end subroutine EM_VSFM_Populate_E2L_List
        end select
     enddo
 
-    if (vsfm_cond_id_for_infil == -1) then
+    if (this%vsfm_cond_id_for_infil == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_infil not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
-    if (vsfm_cond_id_for_et == -1) then
+    if (this%vsfm_cond_id_for_et == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_et not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
-    if (vsfm_cond_id_for_dew == -1) then
+    if (this%vsfm_cond_id_for_dew == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_dew not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
-    if (vsfm_cond_id_for_drainage == -1) then
+    if (this%vsfm_cond_id_for_drainage == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_drainage not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
-    if (vsfm_cond_id_for_snow == -1) then
+    if (this%vsfm_cond_id_for_snow == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_snow not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
-    if (vsfm_cond_id_for_sublimation == -1) then
+    if (this%vsfm_cond_id_for_sublimation == -1) then
       write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_sublimation not defined.'
       call endrun(msg=errMsg(__FILE__, __LINE__))
     endif
 
     if (vsfm_lateral_model_type == 'source_sink') then
-       if (vsfm_cond_id_for_lateral_flux == -1) then
+       if (this%vsfm_cond_id_for_lateral_flux == -1) then
           write(iulog,*)'In init_vsfm_condition_ids: vsfm_cond_id_for_lateral_flux not defined.'
           call endrun(msg=errMsg(__FILE__, __LINE__))
        endif
@@ -1506,7 +1525,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine determine_condition_ids
 
   !-----------------------------------------------------------------------
-  subroutine extract_data_for_alm(l2e_init_list, e2l_init_list)
+  subroutine extract_data_for_alm(this, l2e_init_list, e2l_init_list)
     !
     !DESCRIPTION
     !  Saves
@@ -1520,6 +1539,8 @@ end subroutine EM_VSFM_Populate_E2L_List
     !
     implicit none
     !
+    ! !ARGUMENTS
+    class(em_vsfm_type)                  :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
     class(emi_data_list) , intent(inout) :: e2l_init_list
 
@@ -1546,17 +1567,17 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     !-----------------------------------------------------------------------
 
-    call l2e_init_list%GetPointerToReal1D(index_l2e_init_flux_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
+    call l2e_init_list%GetPointerToReal1D(this%index_l2e_init_flux_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
 
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_state_soilp           , l2e_soilp            )
-    call l2e_init_list%GetPointerToReal2D(index_l2e_init_col_zi                     , l2e_col_zi           )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_state_soilp           , l2e_soilp            )
+    call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_col_zi                     , l2e_col_zi           )
 
-    call e2l_init_list%GetPointerToReal1D(index_e2l_init_state_wtd             , e2l_zwt              )
-    call e2l_init_list%GetPointerToReal1D(index_e2l_init_flux_mflx_snowlyr_col , e2l_mflx_snowlyr_col )
+    call e2l_init_list%GetPointerToReal1D(this%index_e2l_init_state_wtd             , e2l_zwt              )
+    call e2l_init_list%GetPointerToReal1D(this%index_e2l_init_flux_mflx_snowlyr_col , e2l_mflx_snowlyr_col )
 
-    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_h2osoi_liq      , e2l_h2osoi_liq       )
-    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_h2osoi_ice      , e2l_h2osoi_ice       )
-    call e2l_init_list%GetPointerToReal2D(index_e2l_init_state_smp             , e2l_smp_l            )
+    call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_h2osoi_liq      , e2l_h2osoi_liq       )
+    call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_h2osoi_ice      , e2l_h2osoi_ice       )
+    call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_smp             , e2l_smp_l            )
 
     ! PreSolve: Allows saturation value to be computed based on ICs and stored
     !           in GE auxvar
@@ -1647,7 +1668,7 @@ end subroutine EM_VSFM_Populate_E2L_List
    end subroutine extract_data_for_alm
 
     !------------------------------------------------------------------------
-  subroutine EM_VSFM_Solve(em_stage, dt, nstep, l2e_list, e2l_list)
+  subroutine EM_VSFM_Solve(this, em_stage, dt, nstep, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! The VSFM dirver subroutine
@@ -1658,16 +1679,16 @@ end subroutine EM_VSFM_Populate_E2L_List
     implicit none
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                  :: this
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
     class(emi_data_list) , intent(in)    :: l2e_list
     class(emi_data_list) , intent(inout) :: e2l_list
-    !
 
     select case (em_stage)
     case (EM_VSFM_SOIL_HYDRO_STAGE)
-       call EM_VSFM_Solve_Soil_Hydro(em_stage, dt, nstep, l2e_list, e2l_list)
+       call EM_VSFM_Solve_Soil_Hydro(this, em_stage, dt, nstep, l2e_list, e2l_list)
     case default
        write(iulog,*)'EM_FATES_Solve: Unknown em_stage.'
        call endrun(msg=errMsg(__FILE__, __LINE__))
@@ -1676,7 +1697,7 @@ end subroutine EM_VSFM_Populate_E2L_List
   end subroutine EM_VSFM_Solve
 
     !------------------------------------------------------------------------
-  subroutine EM_VSFM_Solve_Soil_Hydro(em_stage, dt, nstep, l2e_list, e2l_list)
+  subroutine EM_VSFM_Solve_Soil_Hydro(this, em_stage, dt, nstep, l2e_list, e2l_list)
     !
     ! !DESCRIPTION:
     ! Solve the Variably Saturated Flow Model (VSFM) in soil columns.
@@ -1708,6 +1729,7 @@ end subroutine EM_VSFM_Populate_E2L_List
 #include "finclude/petscsnes.h90"
     !
     ! !ARGUMENTS:
+    class(em_vsfm_type)                  :: this
     integer              , intent(in)    :: em_stage
     real(r8)             , intent(in)    :: dt
     integer              , intent(in)    :: nstep
@@ -1822,28 +1844,28 @@ end subroutine EM_VSFM_Populate_E2L_List
 
       dtime = dt
 
-      call l2e_list%GetPointerToReal1D(index_l2e_flux_infil       , l2e_mflux_infil       )
-      call l2e_list%GetPointerToReal1D(index_l2e_flux_dew         , l2e_mflux_dew         )
-      call l2e_list%GetPointerToReal1D(index_l2e_flux_snow_sub    , l2e_mflux_sub_snow    )
-      call l2e_list%GetPointerToReal1D(index_l2e_flux_snowlyr     , l2e_mflux_snowlyr     )
+      call l2e_list%GetPointerToReal1D(this%index_l2e_flux_infil       , l2e_mflux_infil       )
+      call l2e_list%GetPointerToReal1D(this%index_l2e_flux_dew         , l2e_mflux_dew         )
+      call l2e_list%GetPointerToReal1D(this%index_l2e_flux_snow_sub    , l2e_mflux_sub_snow    )
+      call l2e_list%GetPointerToReal1D(this%index_l2e_flux_snowlyr     , l2e_mflux_snowlyr     )
 
-      call l2e_list%GetPointerToReal2D(index_l2e_flux_et          , l2e_mflux_et          )
-      call l2e_list%GetPointerToReal2D(index_l2e_flux_drainage    , l2e_mflux_drain       )
-      call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_liq , l2e_h2osoi_liq        )
-      call l2e_list%GetPointerToReal2D(index_l2e_state_h2osoi_ice , l2e_h2osoi_ice        )
+      call l2e_list%GetPointerToReal2D(this%index_l2e_flux_et          , l2e_mflux_et          )
+      call l2e_list%GetPointerToReal2D(this%index_l2e_flux_drainage    , l2e_mflux_drain       )
+      call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_liq , l2e_h2osoi_liq        )
+      call l2e_list%GetPointerToReal2D(this%index_l2e_state_h2osoi_ice , l2e_h2osoi_ice        )
 
-      call l2e_list%GetPointerToInt1D(index_l2e_filter_hydrologyc , l2e_filter_hydrologyc )
-      call l2e_list%GetIntValue(index_l2e_filter_num_hydrologyc   , l2e_num_hydrologyc    )
+      call l2e_list%GetPointerToInt1D(this%index_l2e_filter_hydrologyc , l2e_filter_hydrologyc )
+      call l2e_list%GetIntValue(this%index_l2e_filter_num_hydrologyc   , l2e_num_hydrologyc    )
 
-      call l2e_list%GetPointerToReal2D(index_l2e_column_zi        , l2e_zi                )
+      call l2e_list%GetPointerToReal2D(this%index_l2e_column_zi        , l2e_zi                )
 
-      call e2l_list%GetPointerToReal1D(index_e2l_state_wtd        , e2l_wtd               )
-      call e2l_list%GetPointerToReal2D(index_e2l_state_h2osoi_liq , e2l_h2osoi_liq        )
-      call e2l_list%GetPointerToReal2D(index_e2l_state_h2osoi_ice , e2l_h2osoi_ice        )
-      call e2l_list%GetPointerToReal2D(index_e2l_state_smp        , e2l_smp               )
-      call e2l_list%GetPointerToReal2D(index_e2l_state_soilp      , e2l_soilp             )
+      call e2l_list%GetPointerToReal1D(this%index_e2l_state_wtd        , e2l_wtd               )
+      call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2osoi_liq , e2l_h2osoi_liq        )
+      call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2osoi_ice , e2l_h2osoi_ice        )
+      call e2l_list%GetPointerToReal2D(this%index_e2l_state_smp        , e2l_smp               )
+      call e2l_list%GetPointerToReal2D(this%index_e2l_state_soilp      , e2l_soilp             )
 
-      call e2l_list%GetPointerToReal1D(index_e2l_flux_qrecharge   , e2l_qrecharge         )
+      call e2l_list%GetPointerToReal1D(this%index_e2l_flux_qrecharge   , e2l_qrecharge         )
 
       begc = bounds_proc_begc
       endc = bounds_proc_endc
@@ -1983,28 +2005,28 @@ end subroutine EM_VSFM_Populate_E2L_List
                                              t_soil_col_1d          &
                                             )
       ! Set Infiltration
-      soe_auxvar_id = vsfm_cond_id_for_infil;
+      soe_auxvar_id = this%vsfm_cond_id_for_infil;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS           ,  &
                                              VAR_BC_SS_CONDITION ,  &
                                              soe_auxvar_id       ,  &
                                              mflx_infl_col_1d       &
                                             )
       ! Set ET
-      soe_auxvar_id = vsfm_cond_id_for_et;
+      soe_auxvar_id = this%vsfm_cond_id_for_et;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS           ,  &
                                              VAR_BC_SS_CONDITION ,  &
                                              soe_auxvar_id       ,  &
                                              mflx_et_col_1d         &
                                             )
       ! Set Dew
-      soe_auxvar_id = vsfm_cond_id_for_dew;
+      soe_auxvar_id = this%vsfm_cond_id_for_dew;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS           ,  &
                                              VAR_BC_SS_CONDITION ,  &
                                              soe_auxvar_id       ,  &
                                              mflx_dew_col_1d        &
                                             )
       ! Set Drainage sink
-      soe_auxvar_id = vsfm_cond_id_for_drainage;
+      soe_auxvar_id = this%vsfm_cond_id_for_drainage;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS           ,  &
                                              VAR_BC_SS_CONDITION ,  &
                                              soe_auxvar_id       ,  &
@@ -2012,14 +2034,14 @@ end subroutine EM_VSFM_Populate_E2L_List
                                             )
       ! Set mass flux associated with disappearance of snow layer
       ! from last time step
-      soe_auxvar_id = vsfm_cond_id_for_snow;
+      soe_auxvar_id = this%vsfm_cond_id_for_snow;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS           ,  &
                                              VAR_BC_SS_CONDITION ,  &
                                              soe_auxvar_id       ,  &
                                              mflx_snowlyr_col_1d    &
                                             )
       ! Set mass flux associated with sublimation of snow
-      soe_auxvar_id = vsfm_cond_id_for_sublimation;
+      soe_auxvar_id = this%vsfm_cond_id_for_sublimation;
       call vsfm_mpp%sysofeqns%SetDataFromCLM(AUXVAR_SS            , &
                                              VAR_BC_SS_CONDITION  , &
                                              soe_auxvar_id        , &
@@ -2083,7 +2105,7 @@ end subroutine EM_VSFM_Populate_E2L_List
 
          call vsfm_mpp%sysofeqns%ComputeLateralFlux(dtime)
 
-         soe_auxvar_id = vsfm_cond_id_for_lateral_flux;
+         soe_auxvar_id = this%vsfm_cond_id_for_lateral_flux;
          call vsfm_mpp%sysofeqns%GetDataForCLM(AUXVAR_SS   , &
                                                VAR_BC_SS_CONDITION      , &
                                                soe_auxvar_id     , &
