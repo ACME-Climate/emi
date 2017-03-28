@@ -95,6 +95,9 @@ module ExternalModelVSFMMod
      procedure, public :: Solve                   => EM_VSFM_Solve
   end type em_vsfm_type
 
+  public :: EM_VSFM_Populate_E2L_Init_List, &
+            EM_VSFM_Populate_E2L_List
+
 contains
 
   !------------------------------------------------------------------------
@@ -1305,7 +1308,7 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     call VSFMMPPSetSoils(vsfm_mpp, bounds_proc_begc, bounds_proc_endc, &
          ncols_ghost, vsfm_filter, &
-         vsfm_watsat, vsfm_hksat, vsfm_bsw, vsfm_sucsat, vsfm_eff_porosity, &
+         vsfm_watsat, vsfm_hksat, vsfm_bsw, vsfm_sucsat, &
          vsfm_residual_sat, vsfm_satfunc_type, DENSITY_TGDPB01)
 
     ! Free up memory

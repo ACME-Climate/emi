@@ -1498,7 +1498,7 @@ contains
     ! Set if cell is active
     soe_auxvar_id = 1;
     call thermal_mpp%sysofeqns%SetBDataFromCLM(AUXVAR_INTERNAL, &
-         VAR_ACTIVE, soe_auxvar_id, is_active_1d)
+         VAR_ACTIVE, is_active_1d)
 
     ! Set tuning factor
     call thermal_mpp%sysofeqns%SetRDataFromCLM(AUXVAR_INTERNAL, &
