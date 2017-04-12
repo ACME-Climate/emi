@@ -1062,6 +1062,7 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OSOI_ICE
     use ExternalModelConstants    , only : E2L_STATE_SOIL_MATRIC_POTENTIAL
+    use ExternalModelConstants    , only : E2L_STATE_XYLEM_MATRIC_POTENTIAL
     use ExternalModelConstants    , only : E2L_STATE_H2OROOT_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OXYLEM_LIQ
     use ExternalModelConstants    , only : E2L_STATE_WTD
@@ -1140,6 +1141,7 @@ contains
     use ExternalModelIntefaceDataDimensionMod, only : dimname_zero
     use ExternalModelIntefaceDataDimensionMod, only : dimname_one
     use ExternalModelIntefaceDataDimensionMod, only : dimname_two
+    use ExternalModelIntefaceDataDimensionMod, only : dimname_nxylem
 
     !
     implicit none
@@ -1493,15 +1495,29 @@ contains
        dim2_beg_name = dimname_one
        dim2_end_name = dimname_nlevgrnd
 
+    case (E2L_STATE_XYLEM_MATRIC_POTENTIAL)
+       id_val        = E2L_STATE_XYLEM_MATRIC_POTENTIAL
+       name_val      = 'Xylem matric potential'
+       long_name_val = 'Xylem matric potential: External Model to ALM'
+       units_val     = '[mm]'
+       is_real_type  = .true.
+       ndim          = 2
+       dim1_beg_name = dimname_begc
+       dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nxylem
+
     case (E2L_STATE_H2OROOT_LIQ)
        id_val        = E2L_STATE_H2OROOT_LIQ
        name_val      = 'Root liquid water'
        long_name_val = 'Root liquid water: External Model to ALM'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
-       ndim          = 1
+       ndim          = 2
        dim1_beg_name = dimname_begc
        dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nlevgrnd
 
     case (E2L_STATE_H2OXYLEM_LIQ)
        id_val        = E2L_STATE_H2OXYLEM_LIQ
@@ -1509,9 +1525,11 @@ contains
        long_name_val = 'Xylem liquid water: External Model to ALM'
        units_val     = '[kg/m2]'
        is_real_type  = .true.
-       ndim          = 1
+       ndim          = 2
        dim1_beg_name = dimname_begc
        dim1_end_name = dimname_endc
+       dim2_beg_name = dimname_one
+       dim2_end_name = dimname_nxylem
 
     case (E2L_STATE_WTD)
        id_val        = E2L_STATE_WTD

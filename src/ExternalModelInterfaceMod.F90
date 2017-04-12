@@ -1834,6 +1834,7 @@ contains
     use ExternalModelConstants    , only : E2L_STATE_VSFM_PROGNOSTIC_SOILP
     use ExternalModelConstants    , only : E2L_STATE_H2OROOT_LIQ
     use ExternalModelConstants    , only : E2L_STATE_H2OXYLEM_LIQ
+    use ExternalModelConstants    , only : E2L_STATE_XYLEM_MATRIC_POTENTIAL
     use WaterStateType            , only : waterstate_type
     use clm_varpar                , only : nlevgrnd
     !
@@ -1858,6 +1859,7 @@ contains
 #ifdef VSFM_SPAC_VIA_EMI
          h2oroot_liq  =>    waterstate_vars%h2oroot_liq_col , & ! Output:  [real(r8) (:,:) ]  root liquid water (kg/m2)
          h2oxylem_liq =>    waterstate_vars%h2oxylem_liq_col, & ! Output:  [real(r8) (:,:) ]  xylem liquid water (kg/m2)
+         xylemp_col   =>    waterstate_vars%xylemp_col      , & ! Output:  [real(r8) (:,:) ]  xylem water pressure (Pa)
 #endif
          soilp_col    =>    waterstate_vars%soilp_col         & ! Output:  [real(r8) (:,:) ]  soil water pressure (Pa)
          )
@@ -1921,7 +1923,22 @@ contains
 #ifdef VSFM_SPAC_VIA_EMI
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
-                h2oroot_liq(c) = cur_data%data_real_1d(c)
+                do j = 1, nlevgrnd
+                   h2oroot_liq(c,j) = cur_data%data_real_2d(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+#else
+            write(*,*)'Need to compile the code with -DFATES_VIA_EMI'
+#endif
+
+          case (E2L_STATE_XYLEM_MATRIC_POTENTIAL)
+#ifdef VSFM_SPAC_VIA_EMI
+             do fc = 1, num_hydrologyc
+                c = filter_hydrologyc(fc)
+                do j = 1, 170
+                   xylemp_col(c,j) = cur_data%data_real_2d(c,j)
+                enddo
              enddo
              cur_data%is_set = .true.
 #else
@@ -1932,7 +1949,9 @@ contains
 #ifdef VSFM_SPAC_VIA_EMI
              do fc = 1, num_hydrologyc
                 c = filter_hydrologyc(fc)
-                h2oxylem_liq(c) = cur_data%data_real_1d(c)
+                do j = 1, 170
+                   h2oxylem_liq(c,j) = cur_data%data_real_2d(c,j)
+                enddo
              enddo
              cur_data%is_set = .true.
 #else

@@ -28,6 +28,7 @@ implicit none
     character(*), parameter :: dimname_zero              = 'zero'
     character(*), parameter :: dimname_one               = 'one'
     character(*), parameter :: dimname_two               = 'two'
+    character(*), parameter :: dimname_nxylem            = 'nxylem'
 
   type emi_data_dimension_type
      character(len=24) :: name ! String labelling this IO type
@@ -128,6 +129,9 @@ contains
     case (dimname_two)
        dim_value = 2
 
+    case (dimname_nxylem)
+       dim_value = 170
+
     case default
        write(iulog,*)'dim_name = ',dim_name
        call endrun(msg='Unknown dim_name while trying to get dimension value.')
@@ -168,6 +172,7 @@ contains
     call this%AddDimByName(dimname_zero)
     call this%AddDimByName(dimname_one)
     call this%AddDimByName(dimname_two)
+    call this%AddDimByName(dimname_nxylem)
 
   end subroutine EMID_Dim_List_Init
 

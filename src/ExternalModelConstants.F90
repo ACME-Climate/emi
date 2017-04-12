@@ -68,6 +68,7 @@ module ExternalModelConstants
   integer, parameter, public :: E2L_STATE_VSFM_PROGNOSTIC_SOILP                  = 0303
   integer, parameter, public :: E2L_STATE_H2OROOT_LIQ                            = 0304
   integer, parameter, public :: E2L_STATE_H2OXYLEM_LIQ                           = 0305
+  integer, parameter, public :: E2L_STATE_XYLEM_MATRIC_POTENTIAL                 = 0306
 
   ! soilhydrology_type
   integer, parameter, public :: E2L_STATE_WTD                                    = 0401

@@ -106,6 +106,7 @@ module ExternalModelVSFMSPACMod
 
      integer :: index_e2l_state_h2oroot_liq
      integer :: index_e2l_state_h2oxylem_liq
+     integer :: index_e2l_state_xylemp
 
    contains
      !procedure, public :: Populate_L2E_Init_List  => EM_VSFM_SPAC_Populate_L2E_Init_List
@@ -1636,8 +1637,8 @@ contains
     integer                              :: soe_auxvar_id
     real(r8)                             :: z_up, z_dn
     integer                              :: num
-    real(r8)  , pointer                  :: e2l_h2oroot_liq(:)
-    real(r8)  , pointer                  :: e2l_h2oxylem_liq(:)
+    real(r8)  , pointer                  :: e2l_h2oroot_liq(:,:)
+    real(r8)  , pointer                  :: e2l_h2oxylem_liq(:,:)
 
     !-----------------------------------------------------------------------
     call l2e_init_list%GetPointerToReal1D(this%index_l2e_init_flux_mflx_snowlyr_col , l2e_mflx_snowlyr_col )
@@ -1652,8 +1653,8 @@ contains
     call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_h2osoi_ice      , e2l_h2osoi_ice       )
     call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_smp             , e2l_smp_l            )
 
-    call e2l_init_list%GetPointerToReal1D(this%index_e2l_init_state_h2oroot_liq     , e2l_h2oroot_liq      )
-    call e2l_init_list%GetPointerToReal1D(this%index_e2l_init_state_h2oxylem_liq    , e2l_h2oxylem_liq     )
+    call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_h2oroot_liq     , e2l_h2oroot_liq      )
+    call e2l_init_list%GetPointerToReal2D(this%index_e2l_init_state_h2oxylem_liq    , e2l_h2oxylem_liq     )
 
     ! PreSolve: Allows saturation value to be computed based on ICs and stored
     !           in GE auxvar
@@ -1743,15 +1744,15 @@ contains
           e2l_zwt(c) = (0._r8 - e2l_smp_l(c,jwt))/(e2l_smp_l(c,jwt) - e2l_smp_l(c,jwt+1))*(z_dn - z_up) + z_dn
        endif
 
-             do j = nz_soil + 1, nz_soil + nz_root
-                idx = (c-bounds_proc_begc)*(nz_soil + nz_root + nz_xylem) + j
-                e2l_h2oroot_liq(c) = e2l_h2oroot_liq(c) + vsfm_mass_col_1d(idx)
-             enddo
+       do j = nz_soil + 1, nz_soil + nz_root
+          idx = (c-bounds_proc_begc)*(nz_soil + nz_root + nz_xylem) + j
+          e2l_h2oroot_liq(c,j - nz_soil) = vsfm_mass_col_1d(idx)
+       enddo
 
-             do j = nz_soil + nz_root + 1, nz_soil + nz_root + nz_xylem
-                idx = (c-bounds_proc_begc)*(nz_soil + nz_root + nz_xylem) + j
-                e2l_h2oxylem_liq(c) = e2l_h2oxylem_liq(c) + vsfm_mass_col_1d(idx)
-             enddo
+       do j = nz_soil + nz_root + 1, nz_soil + nz_root + nz_xylem
+          idx = (c-bounds_proc_begc)*(nz_soil + nz_root + nz_xylem) + j
+          e2l_h2oxylem_liq(c,j - nz_soil - nz_root) = vsfm_mass_col_1d(idx)
+      enddo
 
     enddo
 
@@ -1808,6 +1809,7 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_Init_List
     use ExternalModelConstants, only : EM_VSFM_SOIL_HYDRO_STAGE
     use ExternalModelConstants, only : E2L_STATE_H2OROOT_LIQ
     use ExternalModelConstants, only : E2L_STATE_H2OXYLEM_LIQ
+    use ExternalModelConstants, only : E2L_STATE_XYLEM_MATRIC_POTENTIAL
     !
     implicit none
     !
@@ -1818,6 +1820,8 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_Init_List
     ! !LOCAL VARIABLES:
     integer              , pointer       :: em_stages(:)
     integer                              :: number_em_stages
+    integer                              :: id
+    integer                              :: index
 
     call EM_VSFM_Populate_E2L_List(this, e2l_list)
 
@@ -1829,6 +1833,10 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_Init_List
                               em_stages, this%index_e2l_state_h2oroot_liq)
     call e2l_list%AddDataByID(E2L_STATE_H2OXYLEM_LIQ, number_em_stages, &
                               em_stages, this%index_e2l_state_h2oxylem_liq)
+
+    id = E2L_STATE_XYLEM_MATRIC_POTENTIAL
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_xylemp = index
 
     deallocate(em_stages)
 
@@ -2004,10 +2012,11 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_List
     real(r8)  , pointer                  :: e2l_smp(:,:)
     real(r8)  , pointer                  :: e2l_wtd(:)
     real(r8)  , pointer                  :: e2l_soilp(:,:)
+    real(r8)  , pointer                  :: e2l_xylemp(:,:)
     real(r8)  , pointer                  :: e2l_qrecharge(:)
     real(r8)                             :: et_integrated_over_root
-    real(r8)  , pointer                  :: e2l_h2oroot_liq(:)
-    real(r8)  , pointer                  :: e2l_h2oxylem_liq(:)
+    real(r8)  , pointer                  :: e2l_h2oroot_liq(:,:)
+    real(r8)  , pointer                  :: e2l_h2oxylem_liq(:,:)
 
     !-----------------------------------------------------------------------
 
@@ -2030,14 +2039,15 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_List
 
     call l2e_list%GetPointerToReal2D(this%index_l2e_column_zi        , l2e_zi                )
 
-    call e2l_list%GetPointerToReal1D(this%index_e2l_state_h2oroot_liq , e2l_h2oroot_liq      )
-    call e2l_list%GetPointerToReal1D(this%index_e2l_state_h2oxylem_liq, e2l_h2oxylem_liq     )
+    call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2oroot_liq , e2l_h2oroot_liq      )
+    call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2oxylem_liq, e2l_h2oxylem_liq     )
 
     call e2l_list%GetPointerToReal1D(this%index_e2l_state_wtd        , e2l_wtd               )
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2osoi_liq , e2l_h2osoi_liq        )
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_h2osoi_ice , e2l_h2osoi_ice        )
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_smp        , e2l_smp               )
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_soilp      , e2l_soilp             )
+    call e2l_list%GetPointerToReal2D(this%index_e2l_state_xylemp     , e2l_xylemp            )
 
     call e2l_list%GetPointerToReal1D(this%index_e2l_flux_qrecharge   , e2l_qrecharge         )
 
@@ -2412,17 +2422,17 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_List
              enddo
 
              idx_c                   = (c-begc) + 1
-             e2l_h2oroot_liq(idx_c)  = 0.d0
-             e2l_h2oxylem_liq(idx_c) = 0.d0
+             e2l_h2oroot_liq(idx_c,:)  = 0.d0
+             e2l_h2oxylem_liq(idx_c,:) = 0.d0
 
              do j = nz_soil + 1, nz_soil + nz_root
                 idx = (c-begc)*nlevgrnd + j
-                e2l_h2oroot_liq(idx_c) = e2l_h2oroot_liq(idx_c) + vsfm_mass_col_1d(idx)
+                e2l_h2oroot_liq(idx_c,j-nz_soil) = vsfm_mass_col_1d(idx)
              enddo
 
              do j = nz_soil + nz_root + 1, nz_soil + nz_root + nz_xylem
                 idx = (c-begc)*nlevgrnd + j
-                e2l_h2oxylem_liq(idx_c) = e2l_h2oxylem_liq(idx_c) + vsfm_mass_col_1d(idx)
+                e2l_h2oxylem_liq(idx_c, j - nz_soil - nz_root) = vsfm_mass_col_1d(idx)
              enddo
 
              ! Find maximum water balance error over the column
@@ -2447,6 +2457,14 @@ end subroutine EM_VSFM_SPAC_Populate_E2L_List
              do j = 1, nlevgrnd
                 idx = (c - begc)*nlevgrnd + j
                 e2l_soilp(c,j) = vsfm_soilp_col_1d(idx)
+             end do
+          end do
+
+          ! Save xylem matric potential [mm]
+          do c = begc, endc
+             do j = 1, 170
+                idx = (c - begc)*nlevgrnd + j + nz_soil + nz_root
+                e2l_xylemp(c,j) = vsfm_smpl_col_1d(idx)*1000.0_r8 ! [m] --> [mm]
              end do
           end do
 
