@@ -341,17 +341,17 @@ contains
           call em_vsfm%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
 
           ! Unpack all data sent from the external model
-          !call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
-          !     num_filter_col, filter_col, soilstate_vars)
-          !call EMID_Unpack_WaterState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
-          !     num_filter_col, filter_col, waterstate_vars)
-          !call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
-          !     num_filter_col, filter_col, waterflux_vars)
-          !call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
-          !     num_filter_col, filter_col, soilhydrology_vars)
+          call EMID_Unpack_SoilState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilstate_vars)
+          call EMID_Unpack_WaterState_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterstate_vars)
+          call EMID_Unpack_WaterFlux_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, waterflux_vars)
+          call EMID_Unpack_SoilHydrology_Vars_for_EM(e2l_init_list(clump_rank), em_stage, &
+               num_filter_col, filter_col, soilhydrology_vars)
 
           ! Ensure all data sent by external model is unpacked
-          !call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage)
+          call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage)
 
           ! Clean up memory
           call l2e_init_list(clump_rank)%Destroy()
