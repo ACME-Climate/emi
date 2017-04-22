@@ -310,15 +310,14 @@ end subroutine EM_VSFM_Populate_E2L_List
     !
     ! !DESCRIPTION:
     !
+#include <petsc/finclude/petsc.h>
+    !
     !
     ! !USES:
     use mpp_varctl                , only : vsfm_use_dynamic_linesearch
+    use petscsnes
     !
     implicit none
-    !
-#include "finclude/petscsys.h"
-#include "finclude/petscsnes.h"
-#include "finclude/petscsnes.h90"
     !
     ! !ARGUMENTS:
     class(em_vsfm_type)                  :: this
@@ -1305,7 +1304,7 @@ end subroutine EM_VSFM_Populate_E2L_List
 
     call VSFMMPPSetSoils(vsfm_mpp, bounds_proc_begc, bounds_proc_endc, &
          ncols_ghost, vsfm_filter, &
-         vsfm_watsat, vsfm_hksat, vsfm_bsw, vsfm_sucsat, vsfm_eff_porosity, &
+         vsfm_watsat, vsfm_hksat, vsfm_bsw, vsfm_sucsat, &
          vsfm_residual_sat, vsfm_satfunc_type, DENSITY_TGDPB01)
 
     ! Free up memory
@@ -1703,6 +1702,8 @@ end subroutine EM_VSFM_Populate_E2L_List
     ! !DESCRIPTION:
     ! Solve the Variably Saturated Flow Model (VSFM) in soil columns.
     !
+#include <petsc/finclude/petsc.h>
+    !
     ! !USES:
     use shr_kind_mod              , only : r8 => shr_kind_r8
     use abortutils                , only : endrun
@@ -1722,12 +1723,9 @@ end subroutine EM_VSFM_Populate_E2L_List
     use MultiPhysicsProbConstants , only : AUXVAR_SS
     use mpp_varpar                , only : nlevgrnd
     use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
+    use petscsnes
     !
     implicit none
-    !
-#include "finclude/petscsys.h"
-#include "finclude/petscsnes.h"
-#include "finclude/petscsnes.h90"
     !
     ! !ARGUMENTS:
     class(em_vsfm_type)                  :: this

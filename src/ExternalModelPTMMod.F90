@@ -333,6 +333,8 @@ contains
     ! !DESCRIPTION:
     ! Add meshes to the thermal MPP problem
     !
+#include <petsc/finclude/petsc.h>
+    !
     ! !USES:
     use filterMod                 , only : filter
     use mpp_bounds                , only : bounds_proc_begc_all, bounds_proc_endc_all
@@ -376,14 +378,13 @@ contains
     use MultiPhysicsProbConstants , only : VAR_DIST_UP
     use MultiPhysicsProbConstants , only : VAR_DIST_DN
     use MultiPhysicsProbConstants , only : CONN_VERTICAL
+    use petscsys
     !
     implicit none
     !
     ! !ARGUMENTS
     class(em_ptm_type)                   :: this
     class(emi_data_list) , intent(in)    :: l2e_init_list
-    !
-#include "finclude/petscsys.h"
     !
     ! !LOCAL VARIABLES:
     integer           :: nc                       ! clump index
@@ -1120,6 +1121,8 @@ contains
     ! !DESCRIPTION:
     ! The PETSc-based Thermal Model dirver
     !
+#include <petsc/finclude/petsc.h>
+    !
     ! !USES:
     use ExternalModelConstants    , only : EM_PTM_TBASED_SOLVE_STAGE
     use mpp_bounds                , only : bounds_proc_begc, bounds_proc_endc
@@ -1142,10 +1145,9 @@ contains
     use MultiPhysicsProbConstants , only : AUXVAR_INTERNAL
     use MultiPhysicsProbConstants , only : AUXVAR_BC
     use MultiPhysicsProbConstants , only : AUXVAR_SS
+    use petscsys
     !
     implicit none
-    !
-#include "finclude/petscsys.h"
     !
     ! !ARGUMENTS:
     class(em_ptm_type)                   :: this
@@ -1496,9 +1498,8 @@ contains
          VAR_NUM_SNOW_LYR, soe_auxvar_id, num_snow_layer_1d)
 
     ! Set if cell is active
-    soe_auxvar_id = 1;
     call thermal_mpp%sysofeqns%SetBDataFromCLM(AUXVAR_INTERNAL, &
-         VAR_ACTIVE, soe_auxvar_id, is_active_1d)
+         VAR_ACTIVE, is_active_1d)
 
     ! Set tuning factor
     call thermal_mpp%sysofeqns%SetRDataFromCLM(AUXVAR_INTERNAL, &
