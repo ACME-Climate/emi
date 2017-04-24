@@ -101,7 +101,9 @@ contains
     if (use_vsfm) then
        num_em            = num_em + 1
        index_em_vsfm     = num_em
+#ifdef USE_PETSC_LIB
        allocate(em_vsfm)
+#endif
     endif
 
 #ifdef VSFM_VIA_EMI
