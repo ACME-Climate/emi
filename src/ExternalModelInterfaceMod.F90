@@ -61,9 +61,7 @@ contains
     use clm_varctl, only : use_pflotran
     use clm_varctl, only : use_vsfm
 #endif
-#ifdef VSFM_VIA_EMI
     use clm_varctl, only : use_petsc_thermal_model
-#endif
     !
     implicit none
     !
@@ -106,14 +104,14 @@ contains
 #endif
     endif
 
-#ifdef VSFM_VIA_EMI
     ! Is PETSc based Thermal Model active?
     if (use_petsc_thermal_model) then
        num_em            = num_em + 1
        index_em_ptm      = num_em
+#ifdef USE_PETSC_LIB
        allocate(em_ptm)
-    endif
 #endif
+    endif
 
 #endif
 
@@ -355,7 +353,6 @@ contains
     case (EM_ID_PTM)
 
 #ifdef USE_PETSC_LIB
-#ifdef VSFM_VIA_EMI
 
        ! Initialize lists of data to be exchanged between ALM and VSFM
        ! during initialization step
@@ -427,9 +424,6 @@ contains
        enddo
        !$OMP END PARALLEL DO
 
-#else
-       call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
-#endif
 #else
        call endrun('PTM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
@@ -788,10 +782,10 @@ contains
 #endif
 
     case (EM_ID_PTM)
-#ifdef VSFM_VIA_EMI
+#ifdef USE_PETSC_LIB
        call em_ptm%Solve(em_stage, dtime, nstep, clump_rank, l2e_driver_list(iem), e2l_driver_list(iem))
 #else
-       call endrun('PTM is on but code was not compiled with -DVSFM_VIA_EMI')
+       call endrun('PTM is on but code was not compiled with -DUSE_PETSC_LIB')
 #endif
 
     case default
@@ -947,7 +941,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef VSFM_VIA_EMI
+#ifdef USE_PETSC_LIB
     associate(&
          mflx_infl_col         => waterflux_vars%mflx_infl_col         , &
          mflx_dew_col          => waterflux_vars%mflx_dew_col          , &
@@ -1074,7 +1068,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef VSFM_VIA_EMI
+#ifdef USE_PETSC_LIB
     associate( &
          mflx_recharge_col   => waterflux_vars%mflx_recharge_col, &
          mflx_snowlyr_col    => waterflux_vars%mflx_snowlyr_col   &
@@ -2499,7 +2493,7 @@ contains
     integer                           :: istage
     integer                           :: count
 
-#ifdef VSFM_VIA_EMI
+#ifdef USE_PETSC_LIB
     associate(&
          sabg_lyr    => energyflux_vars%eflx_sabg_lyr_col    , &
          hs_soil     => energyflux_vars%eflx_hs_soil_col     , &
