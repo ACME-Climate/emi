@@ -13,7 +13,6 @@ module ExternalModelInterfaceMod
   use ExternalModelInterfaceDataMod        , only : emi_data_list, emi_data
   use ExternalModelIntefaceDataDimensionMod, only : emi_data_dimension_list_type
 #ifdef USE_PETSC_LIB
-  use MultiPhysicsProbVSFM          , only : vsfm_mpp
   use ExternalModelVSFMMod                 , only : em_vsfm_type
   use ExternalModelPTMMod                  , only : em_ptm_type
 #endif
@@ -262,14 +261,10 @@ contains
 
           ! Fill the data list:
           !  - Data need during the initialization
-          !call EM_VSFM_Populate_L2E_Init_List(l2e_init_list(clump_rank))
-          !call EM_VSFM_Populate_E2L_Init_List(e2l_init_list(clump_rank))
           call em_vsfm%Populate_L2E_Init_List(l2e_init_list(clump_rank))
           call em_vsfm%Populate_E2L_Init_List(e2l_init_list(clump_rank))
 
           !  - Data need during timestepping
-          !call EM_VSFM_Populate_L2E_List(l2e_driver_list(iem))
-          !call EM_VSFM_Populate_E2L_List(e2l_driver_list(iem))
           call em_vsfm%Populate_L2E_List(l2e_driver_list(iem))
           call em_vsfm%Populate_E2L_List(e2l_driver_list(iem))
        enddo
@@ -323,7 +318,6 @@ contains
           call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage)
 
           ! Initialize the external model
-          !call EM_VSFM_Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
           call em_vsfm%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), iam)
 
           ! Unpack all data sent from the external model
