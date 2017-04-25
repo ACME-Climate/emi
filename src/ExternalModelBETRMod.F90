@@ -67,25 +67,65 @@ contains
     class(emi_data), pointer :: data
     integer        , pointer :: em_stages(:)
     integer                  :: number_em_stages
+    integer                  :: id
+    integer                  :: index
 
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
 
     em_stages(1) = EM_BETR_PRE_DIAG_WATER_FLUX_STAGE
 
-    call l2e_list%AddDataByID(L2E_STATE_FRAC_H2OSFC                   , number_em_stages, em_stages, index_l2e_state_frac_h2osfc   )
-    call l2e_list%AddDataByID(L2E_STATE_FRAC_INUNDATED                , number_em_stages, em_stages, index_l2e_state_finundated    )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVSOI            , number_em_stages, em_stages, index_l2e_state_h2osoi_liq    )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVSOI            , number_em_stages, em_stages, index_l2e_state_h2osoi_ice    )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI        , number_em_stages, em_stages, index_l2e_state_h2osoi_liqvol )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI        , number_em_stages, em_stages, index_l2e_state_h2osoi_icevol )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_VOL_NLEVSOI            , number_em_stages, em_stages, index_l2e_state_h2osoi_vol    )
-    call l2e_list%AddDataByID(L2E_STATE_AIR_VOL_NLEVSOI               , number_em_stages, em_stages, index_l2e_state_air_vol       )
-    call l2e_list%AddDataByID(L2E_STATE_RHO_VAP_NLEVSOI               , number_em_stages, em_stages, index_l2e_state_rho_vap       )
-    call l2e_list%AddDataByID(L2E_STATE_RHVAP_SOI_NLEVSOI             , number_em_stages, em_stages, index_l2e_state_rhvap_soi     )
-    call l2e_list%AddDataByID(L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI , number_em_stages, em_stages, index_l2e_state_smp_l         )
-    call l2e_list%AddDataByID(L2E_FILTER_NOLAKEC                      , number_em_stages, em_stages, index_l2e_filter_nolakec      )
-    call l2e_list%AddDataByID(L2E_FILTER_NUM_NOLAKEC                  , number_em_stages, em_stages, index_l2e_filter_num_nolakec  )
+    id                            = L2E_STATE_FRAC_H2OSFC
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_frac_h2osfc   = index
+
+    id                            = L2E_STATE_FRAC_INUNDATED
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_finundated    = index
+
+    id                            = L2E_STATE_H2OSOI_LIQ_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_h2osoi_liq    = index
+
+    id                            = L2E_STATE_H2OSOI_ICE_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_h2osoi_ice    = index
+
+    id                            = L2E_STATE_H2OSOI_LIQ_VOL_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_h2osoi_liqvol = index
+
+    id                            = L2E_STATE_H2OSOI_ICE_VOL_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_h2osoi_icevol = index
+
+    id                            = L2E_STATE_H2OSOI_VOL_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_h2osoi_vol    = index
+
+    id                            = L2E_STATE_AIR_VOL_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_air_vol       = index
+
+    id                            = L2E_STATE_RHO_VAP_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_rho_vap       = index
+
+    id                            = L2E_STATE_RHVAP_SOI_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_rhvap_soi     = index
+
+    id                            = L2E_STATE_SOIL_MATRIC_POTENTIAL_NLEVSOI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_state_smp_l         = index
+
+    id                            = L2E_FILTER_NOLAKEC
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_filter_nolakec      = index
+
+    id                            = L2E_FILTER_NUM_NOLAKEC
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    index_l2e_filter_num_nolakec  = index
 
     deallocate(em_stages)
 

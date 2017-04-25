@@ -102,17 +102,28 @@ contains
     class(emi_data), pointer :: data
     integer        , pointer :: em_stages(:)
     integer                  :: number_em_stages
-    integer                  :: count
+    integer                              :: id
+    integer                              :: index
 
-    count            = 0
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_FATES_SUNFRAC_STAGE
 
-    call l2e_list%AddDataByID(L2E_FLUX_SOLAR_DIRECT_RADDIATION , number_em_stages, em_stages, this%index_l2e_flux_solad)
-    call l2e_list%AddDataByID(L2E_FLUX_SOLAR_DIFFUSE_RADDIATION, number_em_stages, em_stages, this%index_l2e_flux_solai)
-    call l2e_list%AddDataByID(L2E_COLUMN_GRIDCELL_INDEX        , number_em_stages, em_stages, this%index_l2e_col_gridcell_index)
-    call l2e_list%AddDataByID(L2E_COLUMN_PATCH_INDEX           , number_em_stages, em_stages, this%index_l2e_col_patch_index)
+    id                                = L2E_FLUX_SOLAR_DIRECT_RADDIATION
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_solad         = index
+
+    id                                = L2E_FLUX_SOLAR_DIFFUSE_RADDIATION
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_solai         = index
+
+    id                                = L2E_COLUMN_GRIDCELL_INDEX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_col_gridcell_index = index
+
+    id                                = L2E_COLUMN_PATCH_INDEX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_col_patch_index    = index
 
     deallocate(em_stages)
 
@@ -140,14 +151,24 @@ contains
     ! !LOCAL VARIABLES:
     integer              , pointer       :: em_stages(:)
     integer                              :: number_em_stages
+    integer                              :: id
+    integer                              :: index
 
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_FATES_SUNFRAC_STAGE
 
-    call e2l_list%AddDataByID(E2L_STATE_FSUN  , number_em_stages, em_stages, this%index_e2l_state_fsun   )
-    call e2l_list%AddDataByID(E2L_STATE_LAISUN, number_em_stages, em_stages, this%index_e2l_state_laisun )
-    call e2l_list%AddDataByID(E2L_STATE_LAISHA, number_em_stages, em_stages, this%index_e2l_state_laisha )
+    id                          = E2L_STATE_FSUN
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_fsun   = index
+
+    id                          = E2L_STATE_LAISUN
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_laisun = index
+
+    id                          = E2L_STATE_LAISHA
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_laisha = index
 
     deallocate(em_stages)
 

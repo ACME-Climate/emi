@@ -134,35 +134,84 @@ contains
     class(emi_data), pointer :: data
     integer        , pointer :: em_stages(:)
     integer                  :: number_em_stages
-    integer                  :: count
+    integer                  :: id
+    integer                  :: index
 
-    count            = 0
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call l2e_init_list%AddDataByID(L2E_STATE_WTD                                    , number_em_stages, em_stages, this%index_l2e_init_state_wtd             )
-    call l2e_init_list%AddDataByID(L2E_STATE_VSFM_PROGNOSTIC_SOILP                  , number_em_stages, em_stages, this%index_l2e_init_state_soilp           )
+    id                                         = L2E_STATE_WTD
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_state_wtd              = index
 
-    call l2e_init_list%AddDataByID(L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_l2e_init_flux_mflx_snowlyr_col )
+    id                                         = L2E_STATE_VSFM_PROGNOSTIC_SOILP
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_state_soilp            = index
 
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ACTIVE                                , number_em_stages, em_stages, this%index_l2e_init_col_active                 )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_TYPE                                  , number_em_stages, em_stages, this%index_l2e_init_col_type                   )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_LANDUNIT_INDEX                        , number_em_stages, em_stages, this%index_l2e_init_col_landunit_index         )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_ZI                                    , number_em_stages, em_stages, this%index_l2e_init_col_zi                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_DZ                                    , number_em_stages, em_stages, this%index_l2e_init_col_dz                     )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_Z                                     , number_em_stages, em_stages, this%index_l2e_init_col_z                      )
-    call l2e_init_list%AddDataByID(L2E_COLUMN_AREA                                  , number_em_stages, em_stages, this%index_l2e_init_col_area                   )
+    id                                         = L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_flux_mflx_snowlyr_col  = index
 
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_TYPE                                , number_em_stages, em_stages, this%index_l2e_init_landunit_type              )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_LAKEPOINT                           , number_em_stages, em_stages, this%index_l2e_init_landunit_lakepoint         )
-    call l2e_init_list%AddDataByID(L2E_LANDUNIT_URBANPOINT                          , number_em_stages, em_stages, this%index_l2e_init_landunit_urbanpoint        )
+    id                                         = L2E_COLUMN_ACTIVE
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_active             = index
 
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_WATSATC                            , number_em_stages, em_stages, this%index_l2e_init_parameter_watsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_HKSATC                             , number_em_stages, em_stages, this%index_l2e_init_parameter_hksatc           )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_BSWC                               , number_em_stages, em_stages, this%index_l2e_init_parameter_bswc             )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_SUCSATC                            , number_em_stages, em_stages, this%index_l2e_init_parameter_sucsatc          )
-    call l2e_init_list%AddDataByID(L2E_PARAMETER_EFFPOROSITYC                       , number_em_stages, em_stages, this%index_l2e_init_parameter_effporosityc     )
+    id                                         = L2E_COLUMN_TYPE
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_type               = index
+
+    id                                         = L2E_COLUMN_LANDUNIT_INDEX
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_landunit_index     = index
+
+    id                                         = L2E_COLUMN_ZI
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_zi                 = index
+
+    id                                         = L2E_COLUMN_DZ
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_dz                 = index
+
+    id                                         = L2E_COLUMN_Z
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_z                  = index
+
+    id                                         = L2E_COLUMN_AREA
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_col_area               = index
+
+    id                                         = L2E_LANDUNIT_TYPE
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_landunit_type          = index
+
+    id                                         = L2E_LANDUNIT_LAKEPOINT
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_landunit_lakepoint     = index
+
+    id                                         = L2E_LANDUNIT_URBANPOINT
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_landunit_urbanpoint    = index
+
+    id                                         = L2E_PARAMETER_WATSATC
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_parameter_watsatc      = index
+
+    id                                         = L2E_PARAMETER_HKSATC
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_parameter_hksatc       = index
+
+    id                                         = L2E_PARAMETER_BSWC
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_parameter_bswc         = index
+
+    id                                         = L2E_PARAMETER_SUCSATC
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_parameter_sucsatc      = index
+
+    id                                         = L2E_PARAMETER_EFFPOROSITYC
+    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_init_parameter_effporosityc = index
 
   end subroutine EM_VSFM_Populate_L2E_Init_List
 
@@ -191,18 +240,32 @@ contains
     class(emi_data)      , pointer       :: data
     integer              , pointer       :: em_stages(:)
     integer                              :: number_em_stages
-    integer                              :: count
+    integer                              :: id
+    integer                              :: index
 
-    count            = 0
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_LIQ                     , number_em_stages, em_stages, this%index_e2l_init_state_h2osoi_liq      )
-    call e2l_init_list%AddDataByID(E2L_STATE_H2OSOI_ICE                     , number_em_stages, em_stages, this%index_e2l_init_state_h2osoi_ice      )
-    call e2l_init_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL          , number_em_stages, em_stages, this%index_e2l_init_state_smp             )
-    call e2l_init_list%AddDataByID(E2L_STATE_WTD                            , number_em_stages, em_stages, this%index_e2l_init_state_wtd             )
-    call e2l_init_list%AddDataByID(E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_e2l_init_flux_mflx_snowlyr_col )
+    id                                        = E2L_STATE_H2OSOI_LIQ
+    call e2l_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_init_state_h2osoi_liq      = index
+
+    id                                        = E2L_STATE_H2OSOI_ICE
+    call e2l_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_init_state_h2osoi_ice      = index
+
+    id                                        = E2L_STATE_SOIL_MATRIC_POTENTIAL
+    call e2l_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_init_state_smp             = index
+
+    id                                        = E2L_STATE_WTD
+    call e2l_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_init_state_wtd             = index
+
+    id                                        = E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    call e2l_init_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_init_flux_mflx_snowlyr_col = index
 
     deallocate(em_stages)
 
@@ -239,25 +302,60 @@ contains
     class(emi_data), pointer :: data
     integer        , pointer :: em_stages(:)
     integer                  :: number_em_stages
-    integer                  :: count
+    integer                  :: id
+    integer                  :: index
 
-    count            = 0
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_VSFM_SOIL_HYDRO_STAGE
 
-    call l2e_list%AddDataByID(L2E_STATE_TSOIL_NLEVGRND                 , number_em_stages, em_stages, this%index_l2e_state_tsoil           )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_LIQ_NLEVGRND            , number_em_stages, em_stages, this%index_l2e_state_h2osoi_liq      )
-    call l2e_list%AddDataByID(L2E_STATE_H2OSOI_ICE_NLEVGRND            , number_em_stages, em_stages, this%index_l2e_state_h2osoi_ice      )
-    call l2e_list%AddDataByID(L2E_FLUX_INFIL_MASS_FLUX                 , number_em_stages, em_stages, this%index_l2e_flux_infil            )
-    call l2e_list%AddDataByID(L2E_FLUX_VERTICAL_ET_MASS_FLUX           , number_em_stages, em_stages, this%index_l2e_flux_et               )
-    call l2e_list%AddDataByID(L2E_FLUX_DEW_MASS_FLUX                   , number_em_stages, em_stages, this%index_l2e_flux_dew              )
-    call l2e_list%AddDataByID(L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX      , number_em_stages, em_stages, this%index_l2e_flux_snow_sub         )
-    call l2e_list%AddDataByID(L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX , number_em_stages, em_stages, this%index_l2e_flux_snowlyr          )
-    call l2e_list%AddDataByID(L2E_FLUX_DRAINAGE_MASS_FLUX              , number_em_stages, em_stages, this%index_l2e_flux_drainage         )
-    call l2e_list%AddDataByID(L2E_FILTER_HYDROLOGYC                    , number_em_stages, em_stages, this%index_l2e_filter_hydrologyc     )
-    call l2e_list%AddDataByID(L2E_FILTER_NUM_HYDROLOGYC                , number_em_stages, em_stages, this%index_l2e_filter_num_hydrologyc )
-    call l2e_list%AddDataByID(L2E_COLUMN_ZI                            , number_em_stages, em_stages, this%index_l2e_column_zi             )
+    id                                   = L2E_STATE_TSOIL_NLEVGRND
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_state_tsoil           = index
+
+    id                                   = L2E_STATE_H2OSOI_LIQ_NLEVGRND
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_state_h2osoi_liq      = index
+
+    id                                   = L2E_STATE_H2OSOI_ICE_NLEVGRND
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_state_h2osoi_ice      = index
+
+    id                                   = L2E_FLUX_INFIL_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_infil            = index
+
+    id                                   = L2E_FLUX_VERTICAL_ET_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_et               = index
+
+    id                                   = L2E_FLUX_DEW_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_dew              = index
+
+    id                                   = L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_snow_sub         = index
+
+    id                                   = L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_snowlyr          = index
+
+    id                                   = L2E_FLUX_DRAINAGE_MASS_FLUX
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_drainage         = index
+
+    id                                   = L2E_FILTER_HYDROLOGYC
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_filter_hydrologyc     = index
+
+    id                                   = L2E_FILTER_NUM_HYDROLOGYC
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_filter_num_hydrologyc = index
+
+    id                                   = L2E_COLUMN_ZI
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_column_zi             = index
 
     deallocate(em_stages)
 
@@ -288,17 +386,36 @@ contains
     ! !LOCAL VARIABLES:
     integer              , pointer       :: em_stages(:)
     integer                              :: number_em_stages
+    integer                              :: id
+    integer                              :: index
 
     number_em_stages = 1
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_VSFM_SOIL_HYDRO_STAGE
 
-    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_LIQ            , number_em_stages, em_stages, this%index_e2l_state_h2osoi_liq )
-    call e2l_list%AddDataByID(E2L_STATE_H2OSOI_ICE            , number_em_stages, em_stages, this%index_e2l_state_h2osoi_ice )
-    call e2l_list%AddDataByID(E2L_STATE_SOIL_MATRIC_POTENTIAL , number_em_stages, em_stages, this%index_e2l_state_smp        )
-    call e2l_list%AddDataByID(E2L_STATE_WTD                   , number_em_stages, em_stages, this%index_e2l_state_wtd        )
-    call e2l_list%AddDataByID(E2L_STATE_VSFM_PROGNOSTIC_SOILP , number_em_stages, em_stages, this%index_e2l_state_soilp      )
-    call e2l_list%AddDataByID(E2L_FLUX_AQUIFER_RECHARGE       , number_em_stages, em_stages, this%index_e2l_flux_qrecharge   )
+    id                              = E2L_STATE_H2OSOI_LIQ
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_h2osoi_liq = index
+
+    id                              = E2L_STATE_H2OSOI_ICE
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_h2osoi_ice = index
+
+    id                              = E2L_STATE_SOIL_MATRIC_POTENTIAL
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_smp        = index
+
+    id                              = E2L_STATE_WTD
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_wtd        = index
+
+    id                              = E2L_STATE_VSFM_PROGNOSTIC_SOILP
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_state_soilp      = index
+
+    id                              = E2L_FLUX_AQUIFER_RECHARGE
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_flux_qrecharge   = index
 
     deallocate(em_stages)
 
